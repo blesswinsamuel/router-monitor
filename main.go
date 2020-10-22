@@ -1,48 +1,50 @@
 package main
 
 import (
-	"bufio"
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
+	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
+	"syscall"
 
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/pcap"
 	"github.com/google/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
-	listen = flag.String("listen",
-		"localhost:9154",
-		"listen address")
-	metricsPath = flag.String("metrics_path",
-		"/metrics",
-		"path under which metrics are served")
+	listen      = flag.String("listen", "localhost:9154", "listen address")
+	metricsPath = flag.String("metrics_path", "/metrics", "path under which metrics are served")
 
-	iface = flag.String("interface",
-		"eth0",
-		"network interface to monitor")
-	filters = flag.String("filters",
-		"",
-		"TCPdump filters, e.g., \"src net 192.168.1.1/24\"")
+	iface        = flag.String("interface", "eth0", "network interface to monitor")
+	filter       = flag.String("bpf", "", "BPF filter")
+	enableLayer4 = flag.Bool("l4", false, "Show transport layer flows")
 )
 
 var (
-	metricLabels = []string{"src", "dst", "service", "proto"}
+	l3MetricLabels = []string{"src", "dst", "type"}
+	l3Packets      = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ntm_l3_packets_total", Help: "L3 Packets transferred",
+	}, l3MetricLabels)
+	l3Throughput = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ntm_l3_bytes_total", Help: "L3 Bytes transferred",
+	}, l3MetricLabels)
 
-	packets = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_packets_total", Help: "Packets transferred",
-	}, metricLabels)
-	throughput = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_bytes_total", Help: "Bytes transferred",
-	}, metricLabels)
+	l4MetricLabels = []string{"src", "dst", "src_port", "dst_port", "proto"}
+	l4Packets      = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ntm_l4_packets_total", Help: "L4 Packets transferred",
+	}, l4MetricLabels)
+	l4Throughput = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ntm_l4_bytes_total", Help: "L4 Bytes transferred",
+	}, l4MetricLabels)
 )
 
 var services map[string]bool
@@ -51,8 +53,10 @@ var fqdn = false
 var log *logger.Logger
 
 func init() {
-	prometheus.MustRegister(packets)
-	prometheus.MustRegister(throughput)
+	prometheus.MustRegister(l3Packets)
+	prometheus.MustRegister(l3Throughput)
+	prometheus.MustRegister(l4Packets)
+	prometheus.MustRegister(l4Throughput)
 }
 
 type server struct {
@@ -118,120 +122,99 @@ func init() {
 	dumpMatcher = regexp.MustCompile(pattern)
 }
 
-func parsePacket(line string) error {
-	match := dumpMatcher.FindStringSubmatch(line)
-	if len(match) == 0 {
-		log.Warning("[SKIP] " + strings.ReplaceAll(line, "\n", "\\n"))
-		return nil
-	}
+// func parsePacket(line string) error {
+// 	match := dumpMatcher.FindStringSubmatch(line)
+// 	if len(match) == 0 {
+// 		log.Warning("[SKIP] " + strings.ReplaceAll(line, "\n", "\\n"))
+// 		return nil
+// 	}
 
-	paramsMap := make(map[string]string)
-	for i, name := range dumpMatcher.SubexpNames() {
-		if i > 0 && i <= len(match) {
-			paramsMap[name] = match[i]
-		}
-	}
+// 	paramsMap := make(map[string]string)
+// 	for i, name := range dumpMatcher.SubexpNames() {
+// 		if i > 0 && i <= len(match) {
+// 			paramsMap[name] = match[i]
+// 		}
+// 	}
 
-	labels := map[string]string{
-		"src":     extractDomain(paramsMap["src"]),
-		"dst":     extractDomain(paramsMap["dst"]),
-		"proto":   strings.ToLower(paramsMap["proto"]),
-		"service": "",
-	}
-	// If the last part of the src/dst is a service, just use the literal service name:
-	if _, ok := services[paramsMap["dstp"]]; ok {
-		labels["service"] = paramsMap["dstp"]
-	} else if _, ok := services[paramsMap["srcp"]]; ok {
-		labels["service"] = paramsMap["srcp"]
-	}
-	// Otherwise, do a lookup of port/proto to the service:
-	if labels["service"] == "" && isNumeric(paramsMap["dstp"]) {
-		labels["service"] = lookupService(
-			toNumeric(paramsMap["dstp"]), labels["proto"])
-	}
-	if labels["service"] == "" && isNumeric(paramsMap["srcp"]) {
-		labels["service"] = lookupService(
-			toNumeric(paramsMap["srcp"]), labels["proto"])
-	}
-	if labels["service"] == "" {
-		labels["service"] = ""
-	}
+// 	labels := map[string]string{
+// 		"src":     extractDomain(paramsMap["src"]),
+// 		"dst":     extractDomain(paramsMap["dst"]),
+// 		"proto":   strings.ToLower(paramsMap["proto"]),
+// 		"service": "",
+// 	}
+// 	// If the last part of the src/dst is a service, just use the literal service name:
+// 	if _, ok := services[paramsMap["dstp"]]; ok {
+// 		labels["service"] = paramsMap["dstp"]
+// 	} else if _, ok := services[paramsMap["srcp"]]; ok {
+// 		labels["service"] = paramsMap["srcp"]
+// 	}
+// 	// Otherwise, do a lookup of port/proto to the service:
+// 	if labels["service"] == "" && isNumeric(paramsMap["dstp"]) {
+// 		labels["service"] = lookupService(
+// 			toNumeric(paramsMap["dstp"]), labels["proto"])
+// 	}
+// 	if labels["service"] == "" && isNumeric(paramsMap["srcp"]) {
+// 		labels["service"] = lookupService(
+// 			toNumeric(paramsMap["srcp"]), labels["proto"])
+// 	}
+// 	if labels["service"] == "" {
+// 		labels["service"] = ""
+// 	}
 
-	packets.With(labels).Inc()
-	throughput.With(labels).Add(float64(toNumeric(paramsMap["length"])))
-	return nil
-}
+// 	packets.With(labels).Inc()
+// 	throughput.With(labels).Add(float64(toNumeric(paramsMap["length"])))
+// 	return nil
+// }
 
-func streamPackets() {
-	cmd := exec.Command(
-		"tcpdump", "-i", *iface, "-v", "-l", *filters)
-	log.Infof("tcpdump command: %v", cmd.String())
-
-	stdout, err := cmd.StdoutPipe()
+func listenPacket(ifaceName string, ctx context.Context) {
+	handle, err := pcap.OpenLive(ifaceName, 65536, true, pcap.BlockForever)
 	if err != nil {
-		log.Fatalf("cmd.StdoutPipe failed: %v", err)
-	}
-	// var stderr bytes.Buffer
-	// cmd.Stderr = &stderr
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Start(); err != nil {
-		log.Fatalf("cmd.Start failed: %v", err)
+		log.Errorf("Failed to OpenLive by pcap, err: %s\n", err.Error())
+		os.Exit(0)
 	}
 
-	scanner := bufio.NewScanner(stdout)
-	scanner.Split(bufio.ScanLines)
-	twoLineBuf := []string{}
-	for scanner.Scan() {
-		// When tcpdump is run with -v, it outputs two lines per packet;
-		// readuntil ensures that each "line" is actually a parse-able string of output.
-		line := scanner.Text()
-		if len(line) == 0 {
-			log.Info("No output from tcpdump... waiting.")
-			time.Sleep(time.Second)
-			continue
-		}
-		twoLineBuf = append(twoLineBuf, line)
-		if strings.Contains(line, " IP ") || strings.Contains(line, " IP6 ") {
-			continue
-		}
-
-		twoLineStr := strings.Join(twoLineBuf, "\n")
-		// log.Info(twoLineStr)
-		if err := parsePacket(twoLineStr); err != nil {
-			log.Errorf("Failed to parse line \"%s\": %v", line, err)
-		}
-		twoLineBuf = nil
-	}
-	if err := cmd.Wait(); err != nil {
-		// log.Errorf("stderr: %s", stderr.String())
-		log.Fatalf("cmd.Wait failed: %v", err)
-	}
-}
-
-func loadServices() {
-	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
-	file, err := os.Open("/etc/services")
+	err = handle.SetBPFFilter(*filter)
 	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
+		log.Errorf("Failed to set BPF filter, err: %s\n", err.Error())
+		os.Exit(0)
 	}
-	serviceMap = make(map[int]map[string]string)
-	services = make(map[string]bool)
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		match := FindStringSubmatchMap(matcher, scanner.Text())
-		if match == nil {
-			continue
+
+	defer handle.Close()
+
+	ps := gopacket.NewPacketSource(handle, handle.LinkType())
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case p := <-ps.Packets():
+			go PacketHandler(ifaceName, p, *enableLayer4)
 		}
-		port := toNumeric(match["port"])
-		if _, ok := serviceMap[port]; !ok {
-			serviceMap[port] = map[string]string{}
-		}
-		serviceMap[port][match["proto"]] = match["service"]
-		services[match["service"]] = true
 	}
 }
+
+// func loadServices() {
+// 	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
+// 	file, err := os.Open("/etc/services")
+// 	if err != nil {
+// 		log.Fatalf("failed opening file: %s", err)
+// 	}
+// 	serviceMap = make(map[int]map[string]string)
+// 	services = make(map[string]bool)
+// 	scanner := bufio.NewScanner(file)
+// 	scanner.Split(bufio.ScanLines)
+// 	for scanner.Scan() {
+// 		match := FindStringSubmatchMap(matcher, scanner.Text())
+// 		if match == nil {
+// 			continue
+// 		}
+// 		port := toNumeric(match["port"])
+// 		if _, ok := serviceMap[port]; !ok {
+// 			serviceMap[port] = map[string]string{}
+// 		}
+// 		serviceMap[port][match["proto"]] = match["service"]
+// 		services[match["service"]] = true
+// 	}
+// }
 
 func FindStringSubmatchMap(re *regexp.Regexp, str string) map[string]string {
 	match := re.FindStringSubmatch(str)
@@ -253,12 +236,23 @@ func main() {
 	s := &server{
 		promHandler: promhttp.Handler(),
 	}
-	loadServices()
+	// loadServices()
 
-	go streamPackets()
+	if os.Geteuid() != 0 {
+		log.Errorln("Must run as root")
+	}
 
-	http.HandleFunc(*metricsPath, s.promHandler.ServeHTTP)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGHUP, syscall.SIGINT)
+	// tickStatsDuration := time.Tick(time.Duration(1) * time.Second)
+
+	// Stats.ifaces[ifaceName] = NewIface(ifaceName)
+	ctx, cancel := context.WithCancel(context.Background())
+	go listenPacket(*iface, ctx)
+
+	r := http.NewServeMux()
+	r.HandleFunc(*metricsPath, s.promHandler.ServeHTTP)
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
 			<head><title>Network Traffic Exporter</title></head>
 			<body>
@@ -266,7 +260,12 @@ func main() {
 			<p><a href="` + *metricsPath + `">Metrics</a></p>
 			</body></html>`))
 	})
+	h := &http.Server{Addr: *listen, Handler: r}
 	log.Infoln("Listening on", *listen)
 	log.Infoln("Serving metrics under", *metricsPath)
-	log.Fatal(http.ListenAndServe(*listen, nil))
+	go h.ListenAndServe()
+
+	<-signalChan
+	cancel()
+	h.Shutdown(context.Background())
 }
