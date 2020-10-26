@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/google/logger"
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,11 +47,6 @@ var (
 	}, l4MetricLabels)
 )
 
-var services map[string]bool
-var serviceMap map[int]map[string]string
-var fqdn = false
-var log *logger.Logger
-
 func init() {
 	prometheus.MustRegister(l3Packets)
 	prometheus.MustRegister(l3Throughput)
@@ -58,19 +54,36 @@ func init() {
 	prometheus.MustRegister(l4Throughput)
 }
 
+var services map[string]bool
+var serviceMap map[int]map[string]string
+var log *logger.Logger
+
 type server struct {
 	promHandler http.Handler
 }
 
-func isNumeric(s string) bool {
-	if _, err := strconv.Atoi(s); err != nil {
-		return false
+func loadServices() {
+	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
+	file, err := os.Open("/etc/services")
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
 	}
-	return true
-}
-func toNumeric(s string) int {
-	v, _ := strconv.Atoi(s)
-	return v
+	serviceMap = make(map[int]map[string]string)
+	services = make(map[string]bool)
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		match := findStringSubmatchMap(matcher, scanner.Text())
+		if match == nil {
+			continue
+		}
+		port := toNumeric(match["port"])
+		if _, ok := serviceMap[port]; !ok {
+			serviceMap[port] = map[string]string{}
+		}
+		serviceMap[port][match["proto"]] = match["service"]
+		services[match["service"]] = true
+	}
 }
 
 func lookupService(port int, proto string) string {
@@ -104,47 +117,90 @@ func listenPacket(ifaceName string, ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case p := <-ps.Packets():
-			go PacketHandler(ifaceName, p, *enableLayer4)
+			go packetHandler(ifaceName, p, *enableLayer4)
 		}
 	}
 }
 
-func loadServices() {
-	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
-	file, err := os.Open("/etc/services")
-	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
-	}
-	serviceMap = make(map[int]map[string]string)
-	services = make(map[string]bool)
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		match := FindStringSubmatchMap(matcher, scanner.Text())
-		if match == nil {
+func packetHandler(ifaceName string, pkt gopacket.Packet, enableLayer4 bool) {
+	// iface := s.GetIface(ifaceName)
+	var l3Type, l4Protocol string
+	var srcAddr, dstAddr string
+	var srcPort, dstPort string
+	var l3Len, l4Len int
+
+	for _, ly := range pkt.Layers() {
+		switch ly.LayerType() {
+		case layers.LayerTypeIPv4:
+			l := ly.(*layers.IPv4)
+			l3Type = "ipv4"
+			srcAddr = l.SrcIP.String()
+			dstAddr = l.DstIP.String()
+			l3Len = len(l.LayerPayload())
+		}
+		if !enableLayer4 {
 			continue
 		}
-		port := toNumeric(match["port"])
-		if _, ok := serviceMap[port]; !ok {
-			serviceMap[port] = map[string]string{}
+		switch ly.LayerType() {
+		case layers.LayerTypeTCP:
+			l := ly.(*layers.TCP)
+			l4Protocol = "tcp"
+			srcPort = l.SrcPort.String()
+			dstPort = l.DstPort.String()
+			l4Len = len(l.LayerPayload())
+		case layers.LayerTypeUDP:
+			l := ly.(*layers.UDP)
+			l4Protocol = "udp"
+			srcPort = l.SrcPort.String()
+			dstPort = l.DstPort.String()
+			l4Len = len(l.LayerPayload())
+		case layers.LayerTypeICMPv4:
+			l := ly.(*layers.ICMPv4)
+			l4Protocol = "icmp"
+			l4Len = len(l.LayerPayload())
 		}
-		serviceMap[port][match["proto"]] = match["service"]
-		services[match["service"]] = true
 	}
-}
 
-func FindStringSubmatchMap(re *regexp.Regexp, str string) map[string]string {
-	match := re.FindStringSubmatch(str)
-	if match == nil {
-		return nil
+	if l3Type == "" || l4Protocol == "" {
+		return
 	}
-	paramsMap := make(map[string]string)
-	for i, name := range re.SubexpNames() {
-		if i != 0 && name != "" {
-			paramsMap[name] = match[i]
+
+	l3Labels := map[string]string{
+		"src":  srcAddr,
+		"dst":  dstAddr,
+		"type": l3Type,
+	}
+	l3Packets.With(l3Labels).Inc()
+	l3Throughput.With(l3Labels).Add(float64(l3Len))
+
+	if enableLayer4 {
+		l4Labels := map[string]string{
+			"src":   srcAddr,
+			"dst":   dstAddr,
+			"proto": l4Protocol,
 		}
+		// If the last part of the src/dst is a service, just use the literal service name:
+		if _, ok := services[dstPort]; ok {
+			l4Labels["service"] = dstPort
+		}
+		if _, ok := services[srcPort]; ok {
+			l4Labels["service"] = srcPort
+		}
+		// Otherwise, do a lookup of port/proto to the service:
+		srcPortInt, srcPortErr := strconv.Atoi(getDigits(srcPort))
+		dstPortInt, dstPortErr := strconv.Atoi(getDigits(dstPort))
+		if l4Labels["service"] == "" && dstPortErr == nil {
+			l4Labels["service"] = lookupService(dstPortInt, l4Protocol)
+		}
+		if l4Labels["service"] == "" && srcPortErr == nil {
+			l4Labels["service"] = lookupService(srcPortInt, l4Protocol)
+		}
+		if l4Labels["service"] == "" {
+			l4Labels["service"] = ""
+		}
+		l4Throughput.With(l4Labels).Add(float64(l4Len))
+		l4Packets.With(l4Labels).Inc()
 	}
-	return paramsMap
 }
 
 func main() {
@@ -161,9 +217,7 @@ func main() {
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGHUP, syscall.SIGINT)
-	// tickStatsDuration := time.Tick(time.Duration(1) * time.Second)
 
-	// Stats.ifaces[ifaceName] = NewIface(ifaceName)
 	ctx, cancel := context.WithCancel(context.Background())
 	go listenPacket(*iface, ctx)
 
