@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -9,7 +10,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -23,8 +26,9 @@ var (
 	listen      = flag.String("listen", "localhost:9154", "listen address")
 	metricsPath = flag.String("metrics_path", "/metrics", "path under which metrics are served")
 
-	iface  = flag.String("interface", "eth0", "network interface to monitor")
-	filter = flag.String("bpf", "", "BPF filter")
+	dhcpLeasesFile = flag.String("dhcp-leases-file", "/var/lib/misc/dnsmasq.leases", "dnsmasq DHCP leases file")
+	iface          = flag.String("interface", "eth0", "network interface to monitor")
+	filter         = flag.String("bpf", "", "BPF filter")
 )
 
 var (
@@ -43,6 +47,7 @@ func init() {
 }
 
 var ipNets []*net.IPNet
+var ipHostnameLookup map[string]string
 var log *logger.Logger
 
 type server struct {
@@ -50,29 +55,28 @@ type server struct {
 }
 
 func listenPacket(ifaceName string, ctx context.Context) {
-	handle, err := pcap.OpenLive(ifaceName, 65536, true, pcap.BlockForever)
-	if err != nil {
-		log.Errorf("Failed to OpenLive by pcap, err: %s\n", err.Error())
-		os.Exit(0)
-	}
-
-	err = handle.SetBPFFilter(*filter)
-	if err != nil {
-		log.Errorf("Failed to set BPF filter, err: %s\n", err.Error())
-		os.Exit(0)
-	}
-
-	defer handle.Close()
-
-	ps := gopacket.NewPacketSource(handle, handle.LinkType())
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case p := <-ps.Packets():
-			go packetHandler(p)
+	go func() {
+		handle, err := pcap.OpenLive(ifaceName, 65536, true, pcap.BlockForever)
+		if err != nil {
+			log.Fatalf("Failed to OpenLive by pcap, err: %s", err)
 		}
-	}
+
+		err = handle.SetBPFFilter(*filter)
+		if err != nil {
+			log.Fatalf("Failed to set BPF filter, err: %s", err)
+		}
+		defer handle.Close()
+
+		ps := gopacket.NewPacketSource(handle, handle.LinkType())
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case p := <-ps.Packets():
+				go packetHandler(p)
+			}
+		}
+	}()
 }
 
 func packetHandler(pkt gopacket.Packet) {
@@ -96,9 +100,15 @@ func packetHandler(pkt gopacket.Packet) {
 	for _, n := range ipNets {
 		if n.Contains(srcAddr) {
 			src = srcAddr.String()
+			if hn, ok := ipHostnameLookup[src]; ok {
+				src = hn
+			}
 		}
 		if n.Contains(dstAddr) {
 			dst = dstAddr.String()
+			if hn, ok := ipHostnameLookup[dst]; ok {
+				dst = hn
+			}
 		}
 	}
 	labels := map[string]string{
@@ -131,6 +141,56 @@ func getIpNets(iface string) ([]*net.IPNet, error) {
 	return nil, fmt.Errorf("localAddresses: interface not found")
 }
 
+func loadLeasesFile() error {
+	ipHostnameLookup = make(map[string]string)
+	file, err := os.Open(*dhcpLeasesFile)
+	if err != nil {
+		return fmt.Errorf("ReadFile error: %w", err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.Split(scanner.Text(), " ")
+		if len(line) < 4 {
+			continue
+		}
+		ip := line[2]
+		hostname := line[3]
+		if hostname == "*" {
+			continue
+		}
+		ipHostnameLookup[ip] = hostname
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("scanner error: %w", err)
+	}
+	return nil
+}
+
+func listenLeasesFile(ctx context.Context) {
+	err := loadLeasesFile()
+	if err != nil {
+		log.Fatalf("loadLeasesFile failed: %v", err)
+	}
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				err := loadLeasesFile()
+				if err != nil {
+					log.Errorf("loadLeasesFile failed: %v", err)
+				}
+			}
+		}
+	}()
+}
+
 func main() {
 	log = logger.Init("network_traffice_exporter", true, false, ioutil.Discard)
 	flag.Parse()
@@ -149,7 +209,8 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go listenPacket(*iface, ctx)
+	listenLeasesFile(ctx)
+	listenPacket(*iface, ctx)
 
 	r := http.NewServeMux()
 	r.HandleFunc(*metricsPath, s.promHandler.ServeHTTP)
