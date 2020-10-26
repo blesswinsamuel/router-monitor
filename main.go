@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -56,6 +58,7 @@ func init() {
 
 var services map[string]bool
 var serviceMap map[int]map[string]string
+var ipNets []*net.IPNet
 var log *logger.Logger
 
 type server struct {
@@ -117,31 +120,31 @@ func listenPacket(ifaceName string, ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case p := <-ps.Packets():
-			go packetHandler(ifaceName, p, *enableLayer4)
+			go packetHandler(p, *enableLayer4)
 		}
 	}
 }
 
-func packetHandler(ifaceName string, pkt gopacket.Packet, enableLayer4 bool) {
-	// iface := s.GetIface(ifaceName)
+func packetHandler(pkt gopacket.Packet, enableLayer4 bool) {
 	var l3Type, l4Protocol string
-	var srcAddr, dstAddr string
+	var srcAddr, dstAddr net.IP
 	var srcPort, dstPort string
 	var l3Len, l4Len int
 
 	for _, ly := range pkt.Layers() {
-		switch ly.LayerType() {
+		layerType := ly.LayerType()
+		switch layerType {
 		case layers.LayerTypeIPv4:
 			l := ly.(*layers.IPv4)
 			l3Type = "ipv4"
-			srcAddr = l.SrcIP.String()
-			dstAddr = l.DstIP.String()
+			srcAddr = l.SrcIP
+			dstAddr = l.DstIP
 			l3Len = len(l.LayerPayload())
 		}
-		if !enableLayer4 {
-			continue
-		}
-		switch ly.LayerType() {
+		// if !enableLayer4 {
+		// 	continue
+		// }
+		switch layerType {
 		case layers.LayerTypeTCP:
 			l := ly.(*layers.TCP)
 			l4Protocol = "tcp"
@@ -165,9 +168,19 @@ func packetHandler(ifaceName string, pkt gopacket.Packet, enableLayer4 bool) {
 		return
 	}
 
+	src := "internet"
+	dst := "internet"
+	for _, n := range ipNets {
+		if n.Contains(srcAddr) {
+			src = srcAddr.String()
+		}
+		if n.Contains(dstAddr) {
+			dst = dstAddr.String()
+		}
+	}
 	l3Labels := map[string]string{
-		"src":  srcAddr,
-		"dst":  dstAddr,
+		"src":  src,
+		"dst":  dst,
 		"type": l3Type,
 	}
 	l3Packets.With(l3Labels).Inc()
@@ -175,17 +188,16 @@ func packetHandler(ifaceName string, pkt gopacket.Packet, enableLayer4 bool) {
 
 	if enableLayer4 {
 		l4Labels := map[string]string{
-			"src":   srcAddr,
-			"dst":   dstAddr,
+			"src":   src,
+			"dst":   dst,
 			"proto": l4Protocol,
 		}
-		// If the last part of the src/dst is a service, just use the literal service name:
-		if _, ok := services[dstPort]; ok {
-			l4Labels["service"] = dstPort
-		}
-		if _, ok := services[srcPort]; ok {
-			l4Labels["service"] = srcPort
-		}
+		// // If the last part of the src/dst is a service, just use the literal service name:
+		// if _, ok := services[dstPort]; ok {
+		// 	l4Labels["service"] = dstPort
+		// } else if _, ok := services[srcPort]; ok {
+		// 	l4Labels["service"] = srcPort
+		// }
 		// Otherwise, do a lookup of port/proto to the service:
 		srcPortInt, srcPortErr := strconv.Atoi(getDigits(srcPort))
 		dstPortInt, dstPortErr := strconv.Atoi(getDigits(dstPort))
@@ -196,11 +208,33 @@ func packetHandler(ifaceName string, pkt gopacket.Packet, enableLayer4 bool) {
 			l4Labels["service"] = lookupService(srcPortInt, l4Protocol)
 		}
 		if l4Labels["service"] == "" {
-			l4Labels["service"] = ""
+			l4Labels["service"] = "unknown"
 		}
 		l4Throughput.With(l4Labels).Add(float64(l4Len))
 		l4Packets.With(l4Labels).Inc()
 	}
+}
+
+func getIpNets(iface string) ([]*net.IPNet, error) {
+	i, err := net.InterfaceByName(iface)
+	if err != nil {
+		return nil, fmt.Errorf("localAddresses: %w", err)
+	}
+	addrs, err := i.Addrs()
+	if err != nil {
+		return nil, fmt.Errorf("localAddresses: %w", err)
+	}
+	ipNets := []*net.IPNet{}
+	for _, a := range addrs {
+		switch v := a.(type) {
+		case *net.IPNet:
+			ipNets = append(ipNets, v)
+		}
+	}
+	if len(ipNets) > 0 {
+		return ipNets, nil
+	}
+	return nil, fmt.Errorf("localAddresses: interface not found")
 }
 
 func main() {
@@ -215,8 +249,11 @@ func main() {
 		log.Fatalln("Must run as root")
 	}
 
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGHUP, syscall.SIGINT)
+	var err error
+	ipNets, err = getIpNets(*iface)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go listenPacket(*iface, ctx)
@@ -236,7 +273,10 @@ func main() {
 	log.Infoln("Serving metrics under", *metricsPath)
 	go h.ListenAndServe()
 
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGHUP, syscall.SIGINT)
 	<-signalChan
+
 	cancel()
 	h.Shutdown(context.Background())
 }
