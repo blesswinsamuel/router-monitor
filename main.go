@@ -23,19 +23,18 @@ var (
 	listen      = flag.String("listen", "localhost:9154", "listen address")
 	metricsPath = flag.String("metrics_path", "/metrics", "path under which metrics are served")
 
-	iface        = flag.String("interface", "eth0", "network interface to monitor")
-	filter       = flag.String("bpf", "", "BPF filter")
-	enableLayer4 = flag.Bool("l4", false, "Show transport layer flows")
+	iface  = flag.String("interface", "eth0", "network interface to monitor")
+	filter = flag.String("bpf", "", "BPF filter")
 )
 
 var (
-	l3MetricLabels = []string{"src", "dst"}
-	packetsTotal   = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_l3_packets_total", Help: "L3 Packets transferred",
-	}, l3MetricLabels)
+	labelNames   = []string{"src", "dst"}
+	packetsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "ntm_packets_total", Help: "Packets transferred",
+	}, labelNames)
 	bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_l3_bytes_total", Help: "L3 Bytes transferred",
-	}, l3MetricLabels)
+		Name: "ntm_bytes_total", Help: "Bytes transferred",
+	}, labelNames)
 )
 
 func init() {
@@ -71,29 +70,26 @@ func listenPacket(ifaceName string, ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case p := <-ps.Packets():
-			go packetHandler(p, *enableLayer4)
+			go packetHandler(p)
 		}
 	}
 }
 
-func packetHandler(pkt gopacket.Packet, enableLayer4 bool) {
+func packetHandler(pkt gopacket.Packet) {
 	var srcAddr, dstAddr net.IP
 	var payloadLen int
 
-	for _, ly := range pkt.Layers() {
-		layerType := ly.LayerType()
-		switch layerType {
-		case layers.LayerTypeIPv4:
-			l := ly.(*layers.IPv4)
-			srcAddr = l.SrcIP
-			dstAddr = l.DstIP
-			payloadLen = len(l.LayerPayload())
-		}
-	}
-
-	if srcAddr == nil || dstAddr == nil {
+	nl := pkt.NetworkLayer()
+	if nl == nil {
 		return
 	}
+	l, ok := nl.(*layers.IPv4)
+	if !ok {
+		return
+	}
+	srcAddr = l.SrcIP
+	dstAddr = l.DstIP
+	payloadLen = len(l.LayerPayload())
 
 	src := "internet"
 	dst := "internet"
