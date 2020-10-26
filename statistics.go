@@ -23,28 +23,24 @@ func PacketHandler(ifaceName string, pkt gopacket.Packet, enableLayer4 bool) {
 			srcAddr = l.SrcIP.String()
 			dstAddr = l.DstIP.String()
 			l3Len = len(l.LayerPayload())
+		}
+		if !enableLayer4 {
+			continue
+		}
+		switch ly.LayerType() {
 		case layers.LayerTypeTCP:
-			if !enableLayer4 {
-				continue
-			}
 			l := ly.(*layers.TCP)
 			l4Protocol = "tcp"
 			srcPort = l.SrcPort.String()
 			dstPort = l.DstPort.String()
 			l4Len = len(l.LayerPayload())
 		case layers.LayerTypeUDP:
-			if !enableLayer4 {
-				continue
-			}
 			l := ly.(*layers.UDP)
 			l4Protocol = "udp"
 			srcPort = l.SrcPort.String()
 			dstPort = l.DstPort.String()
 			l4Len = len(l.LayerPayload())
 		case layers.LayerTypeICMPv4:
-			if !enableLayer4 {
-				continue
-			}
 			l := ly.(*layers.ICMPv4)
 			l4Protocol = "icmp"
 			l4Len = len(l.LayerPayload())
