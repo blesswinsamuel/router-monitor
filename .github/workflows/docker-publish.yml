@@ -11,7 +11,6 @@ on:
       - v*
 
 env:
-  # TODO: Change variable to your image's name.
   IMAGE_NAME: ${{ github.repository }}
   DOCKER_CLI_EXPERIMENTAL: enabled
 
@@ -44,5 +43,4 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
-          docker buildx create --use --name=cross
-          docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --push --file Dockerfile --tag $IMAGE_ID:$VERSION .
+          docker build -t $IMAGE_ID:$VERSION .
