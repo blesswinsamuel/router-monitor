@@ -19,8 +19,9 @@ jobs:
 
       - name: Build go application
         run: |
-          env GOOS=linux GOARCH=amd64 go build -o netowrk_traffic_exporter . && tar czf netowrk_traffic_exporter-linux-amd64.tar.gz netowrk_traffic_exporter
-          env GOOS=linux GOARCH=arm go build -o netowrk_traffic_exporter . && tar czf netowrk_traffic_exporter-linux-arm.tar.gz netowrk_traffic_exporter
+          docker build -t blesswinsamuel/network_traffic_exporter:latest .
+          docker run --rm --entrypoint cat blesswinsamuel/network_traffic_exporter:latest /network_traffic_exporter > network_traffic_exporter
+          tar czf network_traffic_exporter-linux-arm.tar.gz network_traffic_exporter
 
       - name: Create Release
         id: create_release
@@ -34,23 +35,12 @@ jobs:
           prerelease: false
 
       - name: Upload Release Asset
-        id: upload-release-asset-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./netowrk_traffic_exporter-linux-amd64.tar.gz
-          asset_name: netowrk_traffic_exporter-linux-amd64.tar.gz
-          asset_content_type: application/x-tar
-
-      - name: Upload Release Asset
         id: upload-release-asset-arm
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./netowrk_traffic_exporter-linux-arm.tar.gz
-          asset_name: netowrk_traffic_exporter-linux-arm.tar.gz
+          asset_path: ./network_traffic_exporter-linux-arm.tar.gz
+          asset_name: network_traffic_exporter-linux-arm.tar.gz
           asset_content_type: application/x-tar
