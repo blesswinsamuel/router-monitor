@@ -21,6 +21,7 @@ jobs:
         run: |
           docker build -t blesswinsamuel/network_traffic_exporter:latest .
           docker run --rm --entrypoint cat blesswinsamuel/network_traffic_exporter:latest /network_traffic_exporter > network_traffic_exporter
+          chmod +x network_traffic_exporter
           tar czf network_traffic_exporter-linux-arm.tar.gz network_traffic_exporter
 
       - name: Create Release
