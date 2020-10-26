@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -10,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
-	"strconv"
 	"syscall"
 
 	"github.com/google/gopacket"
@@ -32,71 +29,25 @@ var (
 )
 
 var (
-	l3MetricLabels = []string{"src", "dst", "type"}
-	l3Packets      = prometheus.NewCounterVec(prometheus.CounterOpts{
+	l3MetricLabels = []string{"src", "dst"}
+	packetsTotal   = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "ntm_l3_packets_total", Help: "L3 Packets transferred",
 	}, l3MetricLabels)
-	l3Throughput = prometheus.NewCounterVec(prometheus.CounterOpts{
+	bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "ntm_l3_bytes_total", Help: "L3 Bytes transferred",
 	}, l3MetricLabels)
-
-	l4MetricLabels = []string{"src", "dst", "service", "proto"}
-	l4Packets      = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_l4_packets_total", Help: "L4 Packets transferred",
-	}, l4MetricLabels)
-	l4Throughput = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_l4_bytes_total", Help: "L4 Bytes transferred",
-	}, l4MetricLabels)
 )
 
 func init() {
-	prometheus.MustRegister(l3Packets)
-	prometheus.MustRegister(l3Throughput)
-	prometheus.MustRegister(l4Packets)
-	prometheus.MustRegister(l4Throughput)
+	prometheus.MustRegister(packetsTotal)
+	prometheus.MustRegister(bytesTotal)
 }
 
-var services map[string]bool
-var serviceMap map[int]map[string]string
 var ipNets []*net.IPNet
 var log *logger.Logger
 
 type server struct {
 	promHandler http.Handler
-}
-
-func loadServices() {
-	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
-	file, err := os.Open("/etc/services")
-	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
-	}
-	serviceMap = make(map[int]map[string]string)
-	services = make(map[string]bool)
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
-	for scanner.Scan() {
-		match := findStringSubmatchMap(matcher, scanner.Text())
-		if match == nil {
-			continue
-		}
-		port := toNumeric(match["port"])
-		if _, ok := serviceMap[port]; !ok {
-			serviceMap[port] = map[string]string{}
-		}
-		serviceMap[port][match["proto"]] = match["service"]
-		services[match["service"]] = true
-	}
-}
-
-func lookupService(port int, proto string) string {
-	if _, ok := serviceMap[port]; !ok {
-		return ""
-	}
-	if _, ok := serviceMap[port][proto]; !ok {
-		return ""
-	}
-	return serviceMap[port][proto]
 }
 
 func listenPacket(ifaceName string, ctx context.Context) {
@@ -126,45 +77,21 @@ func listenPacket(ifaceName string, ctx context.Context) {
 }
 
 func packetHandler(pkt gopacket.Packet, enableLayer4 bool) {
-	var l3Type, l4Protocol string
 	var srcAddr, dstAddr net.IP
-	var srcPort, dstPort string
-	var l3Len, l4Len int
+	var payloadLen int
 
 	for _, ly := range pkt.Layers() {
 		layerType := ly.LayerType()
 		switch layerType {
 		case layers.LayerTypeIPv4:
 			l := ly.(*layers.IPv4)
-			l3Type = "ipv4"
 			srcAddr = l.SrcIP
 			dstAddr = l.DstIP
-			l3Len = len(l.LayerPayload())
-		}
-		// if !enableLayer4 {
-		// 	continue
-		// }
-		switch layerType {
-		case layers.LayerTypeTCP:
-			l := ly.(*layers.TCP)
-			l4Protocol = "tcp"
-			srcPort = l.SrcPort.String()
-			dstPort = l.DstPort.String()
-			l4Len = len(l.LayerPayload())
-		case layers.LayerTypeUDP:
-			l := ly.(*layers.UDP)
-			l4Protocol = "udp"
-			srcPort = l.SrcPort.String()
-			dstPort = l.DstPort.String()
-			l4Len = len(l.LayerPayload())
-		case layers.LayerTypeICMPv4:
-			l := ly.(*layers.ICMPv4)
-			l4Protocol = "icmp"
-			l4Len = len(l.LayerPayload())
+			payloadLen = len(l.LayerPayload())
 		}
 	}
 
-	if l3Type == "" || l4Protocol == "" {
+	if srcAddr == nil || dstAddr == nil {
 		return
 	}
 
@@ -178,41 +105,12 @@ func packetHandler(pkt gopacket.Packet, enableLayer4 bool) {
 			dst = dstAddr.String()
 		}
 	}
-	l3Labels := map[string]string{
-		"src":  src,
-		"dst":  dst,
-		"type": l3Type,
+	labels := map[string]string{
+		"src": src,
+		"dst": dst,
 	}
-	l3Packets.With(l3Labels).Inc()
-	l3Throughput.With(l3Labels).Add(float64(l3Len))
-
-	if enableLayer4 {
-		l4Labels := map[string]string{
-			"src":   src,
-			"dst":   dst,
-			"proto": l4Protocol,
-		}
-		// // If the last part of the src/dst is a service, just use the literal service name:
-		// if _, ok := services[dstPort]; ok {
-		// 	l4Labels["service"] = dstPort
-		// } else if _, ok := services[srcPort]; ok {
-		// 	l4Labels["service"] = srcPort
-		// }
-		// Otherwise, do a lookup of port/proto to the service:
-		srcPortInt, srcPortErr := strconv.Atoi(getDigits(srcPort))
-		dstPortInt, dstPortErr := strconv.Atoi(getDigits(dstPort))
-		if l4Labels["service"] == "" && dstPortErr == nil {
-			l4Labels["service"] = lookupService(dstPortInt, l4Protocol)
-		}
-		if l4Labels["service"] == "" && srcPortErr == nil {
-			l4Labels["service"] = lookupService(srcPortInt, l4Protocol)
-		}
-		if l4Labels["service"] == "" {
-			l4Labels["service"] = "unknown"
-		}
-		l4Throughput.With(l4Labels).Add(float64(l4Len))
-		l4Packets.With(l4Labels).Inc()
-	}
+	packetsTotal.With(labels).Inc()
+	bytesTotal.With(labels).Add(float64(payloadLen))
 }
 
 func getIpNets(iface string) ([]*net.IPNet, error) {
@@ -243,7 +141,6 @@ func main() {
 	s := &server{
 		promHandler: promhttp.Handler(),
 	}
-	loadServices()
 
 	if os.Geteuid() != 0 {
 		log.Fatalln("Must run as root")
