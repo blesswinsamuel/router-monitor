@@ -1,0 +1,13 @@
+FROM alpine:3.12
+
+RUN apk add --no-cache build-base
+RUN apk add --no-cache gcc-arm-none-eabi newlib-arm-none-eabi binutils-arm-none-eabi \
+    --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ \
+    --repository http://dl-3.alpinelinux.org/alpine/edge/community/
+
+env PCAPV=1.9.1
+RUN wget http://www.tcpdump.org/release/libpcap-$PCAPV.tar.gz \
+    && tar xvf libpcap-$PCAPV.tar.gz \
+    && cd libpcap-$PCAPV \
+    && CC='arm-none-eabi-gcc --specs=nosys.specs' ./configure --host=arm-linux --with-pcap=linux || true # && make
+RUN cat /libpcap-$PCAPV/config.log

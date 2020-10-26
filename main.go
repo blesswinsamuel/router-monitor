@@ -1,16 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/google/gopacket"
@@ -38,7 +37,7 @@ var (
 		Name: "ntm_l3_bytes_total", Help: "L3 Bytes transferred",
 	}, l3MetricLabels)
 
-	l4MetricLabels = []string{"src", "dst", "src_port", "dst_port", "proto"}
+	l4MetricLabels = []string{"src", "dst", "service", "proto"}
 	l4Packets      = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "ntm_l4_packets_total", Help: "L4 Packets transferred",
 	}, l4MetricLabels)
@@ -74,28 +73,6 @@ func toNumeric(s string) int {
 	return v
 }
 
-func extractDomain(s string) string {
-	if fqdn {
-		return s
-	}
-	parts := strings.Split(s, ".")
-	l := len(parts)
-	allNumeric := true
-	for _, p := range parts {
-		if !isNumeric(p) {
-			allNumeric = false
-		}
-	}
-	if l == 4 && allNumeric {
-		return s // IP address
-	}
-	if l > 2 {
-		return strings.Join(parts[l-2:], ".")
-	} else {
-		return s
-	}
-}
-
 func lookupService(port int, proto string) string {
 	if _, ok := serviceMap[port]; !ok {
 		return ""
@@ -105,66 +82,6 @@ func lookupService(port int, proto string) string {
 	}
 	return serviceMap[port][proto]
 }
-
-var dumpMatcher *regexp.Regexp
-
-func init() {
-	reParam := func(name, pattern string) string {
-		return fmt.Sprintf("(?P<%s>%s)", name, pattern)
-	}
-	pattern := ".*" + strings.Join([]string{
-		"proto " + reParam("proto", "\\w+") + " ",
-		"length " + reParam("length", "\\d+"),
-		"\n\\s*" + reParam("src", "[\\w\\d\\.-]+") + "\\." + reParam("srcp", "[\\w\\d-]+") +
-			" > " +
-			reParam("dst", "[\\w\\d\\.-]+") + "\\." + reParam("dstp", "[\\w\\d-]+"),
-	}, ".*") + ".*"
-	dumpMatcher = regexp.MustCompile(pattern)
-}
-
-// func parsePacket(line string) error {
-// 	match := dumpMatcher.FindStringSubmatch(line)
-// 	if len(match) == 0 {
-// 		log.Warning("[SKIP] " + strings.ReplaceAll(line, "\n", "\\n"))
-// 		return nil
-// 	}
-
-// 	paramsMap := make(map[string]string)
-// 	for i, name := range dumpMatcher.SubexpNames() {
-// 		if i > 0 && i <= len(match) {
-// 			paramsMap[name] = match[i]
-// 		}
-// 	}
-
-// 	labels := map[string]string{
-// 		"src":     extractDomain(paramsMap["src"]),
-// 		"dst":     extractDomain(paramsMap["dst"]),
-// 		"proto":   strings.ToLower(paramsMap["proto"]),
-// 		"service": "",
-// 	}
-// 	// If the last part of the src/dst is a service, just use the literal service name:
-// 	if _, ok := services[paramsMap["dstp"]]; ok {
-// 		labels["service"] = paramsMap["dstp"]
-// 	} else if _, ok := services[paramsMap["srcp"]]; ok {
-// 		labels["service"] = paramsMap["srcp"]
-// 	}
-// 	// Otherwise, do a lookup of port/proto to the service:
-// 	if labels["service"] == "" && isNumeric(paramsMap["dstp"]) {
-// 		labels["service"] = lookupService(
-// 			toNumeric(paramsMap["dstp"]), labels["proto"])
-// 	}
-// 	if labels["service"] == "" && isNumeric(paramsMap["srcp"]) {
-// 		labels["service"] = lookupService(
-// 			toNumeric(paramsMap["srcp"]), labels["proto"])
-// 	}
-// 	if labels["service"] == "" {
-// 		labels["service"] = ""
-// 	}
-
-// 	packets.With(labels).Inc()
-// 	throughput.With(labels).Add(float64(toNumeric(paramsMap["length"])))
-// 	return nil
-// }
 
 func listenPacket(ifaceName string, ctx context.Context) {
 	handle, err := pcap.OpenLive(ifaceName, 65536, true, pcap.BlockForever)
@@ -192,29 +109,29 @@ func listenPacket(ifaceName string, ctx context.Context) {
 	}
 }
 
-// func loadServices() {
-// 	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
-// 	file, err := os.Open("/etc/services")
-// 	if err != nil {
-// 		log.Fatalf("failed opening file: %s", err)
-// 	}
-// 	serviceMap = make(map[int]map[string]string)
-// 	services = make(map[string]bool)
-// 	scanner := bufio.NewScanner(file)
-// 	scanner.Split(bufio.ScanLines)
-// 	for scanner.Scan() {
-// 		match := FindStringSubmatchMap(matcher, scanner.Text())
-// 		if match == nil {
-// 			continue
-// 		}
-// 		port := toNumeric(match["port"])
-// 		if _, ok := serviceMap[port]; !ok {
-// 			serviceMap[port] = map[string]string{}
-// 		}
-// 		serviceMap[port][match["proto"]] = match["service"]
-// 		services[match["service"]] = true
-// 	}
-// }
+func loadServices() {
+	matcher := regexp.MustCompile(`^(?P<service>[\w-]+)\s*(?P<port>\d+)\/(?P<proto>\w+)$`)
+	file, err := os.Open("/etc/services")
+	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+	serviceMap = make(map[int]map[string]string)
+	services = make(map[string]bool)
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		match := FindStringSubmatchMap(matcher, scanner.Text())
+		if match == nil {
+			continue
+		}
+		port := toNumeric(match["port"])
+		if _, ok := serviceMap[port]; !ok {
+			serviceMap[port] = map[string]string{}
+		}
+		serviceMap[port][match["proto"]] = match["service"]
+		services[match["service"]] = true
+	}
+}
 
 func FindStringSubmatchMap(re *regexp.Regexp, str string) map[string]string {
 	match := re.FindStringSubmatch(str)
@@ -236,10 +153,10 @@ func main() {
 	s := &server{
 		promHandler: promhttp.Handler(),
 	}
-	// loadServices()
+	loadServices()
 
 	if os.Geteuid() != 0 {
-		log.Errorln("Must run as root")
+		log.Fatalln("Must run as root")
 	}
 
 	signalChan := make(chan os.Signal, 1)
