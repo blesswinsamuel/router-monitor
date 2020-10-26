@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -10,9 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
-	"time"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -47,7 +44,6 @@ func init() {
 }
 
 var ipNets []*net.IPNet
-var ipHostnameLookup map[string]string
 var log *logger.Logger
 
 type server struct {
@@ -100,15 +96,9 @@ func packetHandler(pkt gopacket.Packet) {
 	for _, n := range ipNets {
 		if n.Contains(srcAddr) {
 			src = srcAddr.String()
-			if hn, ok := ipHostnameLookup[src]; ok {
-				src = hn
-			}
 		}
 		if n.Contains(dstAddr) {
 			dst = dstAddr.String()
-			if hn, ok := ipHostnameLookup[dst]; ok {
-				dst = hn
-			}
 		}
 	}
 	labels := map[string]string{
@@ -141,56 +131,6 @@ func getIpNets(iface string) ([]*net.IPNet, error) {
 	return nil, fmt.Errorf("localAddresses: interface not found")
 }
 
-func loadLeasesFile() error {
-	ipHostnameLookup = make(map[string]string)
-	file, err := os.Open(*dhcpLeasesFile)
-	if err != nil {
-		return fmt.Errorf("ReadFile error: %w", err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.Split(scanner.Text(), " ")
-		if len(line) < 4 {
-			continue
-		}
-		ip := line[2]
-		hostname := line[3]
-		if hostname == "*" {
-			continue
-		}
-		ipHostnameLookup[ip] = hostname
-	}
-
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("scanner error: %w", err)
-	}
-	return nil
-}
-
-func listenLeasesFile(ctx context.Context) {
-	err := loadLeasesFile()
-	if err != nil {
-		log.Fatalf("loadLeasesFile failed: %v", err)
-	}
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				err := loadLeasesFile()
-				if err != nil {
-					log.Errorf("loadLeasesFile failed: %v", err)
-				}
-			}
-		}
-	}()
-}
-
 func main() {
 	log = logger.Init("network_traffice_exporter", true, false, ioutil.Discard)
 	flag.Parse()
@@ -209,7 +149,6 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	listenLeasesFile(ctx)
 	listenPacket(*iface, ctx)
 
 	r := http.NewServeMux()
