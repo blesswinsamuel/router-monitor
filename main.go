@@ -150,6 +150,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	listenPacket(*iface, ctx)
+	continuouslyCheckInternetConnectionIsUp(ctx)
 
 	r := http.NewServeMux()
 	r.HandleFunc(*metricsPath, s.promHandler.ServeHTTP)
