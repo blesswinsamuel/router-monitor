@@ -48,6 +48,8 @@ func IsInternetConnectionUp() {
 	if err != nil {
 		log.Warningf("Internet is down: %v", err)
 		connectionIsUp.Set(0)
+		connectionDuration.Observe(time.Since(startTime).Seconds())
+		return
 	}
 	connectionDuration.Observe(time.Since(startTime).Seconds())
 	connectionIsUp.Set(1)
