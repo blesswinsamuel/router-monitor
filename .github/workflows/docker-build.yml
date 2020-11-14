@@ -41,3 +41,16 @@ jobs:
           echo VERSION=$VERSION
 
           docker build -t $IMAGE_ID:$VERSION .
+
+      - name: Slack Notification
+        uses: homoluctus/slatify@v2.1.2
+        if: always()
+        with:
+          type: ${{ job.status }}
+          job_name: "*Build and push* ${{github.repository}}"
+          mention: "here"
+          mention_if: "failure"
+          channel: "#github"
+          url: ${{ secrets.SLACK_WEBHOOK }}
+          commit: true
+          token: ${{ secrets.GITHUB_TOKEN }}
