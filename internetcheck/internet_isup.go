@@ -1,11 +1,12 @@
-package main
+package internetcheck
 
 import (
-	"context"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -22,23 +23,16 @@ func init() {
 	prometheus.MustRegister(connectionIsUp)
 }
 
-func continuouslyCheckInternetConnectionIsUp(ctx context.Context) {
-	go func() {
-		ticker := time.NewTicker(10 * time.Second)
-		defer ticker.Stop()
-		IsInternetConnectionUp()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				IsInternetConnectionUp()
-			}
-		}
-	}()
+type InternetCheck struct {
+	stopCh chan struct{}
+	wg     sync.WaitGroup
 }
 
-func IsInternetConnectionUp() {
+func NewInternetCheck() *InternetCheck {
+	return &InternetCheck{}
+}
+
+func isInternetConnectionUp() {
 	host := "1.1.1.1"
 	port := "80"
 	timeout := 5 * time.Second
@@ -46,11 +40,34 @@ func IsInternetConnectionUp() {
 	startTime := time.Now()
 	_, err := net.DialTimeout("tcp", host+":"+port, timeout)
 	if err != nil {
-		log.Warningf("Internet is down: %v", err)
+		log.Warn().Msgf("Internet is down: %v", err)
 		connectionIsUp.Set(0)
 		connectionDuration.Observe(time.Since(startTime).Seconds())
 		return
 	}
 	connectionDuration.Observe(time.Since(startTime).Seconds())
 	connectionIsUp.Set(1)
+}
+
+func (ic *InternetCheck) Start() {
+	ic.wg.Add(1)
+	go func() {
+		defer ic.wg.Done()
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+		isInternetConnectionUp()
+		for {
+			select {
+			case <-ic.stopCh:
+				return
+			case <-ticker.C:
+				isInternetConnectionUp()
+			}
+		}
+	}()
+}
+
+func (ic *InternetCheck) Stop() {
+	close(ic.stopCh)
+	ic.wg.Wait()
 }
