@@ -3,174 +3,78 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcap"
-	"github.com/google/logger"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/blesswinsamuel/router-monitor/dnsmasq"
+	"github.com/blesswinsamuel/router-monitor/internetcheck"
+	"github.com/blesswinsamuel/router-monitor/traffic"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog/log"
 )
 
 var (
 	listen      = flag.String("listen", "localhost:9154", "listen address")
 	metricsPath = flag.String("metrics_path", "/metrics", "path under which metrics are served")
-
-	dhcpLeasesFile = flag.String("dhcp-leases-file", "/var/lib/misc/dnsmasq.leases", "dnsmasq DHCP leases file")
-	iface          = flag.String("interface", "eth0", "network interface to monitor")
-	filter         = flag.String("bpf", "", "BPF filter")
 )
-
-var (
-	labelNames   = []string{"src", "dst"}
-	packetsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_packets_total", Help: "Packets transferred",
-	}, labelNames)
-	bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "ntm_bytes_total", Help: "Bytes transferred",
-	}, labelNames)
-)
-
-func init() {
-	prometheus.MustRegister(packetsTotal)
-	prometheus.MustRegister(bytesTotal)
-}
-
-var ipNets []*net.IPNet
-var log *logger.Logger
 
 type server struct {
-	promHandler http.Handler
+	*http.Server
 }
 
-func listenPacket(ifaceName string, ctx context.Context) {
+func NewServer(r http.Handler) *server {
+	return &server{
+		&http.Server{Addr: *listen, Handler: r},
+	}
+}
+
+func (s *server) Serve() {
 	go func() {
-		handle, err := pcap.OpenLive(ifaceName, 65536, true, pcap.BlockForever)
-		if err != nil {
-			log.Fatalf("Failed to OpenLive by pcap, err: %s", err)
-		}
-
-		err = handle.SetBPFFilter(*filter)
-		if err != nil {
-			log.Fatalf("Failed to set BPF filter, err: %s", err)
-		}
-		defer handle.Close()
-
-		ps := gopacket.NewPacketSource(handle, handle.LinkType())
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case p := <-ps.Packets():
-				go packetHandler(p)
-			}
-		}
+		log.Info().Msgf("Listening on %s", *listen)
+		log.Info().Msgf("Serving metrics under %s", *metricsPath)
+		s.ListenAndServe()
 	}()
 }
 
-func packetHandler(pkt gopacket.Packet) {
-	var srcAddr, dstAddr net.IP
-	var payloadLen int
-
-	nl := pkt.NetworkLayer()
-	if nl == nil {
-		return
-	}
-	l, ok := nl.(*layers.IPv4)
-	if !ok {
-		return
-	}
-	srcAddr = l.SrcIP
-	dstAddr = l.DstIP
-	payloadLen = len(l.LayerPayload())
-
-	src := "internet"
-	dst := "internet"
-	for _, n := range ipNets {
-		if n.Contains(srcAddr) {
-			src = srcAddr.String()
-		}
-		if n.Contains(dstAddr) {
-			dst = dstAddr.String()
-		}
-	}
-	labels := map[string]string{
-		"src": src,
-		"dst": dst,
-	}
-	packetsTotal.With(labels).Inc()
-	bytesTotal.With(labels).Add(float64(payloadLen))
-}
-
-func getIpNets(iface string) ([]*net.IPNet, error) {
-	i, err := net.InterfaceByName(iface)
-	if err != nil {
-		return nil, fmt.Errorf("localAddresses: %w", err)
-	}
-	addrs, err := i.Addrs()
-	if err != nil {
-		return nil, fmt.Errorf("localAddresses: %w", err)
-	}
-	ipNets := []*net.IPNet{}
-	for _, a := range addrs {
-		switch v := a.(type) {
-		case *net.IPNet:
-			ipNets = append(ipNets, v)
-		}
-	}
-	if len(ipNets) > 0 {
-		return ipNets, nil
-	}
-	return nil, fmt.Errorf("localAddresses: interface not found")
+func (s *server) Stop() {
+	s.Shutdown(context.Background())
 }
 
 func main() {
-	log = logger.Init("network_traffice_exporter", true, false, ioutil.Discard)
 	flag.Parse()
-	s := &server{
-		promHandler: promhttp.Handler(),
-	}
-
 	if os.Geteuid() != 0 {
-		log.Fatalln("Must run as root")
+		log.Fatal().Msg("Must run as root")
 	}
 
-	var err error
-	ipNets, err = getIpNets(*iface)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	de := dnsmasq.NewDnsmasqExporter()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	listenPacket(*iface, ctx)
-	continuouslyCheckInternetConnectionIsUp(ctx)
+	ic := internetcheck.NewInternetCheck()
+	ic.Start()
+	defer ic.Stop()
+
+	nte := traffic.NewNetworkTrafficExporter()
+	nte.Start()
+	defer nte.Stop()
 
 	r := http.NewServeMux()
-	r.HandleFunc(*metricsPath, s.promHandler.ServeHTTP)
+	r.Handle(*metricsPath, promhttp.Handler())
+	r.Handle(*metricsPath, de)
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
-			<head><title>Network Traffic Exporter</title></head>
+			<head><title>Router Monitor</title></head>
 			<body>
-			<h1>Network Traffic Exporter</h1>
+			<h1>Router Monitor</h1>
 			<p><a href="` + *metricsPath + `">Metrics</a></p>
 			</body></html>`))
 	})
-	h := &http.Server{Addr: *listen, Handler: r}
-	log.Infoln("Listening on", *listen)
-	log.Infoln("Serving metrics under", *metricsPath)
-	go h.ListenAndServe()
+	s := NewServer(r)
+
+	s.Serve()
+	defer s.Close()
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGHUP, syscall.SIGINT)
 	<-signalChan
-
-	cancel()
-	h.Shutdown(context.Background())
 }

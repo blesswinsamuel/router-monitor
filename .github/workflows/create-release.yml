@@ -19,10 +19,10 @@ jobs:
 
       - name: Build go application
         run: |
-          docker build -t blesswinsamuel/network_traffic_exporter:latest .
-          docker run --rm --entrypoint cat blesswinsamuel/network_traffic_exporter:latest /network_traffic_exporter > network_traffic_exporter
-          chmod +x network_traffic_exporter
-          tar czf network_traffic_exporter-linux-arm.tar.gz network_traffic_exporter
+          docker build -t blesswinsamuel/router-monitor:latest .
+          docker run --rm --entrypoint cat blesswinsamuel/router-monitor:latest /router-monitor > router-monitor
+          chmod +x router-monitor
+          tar czf router-monitor-linux-arm.tar.gz router-monitor
 
       - name: Create Release
         id: create_release
@@ -42,8 +42,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./network_traffic_exporter-linux-arm.tar.gz
-          asset_name: network_traffic_exporter-linux-arm.tar.gz
+          asset_path: ./router-monitor-linux-arm.tar.gz
+          asset_name: router-monitor-linux-arm.tar.gz
           asset_content_type: application/x-tar
 
       - name: Slack Notification

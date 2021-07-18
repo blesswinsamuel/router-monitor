@@ -18,4 +18,4 @@ RUN env CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm CGO_CFLAGS=
 
 FROM alpine
 
-COPY --from=builder /app/network_traffic_exporter /network_traffic_exporter
+COPY --from=builder /app/router-monitor /router-monitor
