@@ -2,6 +2,7 @@
 
 docker build -t blesswinsamuel/router-monitor:latest .
 docker run --rm --entrypoint cat blesswinsamuel/router-monitor:latest /router-monitor > /tmp/router-monitor
+chmod +x /tmp/router-monitor
 
 ssh -p 2244 pi@router.home.local "sudo killall -9 /tmp/router-monitor || true"
 scp -P 2244 /tmp/router-monitor pi@router.home.local:/tmp/router-monitor

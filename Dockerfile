@@ -13,7 +13,7 @@ RUN wget http://www.tcpdump.org/release/libpcap-$PCAPV.tar.gz \
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-COPY internal ./
+COPY internal ./internal
 COPY main.go ./
 RUN env CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm CGO_CFLAGS="-I/libpcap/libpcap-$PCAPV" CGO_LDFLAGS="-L/libpcap/libpcap-$PCAPV" go build .
 
