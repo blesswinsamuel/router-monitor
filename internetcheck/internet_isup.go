@@ -29,7 +29,9 @@ type InternetCheck struct {
 }
 
 func NewInternetCheck() *InternetCheck {
-	return &InternetCheck{}
+	return &InternetCheck{
+		stopCh: make(chan struct{}),
+	}
 }
 
 func isInternetConnectionUp() {

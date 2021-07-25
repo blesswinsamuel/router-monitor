@@ -61,7 +61,6 @@ func TestDnsmasqExporter(t *testing.T) {
 	}
 
 	s := &DnsmasqExporter{
-		promHandler: promhttp.Handler(),
 		dnsClient: &dns.Client{
 			SingleInflight: true,
 		},
@@ -124,7 +123,7 @@ func TestDnsmasqExporter(t *testing.T) {
 
 func fetchMetrics(t *testing.T, s *DnsmasqExporter) map[string]string {
 	rec := httptest.NewRecorder()
-	s.ServeHTTP(rec, httptest.NewRequest("GET", "/metrics", nil))
+	s.Handler(promhttp.Handler())(rec, httptest.NewRequest("GET", "/metrics", nil))
 	resp := rec.Result()
 	if got, want := resp.StatusCode, http.StatusOK; got != want {
 		b, _ := ioutil.ReadAll(resp.Body)
