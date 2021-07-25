@@ -41,12 +41,14 @@ type NetworkTrafficExporter struct {
 }
 
 func NewNetworkTrafficExporter() *NetworkTrafficExporter {
-	return &NetworkTrafficExporter{}
+	return &NetworkTrafficExporter{
+		stopCh: make(chan struct{}),
+	}
 }
 
 func packetHandler(pkt gopacket.Packet) {
 	var srcAddr, dstAddr net.IP
-	var payloadLen int
+	var payloadLen uint16
 
 	nl := pkt.NetworkLayer()
 	if nl == nil {
@@ -58,7 +60,7 @@ func packetHandler(pkt gopacket.Packet) {
 	}
 	srcAddr = l.SrcIP
 	dstAddr = l.DstIP
-	payloadLen = len(l.LayerPayload())
+	payloadLen = l.Length
 
 	src := "internet"
 	dst := "internet"
@@ -70,12 +72,8 @@ func packetHandler(pkt gopacket.Packet) {
 			dst = dstAddr.String()
 		}
 	}
-	labels := map[string]string{
-		"src": src,
-		"dst": dst,
-	}
-	packetsTotal.With(labels).Inc()
-	bytesTotal.With(labels).Add(float64(payloadLen))
+	packetsTotal.WithLabelValues(src, dst).Inc()
+	bytesTotal.WithLabelValues(src, dst).Add(float64(payloadLen))
 }
 
 func getIpNets(iface string) ([]*net.IPNet, error) {

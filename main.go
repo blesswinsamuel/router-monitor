@@ -59,8 +59,7 @@ func main() {
 	defer nte.Stop()
 
 	r := http.NewServeMux()
-	r.Handle(*metricsPath, promhttp.Handler())
-	r.Handle(*metricsPath, de)
+	r.HandleFunc(*metricsPath, de.Handler(promhttp.Handler()))
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`<html>
 			<head><title>Router Monitor</title></head>

@@ -28,13 +28,12 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
+	"github.com/rs/zerolog/log"
 )
 
 var (
-	leasesPath  = flag.String("leases_path", "/var/lib/misc/dnsmasq.leases", "path to the dnsmasq leases file")
-	dnsmasqAddr = flag.String("dnsmasq", "localhost:53", "dnsmasq host:port address")
+	leasesPath  = flag.String("leases-path", "/var/lib/misc/dnsmasq.leases", "path to the dnsmasq leases file")
+	dnsmasqAddr = flag.String("dnsmasq-addr", "localhost:53", "dnsmasq host:port address")
 )
 
 var (
@@ -108,7 +107,6 @@ func init() {
 //     dig +short chaos txt cachesize.bind
 
 type DnsmasqExporter struct {
-	promHandler http.Handler
 	dnsClient   *dns.Client
 	dnsmasqAddr string
 	leasesPath  string
@@ -116,12 +114,14 @@ type DnsmasqExporter struct {
 
 func NewDnsmasqExporter() *DnsmasqExporter {
 	de := &DnsmasqExporter{
-		promHandler: promhttp.Handler(),
 		dnsClient: &dns.Client{
 			SingleInflight: true,
 		},
 		dnsmasqAddr: *dnsmasqAddr,
 		leasesPath:  *leasesPath,
+	}
+	if _, err := os.Stat(de.leasesPath); os.IsNotExist(err) {
+		log.Panic().Err(err).Msgf("could not open leases file")
 	}
 	return de
 }
@@ -134,99 +134,101 @@ func question(name string) dns.Question {
 	}
 }
 
-func (s *DnsmasqExporter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var eg errgroup.Group
+func (s *DnsmasqExporter) Handler(handler http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var eg errgroup.Group
 
-	eg.Go(func() error {
-		msg := &dns.Msg{
-			MsgHdr: dns.MsgHdr{
-				Id:               dns.Id(),
-				RecursionDesired: true,
-			},
-			Question: []dns.Question{
-				question("cachesize.bind."),
-				question("insertions.bind."),
-				question("evictions.bind."),
-				question("misses.bind."),
-				question("hits.bind."),
-				question("auth.bind."),
-				question("servers.bind."),
-			},
-		}
-		in, _, err := s.dnsClient.Exchange(msg, s.dnsmasqAddr)
-		if err != nil {
-			return err
-		}
-		for _, a := range in.Answer {
-			txt, ok := a.(*dns.TXT)
-			if !ok {
-				continue
+		eg.Go(func() error {
+			msg := &dns.Msg{
+				MsgHdr: dns.MsgHdr{
+					Id:               dns.Id(),
+					RecursionDesired: true,
+				},
+				Question: []dns.Question{
+					question("cachesize.bind."),
+					question("insertions.bind."),
+					question("evictions.bind."),
+					question("misses.bind."),
+					question("hits.bind."),
+					question("auth.bind."),
+					question("servers.bind."),
+				},
 			}
-			switch txt.Hdr.Name {
-			case "servers.bind.":
-				for _, str := range txt.Txt {
-					arr := strings.Fields(str)
-					if got, want := len(arr), 3; got != want {
-						return fmt.Errorf("stats DNS record servers.bind.: unexpected number of argument in record: got %d, want %d", got, want)
-					}
-					queries, err := strconv.ParseFloat(arr[1], 64)
-					if err != nil {
-						return err
-					}
-					failedQueries, err := strconv.ParseFloat(arr[2], 64)
-					if err != nil {
-						return err
-					}
-					serversMetrics["queries"].WithLabelValues(arr[0]).Set(queries)
-					serversMetrics["queries_failed"].WithLabelValues(arr[0]).Set(failedQueries)
-				}
-			default:
-				g, ok := floatMetrics[txt.Hdr.Name]
+			in, _, err := s.dnsClient.Exchange(msg, s.dnsmasqAddr)
+			if err != nil {
+				return err
+			}
+			for _, a := range in.Answer {
+				txt, ok := a.(*dns.TXT)
 				if !ok {
-					continue // ignore unexpected answer from dnsmasq
+					continue
 				}
-				if got, want := len(txt.Txt), 1; got != want {
-					return fmt.Errorf("stats DNS record %q: unexpected number of replies: got %d, want %d", txt.Hdr.Name, got, want)
+				switch txt.Hdr.Name {
+				case "servers.bind.":
+					for _, str := range txt.Txt {
+						arr := strings.Fields(str)
+						if got, want := len(arr), 3; got != want {
+							return fmt.Errorf("stats DNS record servers.bind.: unexpected number of argument in record: got %d, want %d", got, want)
+						}
+						queries, err := strconv.ParseFloat(arr[1], 64)
+						if err != nil {
+							return err
+						}
+						failedQueries, err := strconv.ParseFloat(arr[2], 64)
+						if err != nil {
+							return err
+						}
+						serversMetrics["queries"].WithLabelValues(arr[0]).Set(queries)
+						serversMetrics["queries_failed"].WithLabelValues(arr[0]).Set(failedQueries)
+					}
+				default:
+					g, ok := floatMetrics[txt.Hdr.Name]
+					if !ok {
+						continue // ignore unexpected answer from dnsmasq
+					}
+					if got, want := len(txt.Txt), 1; got != want {
+						return fmt.Errorf("stats DNS record %q: unexpected number of replies: got %d, want %d", txt.Hdr.Name, got, want)
+					}
+					f, err := strconv.ParseFloat(txt.Txt[0], 64)
+					if err != nil {
+						return err
+					}
+					g.Set(f)
 				}
-				f, err := strconv.ParseFloat(txt.Txt[0], 64)
-				if err != nil {
-					return err
-				}
-				g.Set(f)
 			}
-		}
-		return nil
-	})
+			return nil
+		})
 
-	eg.Go(func() error {
-		f, err := os.Open(s.leasesPath)
-		if err != nil {
-			log.Warnln("could not open leases file:", err)
-			return err
-		}
-		defer f.Close()
-		scanner := bufio.NewScanner(f)
-		var lines float64
-		leaseInfo.Reset()
-		for scanner.Scan() {
-			arr := strings.Fields(scanner.Text())
-			if got, want := len(arr), 4; got < want {
-				return fmt.Errorf("stats DHCP lease record: unexpected number of argument in record: got %d, want at least %d", got, want)
+		eg.Go(func() error {
+			f, err := os.Open(s.leasesPath)
+			if err != nil {
+				log.Warn().Msgf("could not open leases file:", err)
+				return err
 			}
-			leaseInfo.WithLabelValues(arr[0], arr[1], arr[2], arr[3]).Set(1)
-			lines++
-		}
-		if err := scanner.Err(); err != nil {
-			return err
-		}
-		leases.Set(lines)
-		return nil
-	})
+			defer f.Close()
+			scanner := bufio.NewScanner(f)
+			var lines float64
+			leaseInfo.Reset()
+			for scanner.Scan() {
+				arr := strings.Fields(scanner.Text())
+				if got, want := len(arr), 4; got < want {
+					return fmt.Errorf("stats DHCP lease record: unexpected number of argument in record: got %d, want at least %d", got, want)
+				}
+				leaseInfo.WithLabelValues(arr[0], arr[1], arr[2], arr[3]).Set(1)
+				lines++
+			}
+			if err := scanner.Err(); err != nil {
+				return err
+			}
+			leases.Set(lines)
+			return nil
+		})
 
-	if err := eg.Wait(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		if err := eg.Wait(); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		handler.ServeHTTP(w, r)
 	}
-
-	s.promHandler.ServeHTTP(w, r)
 }
