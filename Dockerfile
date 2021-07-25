@@ -2,7 +2,7 @@ FROM golang:buster AS builder
 
 RUN apt-get update && apt-get install -y gcc-arm-linux-gnueabi byacc flex wget make
 
-ENV PCAPV=1.9.1
+ENV PCAPV=1.10.1
 WORKDIR /libpcap
 RUN wget http://www.tcpdump.org/release/libpcap-$PCAPV.tar.gz \
     && tar xvf libpcap-$PCAPV.tar.gz \
