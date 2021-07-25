@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/blesswinsamuel/router-monitor/dnsmasq"
-	"github.com/blesswinsamuel/router-monitor/internetcheck"
-	"github.com/blesswinsamuel/router-monitor/traffic"
+	"github.com/blesswinsamuel/router-monitor/internal/dnsmasq"
+	"github.com/blesswinsamuel/router-monitor/internal/internetcheck"
+	"github.com/blesswinsamuel/router-monitor/internal/traffic"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 )
