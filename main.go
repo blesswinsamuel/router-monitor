@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"net/http"
 	"os"
@@ -34,12 +35,20 @@ func (s *server) Serve() {
 	go func() {
 		log.Info().Msgf("Listening on %s", *listen)
 		log.Info().Msgf("Serving metrics under %s", *metricsPath)
-		s.ListenAndServe()
+		if err := s.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return
+			}
+			log.Error().Err(err).Msg("ListenAndServe failed")
+			return
+		}
 	}()
 }
 
 func (s *server) Stop() {
+	log.Info().Msg("Shutting down server...")
 	s.Shutdown(context.Background())
+	log.Info().Msg("Server shut down")
 }
 
 func main() {
@@ -71,7 +80,7 @@ func main() {
 	s := NewServer(r)
 
 	s.Serve()
-	defer s.Close()
+	defer s.Stop()
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGHUP, syscall.SIGINT)
