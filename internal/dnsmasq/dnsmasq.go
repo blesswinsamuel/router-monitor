@@ -84,7 +84,7 @@ var (
 	leaseInfo = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "dnsmasq_lease_info",
 		Help: "DHCP leases handed out",
-	}, []string{"expiry", "mac", "ip", "devicename"})
+	}, []string{"mac", "ip", "devicename"})
 )
 
 func init() {
@@ -214,7 +214,11 @@ func (s *DnsmasqExporter) Handler(handler http.Handler) http.HandlerFunc {
 				if got, want := len(arr), 4; got < want {
 					return fmt.Errorf("stats DHCP lease record: unexpected number of argument in record: got %d, want at least %d", got, want)
 				}
-				leaseInfo.WithLabelValues(arr[0], arr[1], arr[2], arr[3]).Set(1)
+				expiry, err := strconv.Atoi(arr[0])
+				if err != nil {
+					log.Warn().Err(err).Msg("Failed to parse expiry field from DHCP leases file")
+				}
+				leaseInfo.WithLabelValues(arr[1], arr[2], arr[3]).Set(float64(expiry))
 				lines++
 			}
 			if err := scanner.Err(); err != nil {
