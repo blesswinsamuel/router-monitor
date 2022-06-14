@@ -20,7 +20,7 @@ func Benchmark_packetHandler(b *testing.B) {
 	for _, tt := range tests {
 		b.Run(tt.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				packetHandler(tt.args.pkt)
+				packetHandler(nil, tt.args.pkt)
 			}
 		})
 	}
