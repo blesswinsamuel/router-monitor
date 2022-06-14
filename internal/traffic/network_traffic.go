@@ -33,8 +33,6 @@ func init() {
 	prometheus.MustRegister(bytesTotal)
 }
 
-var ipNets []*net.IPNet
-
 type NetworkTrafficExporter struct {
 	stopCh chan struct{}
 	wg     sync.WaitGroup
@@ -46,7 +44,7 @@ func NewNetworkTrafficExporter() *NetworkTrafficExporter {
 	}
 }
 
-func packetHandler(pkt gopacket.Packet) {
+func packetHandler(ipNets []*net.IPNet, pkt gopacket.Packet) {
 	var srcAddr, dstAddr net.IP
 	var payloadLen uint16
 
@@ -100,9 +98,13 @@ func getIpNets(iface string) ([]*net.IPNet, error) {
 
 func (nte *NetworkTrafficExporter) Start() {
 	var err error
-	ipNets, err = getIpNets(*iface)
+	ipNets, err := getIpNets(*iface)
 	if err != nil {
 		log.Fatal().Err(err).Send()
+	}
+
+	for _, ipnet := range ipNets {
+		log.Info().Str("ip", ipnet.String()).Msg("IP net")
 	}
 
 	nte.wg.Add(1)
@@ -125,7 +127,7 @@ func (nte *NetworkTrafficExporter) Start() {
 			case <-nte.stopCh:
 				return
 			case p := <-ps.Packets():
-				go packetHandler(p)
+				go packetHandler(ipNets, p)
 			}
 		}
 	}()
