@@ -36,7 +36,7 @@ func NewInternetCheck() *InternetCheck {
 
 func isInternetConnectionUp() {
 	host := "1.1.1.1"
-	port := "80"
+	port := "443"
 	timeout := 5 * time.Second
 
 	startTime := time.Now()
