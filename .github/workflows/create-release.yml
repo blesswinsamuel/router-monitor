@@ -46,15 +46,7 @@ jobs:
           asset_name: router-monitor-linux-arm.tar.gz
           asset_content_type: application/x-tar
 
-      - name: Slack Notification
-        uses: homoluctus/slatify@v2.1.2
-        if: always()
+      - uses: blesswinsamuel/github-actions/notify@main
         with:
-          type: ${{ job.status }}
-          job_name: "*Release* ${{github.repository}}"
-          mention: "here"
-          mention_if: "failure"
-          channel: "#github"
-          url: ${{ secrets.SLACK_WEBHOOK }}
-          commit: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
