@@ -1,25 +1,20 @@
-FROM golang:buster AS builder
+FROM golang:bullseye AS builder
 
-RUN apt-get update && apt-get install -y gcc-arm-linux-gnueabi byacc flex wget make
-
-ENV PCAPV=1.10.1
-WORKDIR /libpcap
-RUN wget http://www.tcpdump.org/release/libpcap-$PCAPV.tar.gz \
-    && tar xvf libpcap-$PCAPV.tar.gz \
-    && cd libpcap-$PCAPV \
-    && CC='arm-linux-gnueabi-gcc' ./configure --host=arm-linux --with-pcap=linux \
-    && make
+RUN apt-get update && apt-get install -y libpcap-dev && apt-get clean
 
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY internal ./internal
 COPY main.go ./
-RUN env CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm CGO_CFLAGS="-I/libpcap/libpcap-$PCAPV" CGO_LDFLAGS="-L/libpcap/libpcap-$PCAPV" go build .
+RUN go build .
 
-FROM alpine
+# FROM alpine:3.17
+# RUN apk add libpcap-dev
 
-RUN apk add libpcap
+FROM debian:bullseye-slim
+
+RUN apt-get update && apt-get install -y libpcap-dev && apt-get clean
 
 COPY --from=builder /app/router-monitor /router-monitor
 
