@@ -19,4 +19,8 @@ RUN env CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm CGO_CFLAGS=
 
 FROM alpine
 
+RUN apk add libpcap
+
 COPY --from=builder /app/router-monitor /router-monitor
+
+ENTRYPOINT [ "/router-monitor" ]
