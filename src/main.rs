@@ -1,5 +1,8 @@
+use axum::extract::State;
+use axum::{routing, Router};
 use clap::Parser;
 
+use dnsmasq::DnsMasq;
 use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
 
@@ -7,10 +10,9 @@ use tokio::net::TcpStream as TokioTcpStream;
 use trust_dns_client::client::AsyncClient;
 use trust_dns_client::proto::iocompat::AsyncIoTokioAsStd;
 use trust_dns_client::tcp::TcpClientStream;
-use warp::Filter;
 
 use std::net::SocketAddr;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::thread;
 
 mod dnsmasq;
@@ -74,11 +76,11 @@ async fn main() {
     let args = Args::parse();
     println!("{:?}", args);
 
-    let registry = Registry::default();
-    let registry = Arc::new(RwLock::new(registry));
+    let mut registry = Registry::default();
+    // let registry = Arc::new(RwLock::new(registry));
 
     let packet_monitor = packet_monitor::PacketMonitor::new();
-    packet_monitor.register(&mut registry.write().unwrap());
+    packet_monitor.register(&mut registry);
     {
         let interface = args.interface.clone();
         // let bpf = args.bpf.clone();
@@ -88,13 +90,10 @@ async fn main() {
     }
 
     let internet_check = internet_check::InternetCheck::new();
-    internet_check.register(&mut registry.write().unwrap());
+    internet_check.register(&mut registry);
     thread::spawn(move || {
         internet_check.start();
     });
-
-    let dnsmasq = dnsmasq::DnsMasq::new();
-    dnsmasq.register(&mut registry.write().unwrap());
 
     let address = args.dnsmasq_addr.parse().unwrap();
     let (stream, sender) = TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(address);
@@ -102,28 +101,46 @@ async fn main() {
     let (client, bg) = client.await.expect("connection failed");
     tokio::spawn(bg);
 
+    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path, client);
+    dnsmasq.register(&mut registry);
+
+    let server_state = Arc::new(ServerState::new(registry, dnsmasq));
     {
-        let registry = registry.clone();
+        let listen_addr = args.bind_addr.clone();
+        let app = Router::new()
+            .route("/", routing::get(Server::root))
+            .route("/metrics", routing::get(Server::metrics).with_state(server_state.clone()));
 
-        let p1 = warp::path!("hello" / String).map(|name| format!("Hello, {}!", name));
-        let p2 = warp::path!("metrics").then(move || {
-            let registry = registry.clone();
-            let mut client = client.clone();
-            let leases_path = args.leases_path.clone();
-            let dnsmasq = dnsmasq.clone();
+        tracing::debug!("listening on {}", listen_addr);
+        axum::Server::bind(&listen_addr).serve(app.into_make_service()).await.unwrap();
+    }
+}
 
-            async move {
-                dnsmasq.update_lease_metrics(&leases_path).await;
-                dnsmasq.update_dns_metrics(&mut client).await;
+struct ServerState {
+    registry: Registry,
+    dnsmasq: DnsMasq,
+}
 
-                let mut buffer = String::new();
-                encode(&mut buffer, &registry.as_ref().read().unwrap()).unwrap();
+impl ServerState {
+    pub fn new(registry: Registry, dnsmasq: DnsMasq) -> Self {
+        Self { registry, dnsmasq }
+    }
+}
 
-                buffer
-            }
-        });
-        let hello = p1.or(p2);
+struct Server {}
 
-        warp::serve(hello).run(args.bind_addr).await;
+impl Server {
+    async fn root() -> String {
+        "Hello, World!".to_string()
+    }
+
+    async fn metrics(State(server): State<Arc<ServerState>>) -> String {
+        server.dnsmasq.update_lease_metrics().await;
+        server.dnsmasq.update_dns_metrics().await;
+
+        let mut buffer = String::new();
+        encode(&mut buffer, &server.registry).unwrap();
+
+        buffer
     }
 }
