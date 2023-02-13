@@ -1,0 +1,17 @@
+[package]
+name = "router-monitor"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pnet = "0.33.0"
+clap = { version = "4.1.4", features = [ "derive" ] }
+tokio = { version = "1", features = ["full"] }
+warp = "0.3"
+prometheus-client = "0.19.0"
+trust-dns-client = "0.22.0"
+rand = "0.8.5"
+futures = "0.3.26"
+crossbeam = "0.8.2"
