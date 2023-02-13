@@ -43,7 +43,7 @@ impl InternetCheck {
         let start_time = Instant::now();
         match TcpStream::connect_timeout(&"1.1.1.1:443".parse::<SocketAddr>().unwrap(), Duration::from_secs(5)) {
             Ok(_) => {
-                println!("Connected to the server!");
+                // println!("Connected to the server!");
                 self.connection_is_up.set(1);
                 self.connection_duration.observe((Instant::now() - start_time).as_secs_f64());
             }
