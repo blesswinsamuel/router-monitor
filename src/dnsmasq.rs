@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{
+    str::FromStr,
+    sync::{Arc, Mutex},
+};
 
 use futures::StreamExt;
 use prometheus_client::{
@@ -75,19 +78,22 @@ impl DnsMasqRegistry {
 #[derive(Clone)]
 pub struct DnsMasq {
     registry: DnsMasqRegistry,
+
+    leases_path: String,
+    client: Arc<Mutex<AsyncClient>>,
 }
 
 impl DnsMasq {
-    pub fn new() -> Self {
-        Self { registry: DnsMasqRegistry::default() }
+    pub fn new(leases_path: String, client: AsyncClient) -> Self {
+        Self { registry: DnsMasqRegistry::default(), leases_path, client: Arc::new(Mutex::new(client)) }
     }
 
     pub fn register(&self, registry: &mut Registry) {
         self.registry.register(registry);
     }
 
-    pub async fn update_lease_metrics(&self, leases_path: &str) {
-        let f = File::open(&leases_path).await.unwrap();
+    pub async fn update_lease_metrics(&self) {
+        let f = File::open(&self.leases_path).await.unwrap();
         let mut scanner = BufReader::new(f).lines();
         let mut lines = 0;
         // for line in scanner {
@@ -106,7 +112,7 @@ impl DnsMasq {
         self.registry.dnsmasq_leases.set(lines);
     }
 
-    pub async fn update_dns_metrics(&self, client: &mut AsyncClient) {
+    pub async fn update_dns_metrics(&self) {
         let mut msg = Message::new();
         let question = |name| {
             let mut q = Query::new();
@@ -128,7 +134,7 @@ impl DnsMasq {
             question("auth.bind."),
             question("servers.bind."),
         ]);
-        let mut results = client.send(DnsRequest::new(msg, DnsRequestOptions::default()));
+        let mut results = self.client.lock().unwrap().send(DnsRequest::new(msg, DnsRequestOptions::default()));
         let result = results.next().await;
         // while let Some(result) = results.next().await {
         let response = match result.unwrap() {
