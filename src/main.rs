@@ -6,11 +6,6 @@ use dnsmasq::DnsMasq;
 use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
 
-use tokio::net::TcpStream as TokioTcpStream;
-use trust_dns_client::client::AsyncClient;
-use trust_dns_client::proto::iocompat::AsyncIoTokioAsStd;
-use trust_dns_client::tcp::TcpClientStream;
-
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::thread;
@@ -95,13 +90,7 @@ async fn main() {
         internet_check.start();
     });
 
-    let address = args.dnsmasq_addr.parse().unwrap();
-    let (stream, sender) = TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(address);
-    let client = AsyncClient::new(stream, sender, None);
-    let (client, bg) = client.await.expect("connection failed");
-    tokio::spawn(bg);
-
-    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path, client);
+    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path, args.dnsmasq_addr);
     dnsmasq.register(&mut registry);
 
     let server_state = Arc::new(ServerState::new(registry, dnsmasq));

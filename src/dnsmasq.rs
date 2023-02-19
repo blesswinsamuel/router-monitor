@@ -1,7 +1,4 @@
-use std::{
-    str::FromStr,
-    sync::{Arc, Mutex},
-};
+use std::str::FromStr;
 
 use futures::StreamExt;
 use prometheus_client::{
@@ -9,12 +6,15 @@ use prometheus_client::{
     metrics::{family::Family, gauge::Gauge},
     registry::Registry,
 };
+use tokio::net::TcpStream as TokioTcpStream;
 use tokio::{
     fs::File,
     io::{AsyncBufReadExt, BufReader},
 };
+use trust_dns_client::client::AsyncClient;
+use trust_dns_client::proto::iocompat::AsyncIoTokioAsStd;
+use trust_dns_client::tcp::TcpClientStream;
 use trust_dns_client::{
-    client::AsyncClient,
     op::{Message, MessageType, OpCode, Query},
     proto::{
         xfer::{DnsRequest, DnsRequestOptions},
@@ -80,12 +80,12 @@ pub struct DnsMasq {
     registry: DnsMasqRegistry,
 
     leases_path: String,
-    client: Arc<Mutex<AsyncClient>>,
+    dnsmasq_addr: String,
 }
 
 impl DnsMasq {
-    pub fn new(leases_path: String, client: AsyncClient) -> Self {
-        Self { registry: DnsMasqRegistry::default(), leases_path, client: Arc::new(Mutex::new(client)) }
+    pub fn new(leases_path: String, dnsmasq_addr: String) -> Self {
+        Self { registry: DnsMasqRegistry::default(), leases_path, dnsmasq_addr }
     }
 
     pub fn register(&self, registry: &mut Registry) {
@@ -113,6 +113,12 @@ impl DnsMasq {
     }
 
     pub async fn update_dns_metrics(&self) {
+        let address = self.dnsmasq_addr.parse().unwrap();
+        let (stream, sender) = TcpClientStream::<AsyncIoTokioAsStd<TokioTcpStream>>::new(address);
+        let client = AsyncClient::new(stream, sender, None);
+        let (mut client, bg) = client.await.expect("connection failed");
+        tokio::spawn(bg);
+
         let mut msg = Message::new();
         let question = |name| {
             let mut q = Query::new();
@@ -134,7 +140,7 @@ impl DnsMasq {
             question("auth.bind."),
             question("servers.bind."),
         ]);
-        let results = self.client.lock().unwrap().send(DnsRequest::new(msg, DnsRequestOptions::default()));
+        let results = client.send(DnsRequest::new(msg, DnsRequestOptions::default()));
         let result = results.take(1).next().await;
         // while let Some(result) = results.next().await {
         let response = match result.unwrap() {
