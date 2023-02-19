@@ -1,4 +1,6 @@
 use axum::extract::State;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::{routing, Router};
 use clap::Parser;
 
@@ -8,7 +10,7 @@ use prometheus_client::registry::Registry;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::thread;
+use std::{env, thread};
 
 mod dnsmasq;
 mod internet_check;
@@ -68,8 +70,13 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    // set RUST_LOG=trace
+    if !env::var("RUST_LOG").is_ok() {
+        env::set_var("RUST_LOG", "info");
+    }
+    pretty_env_logger::init();
     let args = Args::parse();
-    println!("{:?}", args);
+    log::info!("Starting with args: {:?}", args);
 
     let mut registry = Registry::default();
     // let registry = Arc::new(RwLock::new(registry));
@@ -123,13 +130,41 @@ impl Server {
         "Hello, World!".to_string()
     }
 
-    async fn metrics(State(server): State<Arc<ServerState>>) -> String {
-        server.dnsmasq.update_lease_metrics().await;
-        server.dnsmasq.update_dns_metrics().await;
+    async fn metrics(State(server): State<Arc<ServerState>>) -> Result<String, AppError> {
+        server.dnsmasq.update_lease_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
+        server.dnsmasq.update_dns_metrics().await.map_err(|_| DnsError::UpdateDnsMetricsError)?;
 
         let mut buffer = String::new();
         encode(&mut buffer, &server.registry).unwrap();
 
-        buffer
+        Ok(buffer)
+    }
+}
+
+#[derive(Debug)]
+enum AppError {
+    Dns(DnsError),
+}
+
+#[derive(Debug)]
+enum DnsError {
+    UpdateLeaseMetricsError,
+    UpdateDnsMetricsError,
+}
+
+impl From<DnsError> for AppError {
+    fn from(inner: DnsError) -> Self {
+        AppError::Dns(inner)
+    }
+}
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AppError::Dns(DnsError::UpdateLeaseMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update lease metris error"),
+            AppError::Dns(DnsError::UpdateDnsMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update dns metrics error"),
+        };
+
+        (status, error_message).into_response()
     }
 }
