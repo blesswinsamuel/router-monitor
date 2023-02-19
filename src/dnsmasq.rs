@@ -134,13 +134,14 @@ impl DnsMasq {
             question("auth.bind."),
             question("servers.bind."),
         ]);
-        let mut results = self.client.lock().unwrap().send(DnsRequest::new(msg, DnsRequestOptions::default()));
-        let result = results.next().await;
+        let results = self.client.lock().unwrap().send(DnsRequest::new(msg, DnsRequestOptions::default()));
+        let result = results.take(1).next().await;
         // while let Some(result) = results.next().await {
         let response = match result.unwrap() {
             Ok(response) => response,
             Err(e) => {
-                panic!("error: {}", e);
+                println!("error: {}", e);
+                return;
             }
         };
         let answers = response.answers();
