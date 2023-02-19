@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 
+use log;
 use pnet::{
     datalink,
     packet::{
@@ -41,9 +42,9 @@ impl PacketMonitor {
 
         // Find the network interface with the provided name
         let interfaces = datalink::interfaces();
-        println!("Available interfaces: ");
+        log::info!("Available interfaces: ");
         for iface in interfaces.iter() {
-            println!("{}: {:?}", iface.name, iface.ips);
+            log::info!("{}: {:?}", iface.name, iface.ips);
         }
         let interface = interfaces
             .into_iter()
@@ -82,7 +83,7 @@ impl PacketMonitor {
                                 self.packets_total.get_or_create(&labels).inc();
                                 self.bytes_total.get_or_create(&labels).inc_by(header.packet().len() as u64);
                             } else {
-                                println!("[{}]: Malformed IPv4 Packet", interface_name);
+                                log::error!("[{}]: Malformed IPv4 Packet", interface_name);
                             }
                         }
                         EtherTypes::Ipv6 => {
@@ -102,7 +103,7 @@ impl PacketMonitor {
                                 self.packets_total.get_or_create(&labels).inc();
                                 self.bytes_total.get_or_create(&labels).inc_by(header.packet().len() as u64);
                             } else {
-                                println!("[{}]: Malformed IPv6 Packet", interface_name);
+                                log::error!("[{}]: Malformed IPv6 Packet", interface_name);
                             }
                         }
                         _ => {}
@@ -110,7 +111,7 @@ impl PacketMonitor {
 
                     // handle_ethernet_frame(&interface, &EthernetPacket::new(packet).unwrap());
                 }
-                Err(e) => panic!("packetdump: unable to receive packet: {}", e),
+                Err(e) => log::error!("packetdump: unable to receive packet: {}", e),
             }
         }
     }
