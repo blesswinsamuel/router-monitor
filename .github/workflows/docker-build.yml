@@ -15,6 +15,10 @@ jobs:
     steps:
       - uses: blesswinsamuel/github-actions/docker-build-and-push@main
         with:
+          docker-registry: docker.io
+          docker-image-name: ${{ github.repository }}
+          docker-username: ${{ github.actor }}
+          docker-password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
           docker-build-platforms: linux/arm64
