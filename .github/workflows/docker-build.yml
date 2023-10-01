@@ -22,8 +22,6 @@ jobs:
           target: aarch64-unknown-linux-gnu
           args: "--locked --release"
           strip: true
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
       - uses: blesswinsamuel/github-actions/docker-build-and-push@main
         with:
           checkout: false
