@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
@@ -22,6 +22,8 @@ jobs:
           target: aarch64-unknown-linux-gnu
           args: "--locked --release"
           strip: true
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
       - uses: blesswinsamuel/github-actions/docker-build-and-push@main
         with:
           docker-registry: docker.io
