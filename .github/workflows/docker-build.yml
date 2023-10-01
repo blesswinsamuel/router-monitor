@@ -19,7 +19,7 @@ jobs:
         uses: houseabsolute/actions-rust-cross@v0
         with:
           command: build
-          target: armv7-unknown-linux-musleabihf
+          target: aarch64-unknown-linux-gnu
           args: "--locked --release"
           strip: true
       - uses: blesswinsamuel/github-actions/docker-build-and-push@main
