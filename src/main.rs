@@ -12,6 +12,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::{env, thread};
 
+mod ddns_cloudflare;
 mod dnsmasq;
 mod internet_check;
 mod packet_monitor;
@@ -35,37 +36,21 @@ struct Args {
     #[arg(long, default_value_t = format!("/var/lib/misc/dnsmasq.leases"))]
     leases_path: String,
 
-    /// dnsmasq host:port address
-    #[arg(long, default_value_t = format!("127.0.0.1:53").parse().unwrap())]
-    dnsmasq_addr: String,
-    // /// Implicitly using `std::str::FromStr`
-    // #[arg(short = 'O')]
-    // optimization: Option<usize>,
-
-    // /// Allow invalid UTF-8 paths
-    // #[arg(short = 'I', value_name = "DIR", value_hint = clap::ValueHint::DirPath)]
-    // include: Option<std::path::PathBuf>,
-
-    // /// Handle IP addresses
-    // #[arg(long)]
-    // bind: Option<std::net::IpAddr>,
-
-    // /// Allow human-readable durations
-    // #[arg(long)]
-    // sleep: Option<humantime::Duration>,
-
-    // /// Hand-written parser for tuples
-    // #[arg(short = 'D', value_parser = parse_key_val::<String, i32>)]
-    // defines: Vec<(String, i32)>,
-
-    // /// Support enums from a foreign crate that don't implement `ValueEnum`
-    // #[arg(
-    //     long,
-    //     default_value_t = foreign_crate::LogLevel::Info,
-    //     value_parser = clap::builder::PossibleValuesParser::new(["info", "debug", "info", "warn", "error"])
-    //         .map(|s| s.parse::<foreign_crate::LogLevel>().unwrap()),
-    // )]
-    // log_level: foreign_crate::LogLevel,
+    /// Cloudflare DDNS API Token
+    #[arg(long)]
+    ddns_cloudflare_api_token: Option<String>,
+    /// Cloudflare DDNS email
+    #[arg(long)]
+    ddns_cloudflare_email: Option<String>,
+    /// Cloudflare DDNS domain
+    #[arg(long)]
+    ddns_cloudflare_domain: Option<String>,
+    /// Cloudflare DDNS record
+    #[arg(long)]
+    ddns_cloudflare_record: Option<String>,
+    /// Cloudflare DDNS TTL
+    #[arg(long, default_value = "5m")]
+    ddns_cloudflare_ttl: Option<humantime::Duration>,
 }
 
 #[tokio::main]
@@ -87,7 +72,12 @@ async fn main() {
         let interface = args.interface.clone();
         // let bpf = args.bpf.clone();
         thread::spawn(move || {
-            packet_monitor.run(&interface);
+            match packet_monitor.run(&interface) {
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("packet_monitor error: {}", e);
+                }
+            };
         });
     }
 
@@ -97,7 +87,38 @@ async fn main() {
         internet_check.start();
     });
 
-    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path, args.dnsmasq_addr);
+    if let (
+        Some(ddns_cloudflare_api_token),
+        Some(ddns_cloudflare_email),
+        Some(ddns_cloudflare_domain),
+        Some(ddns_cloudflare_record),
+        Some(ddns_cloudflare_ttl),
+    ) = (
+        args.ddns_cloudflare_api_token.clone(),
+        args.ddns_cloudflare_email.clone(),
+        args.ddns_cloudflare_domain.clone(),
+        args.ddns_cloudflare_record.clone(),
+        args.ddns_cloudflare_ttl.clone(),
+    ) {
+        let ddns_cloudflare = ddns_cloudflare::DdnsCloudflare::new(
+            ddns_cloudflare_api_token,
+            ddns_cloudflare_email,
+            ddns_cloudflare_domain,
+            ddns_cloudflare_record,
+            ddns_cloudflare_ttl.into(),
+        );
+        ddns_cloudflare.register(&mut registry);
+        thread::spawn(move || {
+            match ddns_cloudflare.start() {
+                Ok(_) => {}
+                Err(e) => {
+                    log::error!("ddns_cloudflare error: {:#}", e);
+                }
+            };
+        });
+    }
+
+    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path);
     dnsmasq.register(&mut registry);
 
     let server_state = Arc::new(ServerState::new(registry, dnsmasq));
@@ -132,7 +153,6 @@ impl Server {
 
     async fn metrics(State(server): State<Arc<ServerState>>) -> Result<String, AppError> {
         server.dnsmasq.update_lease_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
-        server.dnsmasq.update_dns_metrics().await.map_err(|_| DnsError::UpdateDnsMetricsError)?;
 
         let mut buffer = String::new();
         encode(&mut buffer, &server.registry).unwrap();
@@ -149,7 +169,6 @@ enum AppError {
 #[derive(Debug)]
 enum DnsError {
     UpdateLeaseMetricsError,
-    UpdateDnsMetricsError,
 }
 
 impl From<DnsError> for AppError {
@@ -162,7 +181,6 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
             AppError::Dns(DnsError::UpdateLeaseMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update lease metris error"),
-            AppError::Dns(DnsError::UpdateDnsMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update dns metrics error"),
         };
 
         (status, error_message).into_response()

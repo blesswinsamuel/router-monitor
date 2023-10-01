@@ -1,5 +1,6 @@
 use std::net::IpAddr;
 
+use anyhow::Result;
 use log;
 use pnet::{
     datalink,
@@ -37,7 +38,7 @@ impl PacketMonitor {
         registry.register("ntm_bytes", "Bytes transferred", self.bytes_total.clone());
     }
 
-    pub fn run(&self, iface_name: &str) {
+    pub fn run(&self, iface_name: &str) -> Result<()> {
         use pnet::datalink::Channel::Ethernet;
 
         // Find the network interface with the provided name
@@ -46,11 +47,10 @@ impl PacketMonitor {
         for iface in interfaces.iter() {
             log::info!("{}: {:?}", iface.name, iface.ips);
         }
-        let interface = interfaces
-            .into_iter()
-            .filter(|iface| iface.name == iface_name)
-            .next()
-            .unwrap_or_else(|| panic!("No such network interface: {}", iface_name));
+        let interface = match interfaces.into_iter().filter(|iface| iface.name == iface_name).next() {
+            Some(iface) => iface,
+            None => return Err(anyhow::anyhow!("No such network interface {}", iface_name)),
+        };
 
         // Create a channel to receive on
         let (_, mut rx) = match datalink::channel(&interface, Default::default()) {
