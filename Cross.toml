@@ -1,5 +1,6 @@
+# https://github.com/cross-rs/cross/wiki/Recipes#openssl
 [target.armv7-unknown-linux-musleabihf]
 pre-build = [
-    "dpkg --add-architecture $CROSS_DEB_ARCH",
-    "apt-get update && apt-get install --assume-yes libssl-dev:$CROSS_DEB_ARCH"
+    "dpkg --add-architecture armhf",
+    "apt-get update && apt-get install --assume-yes libssl-dev:armhf"
 ]
