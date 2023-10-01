@@ -32,11 +32,11 @@ impl InternetCheck {
 
     pub fn register(&self, registry: &mut Registry) {
         registry.register(
-            "ntm_internet_connection_duration_seconds",
+            "router_monitor_internet_connection_duration_seconds",
             "Time taken to establish tcp connection",
             self.connection_duration.clone(),
         );
-        registry.register("ntm_internet_connection_is_up", "Whether internet connection is up", self.connection_is_up.clone());
+        registry.register("router_monitor_internet_connection_is_up", "Whether internet connection is up", self.connection_is_up.clone());
     }
 
     fn is_internet_connection_up(&self) {

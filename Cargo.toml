@@ -6,16 +6,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pnet = "0.33.0"
-clap = { version = "4.2.0", features = [ "derive" ] }
+pnet = "0.34.0"
+clap = { version = "4.4.6", features = [ "derive" ] }
 tokio = { version = "1", features = ["full"] }
-axum = "0.6.12"
-prometheus-client = "0.19.0"
-trust-dns-client = "0.22.0"
+axum = "0.6.20"
+prometheus-client = "0.21.2"
+trust-dns-client = "0.23.0"
 rand = "0.8.5"
-futures = "0.3.27"
+futures = "0.3.28"
 crossbeam = "0.8.2"
 tracing = "0.1.37"
-anyhow = "1.0.70"
-log = "0.4.17"
-pretty_env_logger = "0.4.0"
+anyhow = "1.0.75"
+log = "0.4.20"
+pretty_env_logger = "0.5.0"
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", features = ["derive"] }
+humantime = "2.1.0"
