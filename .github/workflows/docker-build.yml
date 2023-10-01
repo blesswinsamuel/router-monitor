@@ -19,6 +19,7 @@ jobs:
           docker-image-name: ${{ github.repository }}
           docker-username: ${{ github.actor }}
           docker-password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          telegram-bot-token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          telegram-chat-id: ${{ secrets.TELEGRAM_CHAT_ID }}
           slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
           docker-build-platforms: linux/arm64
