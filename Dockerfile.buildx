@@ -5,7 +5,7 @@ FROM --platform=$BUILDPLATFORM rust:slim-bullseye AS builder
 # https://github.com/cross-rs/cross/blob/main/docker/Dockerfile.armv7-unknown-linux-gnueabihf
 # https://github.com/cross-rs/cross/blob/main/docker/Dockerfile.aarch64-unknown-linux-gnu
 RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
-    g++-aarch64-linux-gnu libssl-dev
+    g++-aarch64-linux-gnu libssl-dev pkg-config
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
