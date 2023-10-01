@@ -1,7 +1,52 @@
+# https://github.com/cross-rs/cross/blob/main/docker/Dockerfile.aarch64-unknown-linux-gnu
+FROM --platform=$BUILDPLATFORM rust:slim-bullseye AS builder
+
+# RUN apt-get update && apt-get install -y libpcap-dev && apt-get clean
+
+# https://github.com/cross-rs/cross/blob/main/docker/Dockerfile.armv7-unknown-linux-gnueabihf
+# https://github.com/cross-rs/cross/blob/main/docker/Dockerfile.aarch64-unknown-linux-gnu
+RUN apt-get update && apt-get install --assume-yes --no-install-recommends \
+    g++-aarch64-linux-gnu libssl-dev pkg-config
+
+WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir src && echo "// dummy file" > src/lib.rs && cargo fetch
+
+RUN rustup target add aarch64-unknown-linux-gnu
+
+# RUN mkdir .cargo && echo '[target.aarch64-unknown-linux-gnu]\nlinker = "arm-linux-gnueabihf-ld"' > .cargo/config
+
+# to make future builds faster
+RUN cargo build --target=aarch64-unknown-linux-gnu --release
+
+COPY src ./src
+
+ENV CROSS_TOOLCHAIN_PREFIX=aarch64-linux-gnu-
+ENV CROSS_SYSROOT=/usr/aarch64-linux-gnu
+ENV CROSS_TARGET_RUNNER="/linux-runner aarch64"
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER="${CROSS_TOOLCHAIN_PREFIX}gcc" \
+    CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUNNER="$CROSS_TARGET_RUNNER" \
+    AR_aarch64_unknown_linux_gnu="${CROSS_TOOLCHAIN_PREFIX}ar" \
+    CC_aarch64_unknown_linux_gnu="${CROSS_TOOLCHAIN_PREFIX}gcc" \
+    CXX_aarch64_unknown_linux_gnu="${CROSS_TOOLCHAIN_PREFIX}g++" \
+    CMAKE_TOOLCHAIN_FILE_aarch64_unknown_linux_gnu=/opt/toolchain.cmake \
+    BINDGEN_EXTRA_CLANG_ARGS_aarch64_unknown_linux_gnu="--sysroot=$CROSS_SYSROOT" \
+    QEMU_LD_PREFIX="$CROSS_SYSROOT" \
+    RUST_TEST_THREADS=1 \
+    PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig/:${PKG_CONFIG_PATH}"
+
+# RUN cargo build --release && mv target/release/router-monitor /bin
+# RUN rustup target add armv7-unknown-linux-gnueabihf
+# RUN cargo build --target=armv7-unknown-linux-gnueabihf --release
+RUN cargo build --target=aarch64-unknown-linux-gnu --release && mv target/aarch64-unknown-linux-gnu/release/router-monitor /bin
+
+# FROM alpine:3.17
+# RUN apk add libpcap-dev
+
 FROM debian:bullseye-slim
 
 # RUN apt-get update && apt-get install -y libpcap-dev && apt-get clean
 
-COPY ./target/aarch64-unknown-linux-gnu/release/router-monitor /router-monitor
+COPY --from=builder /bin/router-monitor /router-monitor
 
 ENTRYPOINT [ "/router-monitor" ]
