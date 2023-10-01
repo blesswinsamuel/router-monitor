@@ -1,0 +1,4 @@
+# https://github.com/cross-rs/cross/wiki/Recipes#openssl
+[target.aarch64-unknown-linux-gnu]
+dockerfile = "Dockerfile.cross"
+# pre-build = ["apt-get install --yes libssl-dev libsasl2-dev"]
