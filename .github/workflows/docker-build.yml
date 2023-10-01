@@ -26,6 +26,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
       - uses: blesswinsamuel/github-actions/docker-build-and-push@main
         with:
+          checkout: false
           docker-registry: docker.io
           docker-image-name: ${{ github.repository }}
           docker-username: ${{ github.actor }}
