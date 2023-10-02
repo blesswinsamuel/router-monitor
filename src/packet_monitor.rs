@@ -34,8 +34,8 @@ impl PacketMonitor {
     }
 
     pub fn register(&self, registry: &mut Registry) {
-        registry.register("ntm_packets", "Packets transferred", self.packets_total.clone());
-        registry.register("ntm_bytes", "Bytes transferred", self.bytes_total.clone());
+        registry.register("router_monitor_packets", "Packets transferred", self.packets_total.clone());
+        registry.register("router_monitor_bytes", "Bytes transferred", self.bytes_total.clone());
     }
 
     pub fn run(&self, iface_name: &str) -> Result<()> {
