@@ -18,15 +18,16 @@
 
       # Helper to provide system-specific attributes
       forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
+        inherit system;
         pkgs = import nixpkgs { inherit system; };
       });
     in
     {
-      packages = forAllSystems ({ pkgs }: {
+      packages = forAllSystems ({ system, pkgs }: {
         default = pkgs.rustPlatform.buildRustPackage {
           name = "router-monitor";
           src = ./.;
-          buildInputs = [ pkgs.darwin.apple_sdk.frameworks.Security pkgs.pkg-config pkgs.openssl ];
+          buildInputs = [ pkgs.pkg-config pkgs.openssl ] ++ (nixpkgs.lib.optionals (pkgs.stdenv.isDarwin) [ pkgs.darwin.apple_sdk.frameworks.Security ]);
           cargoLock = {
             lockFile = ./Cargo.lock;
           };
