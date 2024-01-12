@@ -1,58 +1,35 @@
-# {
-#   inputs = {
-#     nixpkgs.url = "github:nixos/nixpkgs";
-#     flake-utils.url = "github:numtide/flake-utils";
-#     gitignore = {
-#       url = "github:hercules-ci/gitignore.nix";
-#       inputs.nixpkgs.follows = "nixpkgs";
-#     };
-#   };
-
-#   outputs = { self, nixpkgs, flake-utils, gitignore }:
-#     flake-utils.lib.eachDefaultSystem (system:
-#       let
-#         pkgs = nixpkgs.legacyPackages.${system};
-#         inherit (gitignore.lib) gitignoreSource;
-#       in
-#       {
-#         packages.router-monitor = mkDerivation {
-#           name = "router-monitor";
-#           src = gitignoreSource ./;
-#         };
-
-#         # legacyPackages = packages;
-#         defaultPackage = packages.router-monitor;
-
-#         # devShell = pkgs.mkShell { buildInputs = with pkgs; [ cargo rustc git ]; };
-#       });
-# }
-# https://github.com/reckenrode/verify-archive/blob/f452420680bdf4e037a441e2eb30f4c00a6d7edf/flake.nix
 {
-  description = ''
-    Export prometheus metrics from a Raspberry Pi router.
-  '';
+  description = "Export prometheus metrics from a Raspberry Pi router";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, rust-overlay }:
     let
-      inherit (nixpkgs) lib;
-      forAllSystems = lib.genAttrs lib.systems.flakeExposed;
+      # Systems supported
+      allSystems = [
+        "x86_64-linux" # 64-bit Intel/AMD Linux
+        "aarch64-linux" # 64-bit ARM Linux
+        "x86_64-darwin" # 64-bit Intel macOS
+        "aarch64-darwin" # 64-bit ARM macOS
+      ];
+
+      # Helper to provide system-specific attributes
+      forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
+        pkgs = import nixpkgs { inherit system; };
+      });
     in
     {
-      packages = forAllSystems (system:
-        let pkgs = nixpkgs.legacyPackages.${system}; in rec {
-          default = router-monitor;
-          router-monitor = pkgs.callPackage ./default.nix { };
-        });
-
-      apps = forAllSystems (system: rec {
-        default = router-monitor;
-        router-monitor = {
-          type = "app";
-          program = "${lib.getBin self.packages.${system}.router-monitor}/bin/router-monitor";
+      packages = forAllSystems ({ pkgs }: {
+        default = pkgs.rustPlatform.buildRustPackage {
+          name = "router-monitor";
+          src = ./.;
+          buildInputs = [ pkgs.darwin.apple_sdk.frameworks.Security pkgs.pkg-config pkgs.openssl ];
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
         };
       });
     };
