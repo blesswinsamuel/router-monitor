@@ -152,7 +152,7 @@ impl Server {
     }
 
     async fn metrics(State(server): State<Arc<ServerState>>) -> Result<String, AppError> {
-        server.dnsmasq.update_lease_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
+        // server.dnsmasq.update_lease_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
 
         let mut buffer = String::new();
         encode(&mut buffer, &server.registry).unwrap();
@@ -180,7 +180,7 @@ impl From<DnsError> for AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
-            AppError::Dns(DnsError::UpdateLeaseMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update lease metris error"),
+            AppError::Dns(DnsError::UpdateLeaseMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update lease metrics error"),
         };
 
         (status, error_message).into_response()
