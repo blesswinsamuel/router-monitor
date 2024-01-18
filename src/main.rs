@@ -4,7 +4,7 @@ use axum::response::{IntoResponse, Response};
 use axum::{routing, Router};
 use clap::Parser;
 
-use arp_scan::ArpScan;
+use dnsmasq::DnsMasq;
 use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
 
@@ -12,10 +12,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::{env, thread};
 
-mod arp;
-mod arp_scan;
-mod arp_scan_rs;
 mod ddns_cloudflare;
+mod dnsmasq;
 mod internet_check;
 mod packet_monitor;
 
@@ -33,6 +31,10 @@ struct Args {
     /// BPF filter
     #[arg(long, default_value_t = format!(""))]
     bpf: String,
+
+    /// DNS leases path
+    #[arg(long, default_value_t = format!("/var/lib/misc/dnsmasq.leases"))]
+    leases_path: String,
 
     /// Cloudflare DDNS API Token
     #[arg(long)]
@@ -116,10 +118,10 @@ async fn main() {
         });
     }
 
-    let arpscan = arp_scan::ArpScan::new();
-    arpscan.register(&mut registry);
+    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path);
+    dnsmasq.register(&mut registry);
 
-    let server_state = Arc::new(ServerState::new(registry, arpscan));
+    let server_state = Arc::new(ServerState::new(registry, dnsmasq));
     {
         let listen_addr = args.bind_addr.clone();
         let app = Router::new()
@@ -133,12 +135,12 @@ async fn main() {
 
 struct ServerState {
     registry: Registry,
-    arpscan: ArpScan,
+    dnsmasq: DnsMasq,
 }
 
 impl ServerState {
-    pub fn new(registry: Registry, arpscan: ArpScan) -> Self {
-        Self { registry, arpscan }
+    pub fn new(registry: Registry, dnsmasq: DnsMasq) -> Self {
+        Self { registry, dnsmasq }
     }
 }
 
@@ -150,13 +152,7 @@ impl Server {
     }
 
     async fn metrics(State(server): State<Arc<ServerState>>) -> Result<String, AppError> {
-        // server.arpscan.update_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
-        match server.arpscan.update_metrics().await {
-            Ok(_) => {}
-            Err(e) => {
-                log::error!("arpscan error: {:#}", e);
-            }
-        };
+        // server.dnsmasq.update_lease_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
 
         let mut buffer = String::new();
         encode(&mut buffer, &server.registry).unwrap();
