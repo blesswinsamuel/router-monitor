@@ -23,3 +23,7 @@ reqwest = { version = "0.11", features = ["json", "blocking", "native-tls-vendor
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 serde = { version = "1.0", features = ["derive"] }
 humantime = "2.1.0"
+arp-scan = "0.13.1"
+dns-lookup = "2.0.4"
+pnet_datalink = "0.34.0"
+ipnetwork = "0.20.0"
