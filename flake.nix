@@ -1,37 +1,35 @@
 {
-  description = "Export prometheus metrics from a Raspberry Pi router";
-
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    # rust-overlay.url = "github:oxalica/rust-overlay";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    fenix = { url = "github:nix-community/fenix"; inputs.nixpkgs.follows = "nixpkgs"; };
+    naersk = { url = "github:nix-community/naersk"; inputs.nixpkgs.follows = "nixpkgs"; };
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs }:
-    let
-      # Systems supported
-      allSystems = [
-        "x86_64-linux" # 64-bit Intel/AMD Linux
-        "aarch64-linux" # 64-bit ARM Linux
-        "x86_64-darwin" # 64-bit Intel macOS
-        "aarch64-darwin" # 64-bit ARM macOS
-      ];
+  outputs = { self, fenix, flake-utils, naersk, nixpkgs }:
+    flake-utils.lib.eachDefaultSystem (system: {
+      packages.default =
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          target = "aarch64-unknown-linux-gnu";
+          toolchain = with fenix.packages.${system}; combine [
+            minimal.cargo
+            minimal.rustc
+            targets.${target}.latest.rust-std
+          ];
+        in
 
-      # Helper to provide system-specific attributes
-      forAllSystems = f: nixpkgs.lib.genAttrs allSystems (system: f {
-        inherit system;
-        pkgs = import nixpkgs { inherit system; };
-      });
-    in
-    {
-      packages = forAllSystems ({ system, pkgs }: {
-        default = pkgs.rustPlatform.buildRustPackage {
-          name = "router-monitor";
+        (naersk.lib.${system}.override {
+          cargo = toolchain;
+          rustc = toolchain;
+        }).buildPackage {
           src = ./.;
-          buildInputs = [ pkgs.pkg-config pkgs.openssl ] ++ (nixpkgs.lib.optionals (pkgs.stdenv.isDarwin) [ pkgs.darwin.apple_sdk.frameworks.Security ]);
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
+          CARGO_BUILD_TARGET = target;
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER =
+            let
+              inherit (pkgs.pkgsCross.aarch64-multiplatform.stdenv) cc;
+            in
+            "${cc}/bin/${cc.targetPrefix}cc";
         };
-      });
-    };
+    });
 }

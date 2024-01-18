@@ -1,10 +1,10 @@
+use arp::Arp;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{routing, Router};
 use clap::Parser;
 
-use dnsmasq::DnsMasq;
 use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
 
@@ -12,8 +12,8 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::{env, thread};
 
+mod arp;
 mod ddns_cloudflare;
-mod dnsmasq;
 mod internet_check;
 mod packet_monitor;
 
@@ -118,10 +118,10 @@ async fn main() {
         });
     }
 
-    let dnsmasq = dnsmasq::DnsMasq::new(args.leases_path);
-    dnsmasq.register(&mut registry);
+    let arp = arp::Arp::new(args.leases_path);
+    arp.register(&mut registry);
 
-    let server_state = Arc::new(ServerState::new(registry, dnsmasq));
+    let server_state = Arc::new(ServerState::new(registry, arp));
     {
         let listen_addr = args.bind_addr.clone();
         let app = Router::new()
@@ -135,12 +135,12 @@ async fn main() {
 
 struct ServerState {
     registry: Registry,
-    dnsmasq: DnsMasq,
+    arp: Arp,
 }
 
 impl ServerState {
-    pub fn new(registry: Registry, dnsmasq: DnsMasq) -> Self {
-        Self { registry, dnsmasq }
+    pub fn new(registry: Registry, arp: Arp) -> Self {
+        Self { registry, arp }
     }
 }
 
@@ -152,7 +152,12 @@ impl Server {
     }
 
     async fn metrics(State(server): State<Arc<ServerState>>) -> Result<String, AppError> {
-        // server.dnsmasq.update_lease_metrics().await.map_err(|_| DnsError::UpdateLeaseMetricsError)?;
+        match server.arp.update_arp_metrics().await {
+            Ok(_) => {}
+            Err(e) => {
+                log::error!("arp error: {:#}", e);
+            }
+        };
 
         let mut buffer = String::new();
         encode(&mut buffer, &server.registry).unwrap();

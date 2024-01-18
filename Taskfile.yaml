@@ -1,0 +1,34 @@
+version: 3
+
+tasks:
+  run:
+    cmd: >
+      op run -- RUST_LOG=debug cargo run --
+        --bind-addr 0.0.0.0:9155
+        --interface eth0
+        --ddns-cloudflare-api-token $DDNS_CLOUDFLARE_API_TOKEN
+        --ddns-cloudflare-email $DDNS_CLOUDFLARE_EMAIL
+        --ddns-cloudflare-domain $DDNS_CLOUDFLARE_DOMAIN
+        --ddns-cloudflare-record $DDNS_CLOUDFLARE_RECORD
+    env:
+      DDNS_CLOUDFLARE_API_TOKEN: "op://Private/Dev Creds/DDNS_CLOUDFLARE_API_TOKEN"
+      DDNS_CLOUDFLARE_EMAIL: "op://Private/Dev Creds/DDNS_CLOUDFLARE_EMAIL"
+      DDNS_CLOUDFLARE_DOMAIN: "op://Private/Dev Creds/DDNS_CLOUDFLARE_DOMAIN"
+      DDNS_CLOUDFLARE_RECORD: "op://Private/Dev Creds/DDNS_CLOUDFLARE_RECORD"
+
+  build: |
+    cross build --release --target aarch64-unknown-linux-gnu
+
+    # arm-unknown-linux-gnueabihf
+
+  runonrouter: |
+    #!/bin/bash -e
+
+    docker buildx build --platform linux/arm64 -t blesswinsamuel/router-monitor:latest --file Dockerfile.buildx .
+    docker run --rm --entrypoint cat blesswinsamuel/router-monitor:latest /router-monitor > /tmp/router-monitor
+    chmod +x /tmp/router-monitor
+
+    # ssh router "sudo killall -9 /tmp/router-monitor || true"
+    scp /tmp/router-monitor router:/tmp/router-monitor
+    # ssh router "sudo -E /tmp/router-monitor -listen 0.0.0.0:9156 -interface lan -bpf 'src net 192.168.1.0/24 or dst net 192.168.1.0/24'"
+    # ssh router "sudo -E /tmp/router-monitor --bind-addr 0.0.0.0:9156 --interface lan"
