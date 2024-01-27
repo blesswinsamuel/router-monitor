@@ -9,7 +9,6 @@ use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
 
 use std::net::SocketAddr;
-use std::process::exit;
 use std::sync::Arc;
 use std::{env, thread};
 
