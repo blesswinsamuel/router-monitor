@@ -24,6 +24,10 @@
           rustc = toolchain;
         }).buildPackage {
           src = ./.;
+
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          # buildInputs = [ pkgs.openssl ];
+
           CARGO_BUILD_TARGET = target;
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER =
             let

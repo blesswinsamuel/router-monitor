@@ -9,6 +9,7 @@ use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
 
 use std::net::SocketAddr;
+use std::process::exit;
 use std::sync::Arc;
 use std::{env, thread};
 
@@ -31,10 +32,6 @@ struct Args {
     /// BPF filter
     #[arg(long, default_value_t = format!(""))]
     bpf: String,
-
-    /// DNS leases path
-    #[arg(long, default_value_t = format!("/var/lib/misc/dnsmasq.leases"))]
-    leases_path: String,
 
     /// Cloudflare DDNS API Token
     #[arg(long)]
@@ -113,12 +110,13 @@ async fn main() {
                 Ok(_) => {}
                 Err(e) => {
                     log::error!("ddns_cloudflare error: {:#}", e);
+                    std::process::exit(1);
                 }
             };
         });
     }
 
-    let arp = arp::Arp::new(args.leases_path);
+    let arp = arp::Arp::new();
     arp.register(&mut registry);
 
     let server_state = Arc::new(ServerState::new(registry, arp));
@@ -172,9 +170,7 @@ enum AppError {
 }
 
 #[derive(Debug)]
-enum DnsError {
-    UpdateLeaseMetricsError,
-}
+enum DnsError {}
 
 impl From<DnsError> for AppError {
     fn from(inner: DnsError) -> Self {
@@ -184,10 +180,10 @@ impl From<DnsError> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, error_message) = match self {
-            AppError::Dns(DnsError::UpdateLeaseMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update lease metrics error"),
-        };
+        // let (status, error_message) = match self {
+        //     AppError::Dns(DnsError::UpdateLeaseMetricsError) => (StatusCode::INTERNAL_SERVER_ERROR, "Update lease metrics error"),
+        // };
 
-        (status, error_message).into_response()
+        (StatusCode::INTERNAL_SERVER_ERROR, "internal error").into_response()
     }
 }
