@@ -690,7 +690,17 @@
       "options": {
         "cellHeight": "sm",
         "frameIndex": -1,
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Flags",
+            "desc": true
+          },
+          {
+            "displayName": "IP Address",
+            "desc": false
+          }
+        ]
       }
     },
     {
