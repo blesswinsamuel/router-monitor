@@ -307,7 +307,6 @@ const dashboard: Dashboard = {
 }
 
 writeDashboardAndPostToGrafana({
-  grafanaURL: process.env.GRAFANA_URL,
   dashboard,
   filename: 'router-monitor-dashboard.json',
 })

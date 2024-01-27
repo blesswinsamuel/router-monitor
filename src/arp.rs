@@ -37,7 +37,7 @@ pub struct Arp {
 }
 
 impl Arp {
-    pub fn new(leases_path: String) -> Self {
+    pub fn new() -> Self {
         Self { registry: ArpRegistry::default() }
     }
 
@@ -54,7 +54,6 @@ impl Arp {
             if arr.len() != 6 {
                 continue;
             }
-            let expiry: i64 = arr[0].parse()?;
             self.registry
                 .arp_devices
                 .get_or_create(&ArpDeviceLabels {
@@ -63,8 +62,12 @@ impl Arp {
                     flags: arr[2].to_string(),
                     device: arr[5].to_string(),
                 })
-                .set(expiry);
+                .set(1);
         }
         Ok(())
     }
 }
+
+// IP address       HW type     Flags       HW address            Mask     Device
+// 192.168.1.15     0x1         0x0         00:00:00:00:00:00     *        lan
+// 192.168.1.106    0x1         0x0         90:11:95:3e:cf:5d     *        lan
