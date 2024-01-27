@@ -120,13 +120,13 @@ async fn main() {
 
     let server_state = Arc::new(ServerState::new(registry, arp));
     {
-        let listen_addr = args.bind_addr.clone();
         let app = Router::new()
             .route("/", routing::get(Server::root))
             .route("/metrics", routing::get(Server::metrics).with_state(server_state.clone()));
 
-        tracing::debug!("listening on {}", listen_addr);
-        axum::Server::bind(&listen_addr).serve(app.into_make_service()).await.unwrap();
+        tracing::debug!("listening on {}", args.bind_addr.to_string());
+        let listener = tokio::net::TcpListener::bind(args.bind_addr.clone()).await.unwrap();
+        axum::serve(listener, app.into_make_service()).await.unwrap();
     }
 }
 
