@@ -13,6 +13,8 @@ import {
   PanelRowAndGroups,
   Unit,
   autoLayout,
+  tableExcludeByName,
+  tableIndexByName,
   writeDashboardAndPostToGrafana,
 } from 'grafana-dashboard-helpers'
 
@@ -20,54 +22,56 @@ const datasource: DataSourceRef = {
   uid: '${DS_PROMETHEUS}',
 }
 
-const totalBytesByLocalIPQuery = (labels: string, ipLabel: string) => `
+const totalBytesByLocalIPQuery = (labels: string, ipLabel: string, queryType: string = '$__range', queryFunc: string = 'increase', extraFields: boolean = true) =>
+  `
 label_replace(
   sum by(${ipLabel}) (
-    increase(
-      router_monitor_bytes_total{${labels},instance=~"$instance"}[$__range]
+    ${queryFunc}(
+      router_monitor_bytes_total{${labels},instance=~"$instance"}[${queryType}]
     ) > 0
   ),
-  "ip", "$1", "${ipLabel}", "(.*)"
-)
-
-+ on(ip) group_left(devicename)
-
-(0 * max(router_monitor_dnsmasq_lease_info) by (devicename, ip, mac))
+  "ip_addr", "$1", "${ipLabel}", "(.*)"
+)` +
+  (extraFields
+    ? `
++ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices
++ on(ip_addr) group_left(hostname) router_monitor_hostnames
 `
+    : '')
 
 const totalBytesByLocalIPPieChartPanel = (uploadOrDownload: string, labels: string, ipLabel: string) =>
   NewPieChartPanel({
     title: `Total Bytes ${uploadOrDownload}ed - by local IP (pie chart)`,
-    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel), legendFormat: '{{ devicename }} ({{ ip }})', type: 'instant' }],
+    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel), legendFormat: '{{ hostname }} ({{ ip_addr }})', type: 'instant' }],
     defaultUnit: Unit.BYTES_SI,
   })
 
 const totalBytesByLocalIPBarGaugePanel = (uploadOrDownload: string, labels: string, ipLabel: string) =>
   NewBarGaugePanel({
     title: `Total Bytes ${uploadOrDownload}ed - by local IP (bar gauge)`,
-    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel), legendFormat: '{{ devicename }} ({{ ip }})', type: 'instant' }],
+    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel), legendFormat: '{{ hostname }} ({{ ip_addr }})', type: 'instant' }],
     defaultUnit: Unit.BYTES_SI,
     thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
     options: { orientation: VizOrientation.Horizontal },
   })
 
-const totalBytesTimeSeriesPanel = (title: string, labels: string, ipLabel: string) =>
+const totalBytesTimeSeriesPanel = (title: string, labels: string, ipLabel: string, isInternetTotalGraph: boolean = false) =>
   NewTimeSeriesPanel({
     title: title,
-    targets: [{ expr: `sum by(${ipLabel}) (increase(router_monitor_bytes_total{${labels},instance=~"$instance"}[$__interval] > 0))`, legendFormat: `{{ ${ipLabel} }}` }],
+    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel, '$__interval', 'increase', !isInternetTotalGraph), legendFormat: `{{ hostname }} ({{ ip_addr }})` }],
     defaultUnit: Unit.BYTES_SI,
     thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
     type: 'bar',
     options: { legend: { calcs: ['sum'], placement: 'bottom' } },
   })
 
-const dataRateTimeSeriesPanel = (title: string, labels: string, ipLabel: string) =>
+const dataRateTimeSeriesPanel = (title: string, labels: string, ipLabel: string, isInternetTotalGraph: boolean = false) =>
   NewTimeSeriesPanel({
     title,
-    targets: [{ expr: `sum by(${ipLabel}) (rate(router_monitor_bytes_total{${labels},instance=~"$instance"}[$__rate_interval] > 0))`, legendFormat: `{{ ${ipLabel} }}` }],
+    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel, '$__rate_interval', 'rate', !isInternetTotalGraph), legendFormat: `{{ hostname }} ({{ ip_addr }})` }],
     defaultUnit: Unit.BYTES_PER_SEC_SI,
     thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
-    options: { legend: { calcs: ['sum'], placement: 'bottom' } },
+    options: { legend: { calcs: ['mean', 'min', 'max'], placement: 'bottom' } },
   })
 
 const networkTrafficPanels: PanelRow[] = [
@@ -90,10 +94,10 @@ const networkTrafficPanels: PanelRow[] = [
   ]),
   NewPanelRow({ datasource, height: 10 }, [
     // prettier hack
-    totalBytesTimeSeriesPanel('Total bytes downloaded', 'dst=~"$localips",src=~"internet"', 'src'),
-    totalBytesTimeSeriesPanel('Total bytes uploaded', 'src=~"$localips",dst=~"internet"', 'dst'),
-    dataRateTimeSeriesPanel('Download Data Rate', 'dst=~"$localips",src=~"internet"', 'src'),
-    dataRateTimeSeriesPanel('Upload Data Rate', 'src=~"$localips",dst=~"internet"', 'dst'),
+    totalBytesTimeSeriesPanel('Total bytes downloaded', 'dst=~"$localips",src=~"internet"', 'src', true),
+    totalBytesTimeSeriesPanel('Total bytes uploaded', 'src=~"$localips",dst=~"internet"', 'dst', true),
+    dataRateTimeSeriesPanel('Download Data Rate', 'dst=~"$localips",src=~"internet"', 'src', true),
+    dataRateTimeSeriesPanel('Upload Data Rate', 'src=~"$localips",dst=~"internet"', 'dst', true),
   ]),
 ]
 
@@ -158,9 +162,9 @@ const panels: PanelRowAndGroups = [
         },
       }),
       NewStatPanel({
-        title: 'DHCP Leases',
-        description: 'Number of DHCP leases handed out',
-        targets: [{ expr: 'router_monitor_dnsmasq_leases{instance=~"$instance"}' }],
+        title: 'No. of devices',
+        description: 'Number of devices connected',
+        targets: [{ expr: 'count(router_monitor_arp_devices{instance=~"$instance"})' }],
         defaultUnit: Unit.SHORT,
       }),
       NewBarGaugePanel({
@@ -230,51 +234,42 @@ const panels: PanelRowAndGroups = [
   ]),
   NewPanelRow({ datasource, height: 12 }, [
     NewTablePanel({
-      title: 'DHCP Leases',
-      targets: [{ expr: 'max(router_monitor_dnsmasq_lease_info{instance=~"$instance"}) by (devicename, ip, mac) * 1000', format: 'table' }],
+      title: 'Connected Devices',
+      targets: [{ expr: 'label_del(router_monitor_arp_devices + on(ip_addr) group_left(hostname) router_monitor_hostnames, "job", "instance")', format: 'table', type: 'instant' }],
       options: { cellHeight: TableCellHeight.Sm },
       overrides: [
         {
-          matcher: { id: 'byName', options: 'Expires At' },
-          properties: [{ id: 'unit', value: 'dateTimeAsLocalNoDateIfToday' }],
-        },
-        {
-          matcher: { id: 'byName', options: 'Expires' },
-          properties: [{ id: 'unit', value: 'dateTimeFromNow' }],
+          matcher: { id: 'byName', options: 'Flags' },
+          properties: [
+            {
+              id: 'mappings',
+              value: [
+                {
+                  type: 'value',
+                  options: {
+                    '0x0': { text: 'INVALID', color: 'red', index: 0 },
+                    '0x2': { text: 'VALID', color: 'green', index: 1 },
+                  },
+                },
+              ],
+            },
+            { id: 'custom.cellOptions', value: { type: 'color-background' } },
+          ],
         },
       ],
       transformations: [
         {
-          id: 'groupBy',
-          options: {
-            fields: {
-              Time: { aggregations: [], operation: null },
-              devicename: { aggregations: [], operation: 'groupby' },
-              ip: { aggregations: [], operation: 'groupby' },
-              mac: { aggregations: [], operation: 'groupby' },
-              Value: { aggregations: ['lastNotNull'], operation: 'aggregate' },
-            },
-          },
-        },
-        {
           id: 'organize',
           options: {
-            indexByName: { devicename: 0, mac: 1, ip: 2, 'Value (lastNotNull)': 3 },
+            excludeByName: tableExcludeByName(['Value', 'Time']),
+            indexByName: tableIndexByName(['flags', 'hostname', 'ip_addr', 'hw_addr', 'device']),
             renameByName: {
-              devicename: 'Device Name',
-              mac: 'Mac Address',
-              ip: 'IP Address',
-              'Value (lastNotNull)': 'Expires At',
+              hostname: 'Hostname',
+              device: 'Interface',
+              hw_addr: 'Mac Address',
+              ip_addr: 'IP Address',
+              flags: 'Flags',
             },
-          },
-        },
-        {
-          id: 'calculateField',
-          options: {
-            mode: 'binary',
-            reduce: { reducer: 'lastNotNull', include: ['Expires At'] },
-            binary: { left: 'Expires At', reducer: 'sum', right: '0' },
-            alias: 'Expires',
           },
         },
       ],
@@ -287,10 +282,9 @@ const dashboard: Dashboard = {
   ...defaultDashboard,
   description: 'Dashboard for Router Monitor',
   graphTooltip: DashboardCursorSync.Crosshair,
-  style: 'dark',
   tags: ['router-monitor'],
   time: {
-    from: 'now-6h',
+    from: 'now-24h',
     to: 'now',
   },
   title: 'Router Monitor',

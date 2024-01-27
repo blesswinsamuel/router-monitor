@@ -16,6 +16,23 @@ tasks:
       DDNS_CLOUDFLARE_DOMAIN: "op://Private/Dev Creds/DDNS_CLOUDFLARE_DOMAIN"
       DDNS_CLOUDFLARE_RECORD: "op://Private/Dev Creds/DDNS_CLOUDFLARE_RECORD"
 
+  # NIXPKGS_ALLOW_INSECURE=1 nix-shell -p openssl_1_1 libgcc autoPatchelfHook --run 'autoPatchelf /tmp/router-monitor'
+  run-on-router:
+    cmd: >-
+      op run --no-masking -- sh -c 'echo /tmp/router-monitor \
+        --bind-addr 0.0.0.0:9155 \
+        --interface lan \
+        --ddns-cloudflare-api-token $DDNS_CLOUDFLARE_API_TOKEN \
+        --ddns-cloudflare-email $DDNS_CLOUDFLARE_EMAIL \
+        --ddns-cloudflare-domain $DDNS_CLOUDFLARE_DOMAIN \
+        --ddns-cloudflare-record $DDNS_CLOUDFLARE_RECORD \
+      '
+    env:
+      DDNS_CLOUDFLARE_API_TOKEN: "op://Private/Dev Creds/DDNS_CLOUDFLARE_API_TOKEN"
+      DDNS_CLOUDFLARE_EMAIL: "op://Private/Dev Creds/DDNS_CLOUDFLARE_EMAIL"
+      DDNS_CLOUDFLARE_DOMAIN: "op://Private/Dev Creds/DDNS_CLOUDFLARE_DOMAIN"
+      DDNS_CLOUDFLARE_RECORD: "op://Private/Dev Creds/DDNS_CLOUDFLARE_RECORD"
+
   build: |
     cross build --release --target aarch64-unknown-linux-gnu
 
@@ -29,6 +46,6 @@ tasks:
     chmod +x /tmp/router-monitor
 
     # ssh router "sudo killall -9 /tmp/router-monitor || true"
-    scp /tmp/router-monitor router:/tmp/router-monitor
+    scp /tmp/router-monitor root@router:/tmp/router-monitor
     # ssh router "sudo -E /tmp/router-monitor -listen 0.0.0.0:9156 -interface lan -bpf 'src net 192.168.1.0/24 or dst net 192.168.1.0/24'"
     # ssh router "sudo -E /tmp/router-monitor --bind-addr 0.0.0.0:9156 --interface lan"
