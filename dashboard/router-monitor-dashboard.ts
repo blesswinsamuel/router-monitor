@@ -236,7 +236,13 @@ const panels: PanelRowAndGroups = [
     NewTablePanel({
       title: 'Connected Devices',
       targets: [{ expr: 'label_del(router_monitor_arp_devices + on(ip_addr) group_left(hostname) router_monitor_hostnames, "job", "instance")', format: 'table', type: 'instant' }],
-      options: { cellHeight: TableCellHeight.Sm },
+      options: {
+        cellHeight: TableCellHeight.Sm,
+        sortBy: [
+          { displayName: 'Flags', desc: true },
+          { displayName: 'IP Address', desc: false },
+        ],
+      },
       overrides: [
         {
           matcher: { id: 'byName', options: 'Flags' },
