@@ -34,8 +34,8 @@ label_replace(
 )` +
   (extraFields
     ? `
-+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices
-+ on(ip_addr) group_left(hostname) router_monitor_hostnames
++ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~"$instance"}
++ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~"$instance"}
 `
     : '')
 
@@ -44,15 +44,6 @@ const totalBytesByLocalIPPieChartPanel = (uploadOrDownload: string, labels: stri
     title: `Total Bytes ${uploadOrDownload}ed - by local IP (pie chart)`,
     targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel), legendFormat: '{{ hostname }} ({{ ip_addr }})', type: 'instant' }],
     defaultUnit: Unit.BYTES_SI,
-  })
-
-const totalBytesByLocalIPBarGaugePanel = (uploadOrDownload: string, labels: string, ipLabel: string) =>
-  NewBarGaugePanel({
-    title: `Total Bytes ${uploadOrDownload}ed - by local IP (bar gauge)`,
-    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel), legendFormat: '{{ hostname }} ({{ ip_addr }})', type: 'instant' }],
-    defaultUnit: Unit.BYTES_SI,
-    thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
-    options: { orientation: VizOrientation.Horizontal },
   })
 
 const totalBytesTimeSeriesPanel = (title: string, labels: string, ipLabel: string, isInternetTotalGraph: boolean = false) =>
@@ -79,11 +70,6 @@ const networkTrafficPanels: PanelRow[] = [
     // prettier hack
     totalBytesByLocalIPPieChartPanel('Download', 'dst=~"$localips",src=~"internet"', 'dst'),
     totalBytesByLocalIPPieChartPanel('Upload', 'src=~"$localips",dst=~"internet"', 'src'),
-  ]),
-  NewPanelRow({ datasource, height: 12 }, [
-    // prettier hack
-    totalBytesByLocalIPBarGaugePanel('Download', 'dst=~"$localips",src=~"internet"', 'dst'),
-    totalBytesByLocalIPBarGaugePanel('Upload', 'src=~"$localips",dst=~"internet"', 'src'),
   ]),
   NewPanelRow({ datasource, height: 12 }, [
     // prettier hack
@@ -235,39 +221,58 @@ const panels: PanelRowAndGroups = [
   NewPanelRow({ datasource, height: 12 }, [
     NewTablePanel({
       title: 'Connected Devices',
-      targets: [{ expr: 'label_del(router_monitor_arp_devices + on(ip_addr) group_left(hostname) router_monitor_hostnames, "job", "instance")', format: 'table', type: 'instant' }],
+      targets: [
+        { expr: 'label_del(router_monitor_arp_devices{instance=~"$instance"} + on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~"$instance"}, "job", "instance")', format: 'table', type: 'instant' },
+        {
+          expr: 'label_move(sum by (dst) (increase(router_monitor_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]) > 0), "dst", "ip_addr")',
+          format: 'table',
+          type: 'instant',
+        },
+        {
+          expr: 'label_move(sum by (src) (increase(router_monitor_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]) > 0), "src", "ip_addr")',
+          format: 'table',
+          type: 'instant',
+        },
+      ],
       options: {
         cellHeight: TableCellHeight.Sm,
-        sortBy: [
-          { displayName: 'Flags', desc: true },
-          { displayName: 'IP Address', desc: false },
-        ],
+        sortBy: [{ displayName: 'Downloaded', desc: true }],
       },
+      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
       overrides: [
         {
           matcher: { id: 'byName', options: 'Flags' },
           properties: [
-            {
-              id: 'mappings',
-              value: [
-                {
-                  type: 'value',
-                  options: {
-                    '0x0': { text: 'INVALID', color: 'red', index: 0 },
-                    '0x2': { text: 'VALID', color: 'green', index: 1 },
-                  },
-                },
-              ],
-            },
+            { id: 'mappings', value: [{ type: 'value', options: { '0x0': { text: 'INVALID', color: 'red', index: 0 }, '0x2': { text: 'VALID', color: 'green', index: 1 } } }] },
             { id: 'custom.cellOptions', value: { type: 'color-background' } },
+            { id: 'custom.width', value: 75 },
           ],
         },
+        {
+          matcher: { id: 'byName', options: 'Downloaded' },
+          properties: [
+            { id: 'unit', value: Unit.BYTES_SI },
+            { id: 'custom.cellOptions', value: { type: 'gauge', mode: 'basic', valueDisplayMode: 'text' } },
+          ],
+        },
+        {
+          matcher: { id: 'byName', options: 'Uploaded' },
+          properties: [
+            { id: 'unit', value: Unit.BYTES_SI },
+            { id: 'custom.cellOptions', value: { type: 'gauge', mode: 'basic', valueDisplayMode: 'text' } },
+          ],
+        },
+        { matcher: { id: 'byName', options: 'Hostname' }, properties: [{ id: 'custom.width', value: 240 }] },
+        { matcher: { id: 'byName', options: 'IP Address' }, properties: [{ id: 'custom.width', value: 180 }] },
+        { matcher: { id: 'byName', options: 'Mac Address' }, properties: [{ id: 'custom.width', value: 180 }] },
+        { matcher: { id: 'byName', options: 'Interface' }, properties: [{ id: 'custom.width', value: 100 }] },
       ],
       transformations: [
+        { id: 'joinByField', options: { byField: 'ip_addr', mode: 'outer' } },
         {
           id: 'organize',
           options: {
-            excludeByName: tableExcludeByName(['Value', 'Time']),
+            excludeByName: tableExcludeByName(['Value #A', 'Time']),
             indexByName: tableIndexByName(['flags', 'hostname', 'ip_addr', 'hw_addr', 'device']),
             renameByName: {
               hostname: 'Hostname',
@@ -275,6 +280,8 @@ const panels: PanelRowAndGroups = [
               hw_addr: 'Mac Address',
               ip_addr: 'IP Address',
               flags: 'Flags',
+              'Value #B': 'Downloaded',
+              'Value #C': 'Uploaded',
             },
           },
         },

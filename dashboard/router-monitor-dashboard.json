@@ -604,19 +604,42 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "label_del(router_monitor_arp_devices + on(ip_addr) group_left(hostname) router_monitor_hostnames, \"job\", \"instance\")",
+          "expr": "label_del(router_monitor_arp_devices{instance=~\"$instance\"} + on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}, \"job\", \"instance\")",
           "range": false,
           "instant": true,
           "format": "table",
           "refId": "A"
+        },
+        {
+          "editorMode": "code",
+          "expr": "label_move(sum by (dst) (increase(router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"dst\", \"ip_addr\")",
+          "range": false,
+          "instant": true,
+          "format": "table",
+          "refId": "B"
+        },
+        {
+          "editorMode": "code",
+          "expr": "label_move(sum by (src) (increase(router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"src\", \"ip_addr\")",
+          "range": false,
+          "instant": true,
+          "format": "table",
+          "refId": "C"
         }
       ],
       "transformations": [
         {
+          "id": "joinByField",
+          "options": {
+            "byField": "ip_addr",
+            "mode": "outer"
+          }
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Value": true,
+              "Value #A": true,
               "Time": true
             },
             "indexByName": {
@@ -631,7 +654,9 @@
               "device": "Interface",
               "hw_addr": "Mac Address",
               "ip_addr": "IP Address",
-              "flags": "Flags"
+              "flags": "Flags",
+              "Value #B": "Downloaded",
+              "Value #C": "Uploaded"
             }
           }
         }
@@ -649,7 +674,17 @@
         "h": 12
       },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
         "overrides": [
           {
             "matcher": {
@@ -682,6 +717,98 @@
                 "value": {
                   "type": "color-background"
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 75
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Downloaded"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Uploaded"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic",
+                  "valueDisplayMode": "text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 240
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "IP Address"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mac Address"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Interface"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
               }
             ]
           }
@@ -693,12 +820,8 @@
         "showHeader": true,
         "sortBy": [
           {
-            "displayName": "Flags",
+            "displayName": "Downloaded",
             "desc": true
-          },
-          {
-            "displayName": "IP Address",
-            "desc": false
           }
         ]
       }
@@ -722,7 +845,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -783,7 +906,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -844,133 +967,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": false,
-          "instant": true,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "bargauge",
-      "title": "Total Bytes Downloaded - by local IP (bar gauge)",
-      "gridPos": {
-        "x": 0,
-        "y": 35,
-        "w": 12,
-        "h": 12
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "valueMode": "color",
-        "showUnfilled": true,
-        "namePlacement": "left",
-        "sizing": "manual",
-        "minVizWidth": 0,
-        "minVizHeight": 15,
-        "maxVizHeight": 300,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": false,
-          "instant": true,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "bargauge",
-      "title": "Total Bytes Uploaded - by local IP (bar gauge)",
-      "gridPos": {
-        "x": 12,
-        "y": 35,
-        "w": 12,
-        "h": 12
-      },
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "decbytes"
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "horizontal",
-        "displayMode": "basic",
-        "valueMode": "color",
-        "showUnfilled": true,
-        "namePlacement": "left",
-        "sizing": "manual",
-        "minVizWidth": 0,
-        "minVizHeight": 15,
-        "maxVizHeight": 300,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -987,7 +984,7 @@
       "title": "Total bytes downloaded - by local IP",
       "gridPos": {
         "x": 0,
-        "y": 47,
+        "y": 35,
         "w": 6,
         "h": 12
       },
@@ -1063,7 +1060,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1080,7 +1077,7 @@
       "title": "Total bytes uploaded - by local IP",
       "gridPos": {
         "x": 6,
-        "y": 47,
+        "y": 35,
         "w": 6,
         "h": 12
       },
@@ -1156,7 +1153,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1173,7 +1170,7 @@
       "title": "Download Data Rate - by local IP",
       "gridPos": {
         "x": 12,
-        "y": 47,
+        "y": 35,
         "w": 6,
         "h": 12
       },
@@ -1251,7 +1248,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1268,7 +1265,7 @@
       "title": "Upload Data Rate - by local IP",
       "gridPos": {
         "x": 18,
-        "y": 47,
+        "y": 35,
         "w": 6,
         "h": 12
       },
@@ -1363,7 +1360,7 @@
       "title": "Total bytes downloaded",
       "gridPos": {
         "x": 0,
-        "y": 59,
+        "y": 47,
         "w": 6,
         "h": 10
       },
@@ -1456,7 +1453,7 @@
       "title": "Total bytes uploaded",
       "gridPos": {
         "x": 6,
-        "y": 59,
+        "y": 47,
         "w": 6,
         "h": 10
       },
@@ -1549,7 +1546,7 @@
       "title": "Download Data Rate",
       "gridPos": {
         "x": 12,
-        "y": 59,
+        "y": 47,
         "w": 6,
         "h": 10
       },
@@ -1644,7 +1641,7 @@
       "title": "Upload Data Rate",
       "gridPos": {
         "x": 18,
-        "y": 59,
+        "y": 47,
         "w": 6,
         "h": 10
       },
