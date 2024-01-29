@@ -62,9 +62,15 @@ impl Arp {
         // let router_hostname = router_hostname.to_str().unwrap();
         // log::info!("router_hostname: {}", router_hostname);
         // let domain_name = router_hostname.split('.').collect::<Vec<_>>()[1..].join(".");
+        self.update("/proc/net/arp").await
+    }
+
+    async fn update(&self, filename: &str) -> Result<()> {
+        let f = File::open(filename).await?;
+
         log::debug!("Updating arp metrics");
         let domain_name = ".home.local";
-        let f = File::open("/proc/net/arp").await?;
+
         let mut scanner = BufReader::new(f).lines();
         self.registry.arp_devices.clear();
         self.registry.hostnames.clear();
@@ -90,9 +96,7 @@ impl Arp {
                     host
                 }
             };
-            let flags = arr[2].to_string();
-            let flags = format!("{}f", flags.trim_start_matches("0x"));
-            let flags = i64::from_str_radix(&flags, 16).unwrap_or(-1);
+            let flags = i64::from_str_radix(arr[2].trim_start_matches("0x"), 16).unwrap_or(-1);
             self.registry
                 .arp_devices
                 .get_or_create(&ArpDeviceLabels { ip_addr: ip_addr.to_string(), hw_addr: hw_addr.to_string(), device: arr[5].to_string() })
@@ -103,6 +107,27 @@ impl Arp {
                 .set(1);
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // use super::*;
+    // use std::fs::File;
+    // use std::io::Write;
+
+    #[tokio::test]
+    async fn test_process_arp() {
+        // let mut file = File::create("/tmp/test_arp").unwrap();
+        // writeln!(file, "192.168.1.15     0x1         0x0         00:00:00:00:00:00     *        lan").unwrap();
+        // writeln!(file, "192.168.1.106    0x1         0x2         90:11:95:3e:cf:5d     *        lan").unwrap();
+        // let arp = Arp::new();
+        // arp.update("/tmp/test_arp").await.unwrap();
+
+        let flags = "0x1".to_string();
+        let flags = format!("{}", flags.trim_start_matches("0x"));
+        let flags = i64::from_str_radix(&flags, 16).unwrap_or(-1);
+        assert_eq!(flags, 1);
     }
 }
 
