@@ -28,10 +28,9 @@ impl InternetCheck {
     }
 
     pub async fn start(&self) {
-        let ticker = crossbeam::channel::tick(Duration::from_secs(10));
-        self.is_internet_connection_up().await;
+        let mut ticker = tokio::time::interval(Duration::from_secs(10));
         loop {
-            let _ = ticker.recv();
+            let _ = ticker.tick().await;
             self.is_internet_connection_up().await;
         }
     }
@@ -55,6 +54,7 @@ impl InternetCheck {
             "208.67.222.222:53",
             "9.9.9.9:53",
         ];
+        log::debug!("Checking if internet connection is up.");
         for addr in addrs.iter() {
             let labels = &InternetUpLabels { addr: addr.to_string() };
             match tokio::time::timeout(Duration::from_secs(2), TcpStream::connect(addr)).await {
