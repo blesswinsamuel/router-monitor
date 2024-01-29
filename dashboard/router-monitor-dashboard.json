@@ -23,7 +23,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "router_monitor_internet_connection_is_up{instance=~\"$instance\"}",
+          "expr": "max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -100,7 +100,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "(1 - avg_over_time(router_monitor_internet_connection_is_up{instance=~\"$instance\"}[$__range])) * $__range_s",
+          "expr": "(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})[$__range])) * $__range_s",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -114,6 +114,8 @@
       },
       "type": "stat",
       "title": "Internet Downtime",
+      "interval": "1m",
+      "maxDataPoints": 1000,
       "gridPos": {
         "x": 4,
         "y": 1,
@@ -165,7 +167,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "avg(rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -201,7 +203,7 @@
               },
               {
                 "color": "red",
-                "value": 0.2
+                "value": 0.3
               }
             ]
           },
@@ -213,7 +215,7 @@
         "reduceOptions": {
           "values": false,
           "calcs": [
-            "mean"
+            "lastNotNull"
           ],
           "fields": ""
         },
@@ -303,7 +305,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "count(router_monitor_arp_devices{instance=~\"$instance\"})",
+          "expr": "count(last_over_time((router_monitor_arp_devices{instance=~\"$instance\"} == 2)[$__range]))",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -459,8 +461,8 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval])/\nrate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
-          "legendFormat": "average",
+          "expr": "rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
+          "legendFormat": "{{ addr }} average",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -468,7 +470,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "1 - router_monitor_internet_connection_is_up{instance=~\"$instance\"}",
+          "expr": "1 - max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
           "legendFormat": "down",
           "range": true,
           "instant": false,
@@ -501,10 +503,11 @@
       },
       "type": "timeseries",
       "title": "Connection Latency",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 24,
+        "w": 12,
         "h": 6
       },
       "fieldConfig": {
@@ -594,8 +597,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -604,7 +606,89 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "label_del(router_monitor_arp_devices{instance=~\"$instance\"} + on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}, \"job\", \"instance\")",
+          "expr": "1 - router_monitor_internet_connection_is_up{instance=~\"$instance\"}",
+          "legendFormat": "{{ addr }} down",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "refId": "A"
+        }
+      ],
+      "transformations": [],
+      "transparent": false,
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "type": "timeseries",
+      "title": "Connection down",
+      "maxDataPoints": 100,
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "links": [],
+      "repeatDirection": "h",
+      "tags": [],
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "last_over_time(sum by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"})[$__range]) * on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (router_monitor_hostnames{instance=~\"$instance\"})[$__range])",
           "range": false,
           "instant": true,
           "format": "table",
@@ -639,22 +723,20 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Value #A": true,
               "Time": true
             },
             "indexByName": {
-              "flags": 0,
-              "hostname": 1,
-              "ip_addr": 2,
-              "hw_addr": 3,
-              "device": 4
+              "hostname": 0,
+              "ip_addr": 1,
+              "hw_addr": 2,
+              "device": 3
             },
             "renameByName": {
               "hostname": "Hostname",
               "device": "Interface",
               "hw_addr": "Mac Address",
               "ip_addr": "IP Address",
-              "flags": "Flags",
+              "Value #A": "Flags",
               "Value #B": "Downloaded",
               "Value #C": "Uploaded"
             }
@@ -698,12 +780,12 @@
                   {
                     "type": "value",
                     "options": {
-                      "0x0": {
+                      "0": {
                         "text": "INVALID",
                         "color": "red",
                         "index": 0
                       },
-                      "0x2": {
+                      "2": {
                         "text": "VALID",
                         "color": "green",
                         "index": 1
@@ -845,7 +927,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__range]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__range])\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -906,7 +988,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__range]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__range])\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -967,7 +1049,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__interval])\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -982,6 +1064,7 @@
       },
       "type": "timeseries",
       "title": "Total bytes downloaded - by local IP",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 0,
         "y": 35,
@@ -1050,8 +1133,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1060,7 +1142,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__interval])\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1075,6 +1157,7 @@
       },
       "type": "timeseries",
       "title": "Total bytes uploaded - by local IP",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 6,
         "y": 35,
@@ -1143,8 +1226,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1153,7 +1235,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__rate_interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__rate_interval])\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1168,6 +1250,7 @@
       },
       "type": "timeseries",
       "title": "Download Data Rate - by local IP",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 12,
         "y": 35,
@@ -1238,8 +1321,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1248,7 +1330,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~\"$instance\"}\n+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~\"$instance\"}\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__rate_interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__rate_interval])\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1263,6 +1345,7 @@
       },
       "type": "timeseries",
       "title": "Upload Data Rate - by local IP",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 18,
         "y": 35,
@@ -1333,8 +1416,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1358,6 +1440,7 @@
       },
       "type": "timeseries",
       "title": "Total bytes downloaded",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 0,
         "y": 47,
@@ -1426,8 +1509,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1451,6 +1533,7 @@
       },
       "type": "timeseries",
       "title": "Total bytes uploaded",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 6,
         "y": 47,
@@ -1519,8 +1602,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1544,6 +1626,7 @@
       },
       "type": "timeseries",
       "title": "Download Data Rate",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 12,
         "y": 47,
@@ -1614,8 +1697,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     },
     {
       "links": [],
@@ -1639,6 +1721,7 @@
       },
       "type": "timeseries",
       "title": "Upload Data Rate",
+      "maxDataPoints": 100,
       "gridPos": {
         "x": 18,
         "y": 47,
@@ -1709,8 +1792,7 @@
           "mode": "multi",
           "sort": "desc"
         }
-      },
-      "maxDataPoints": 100
+      }
     }
   ],
   "schemaVersion": 36,
