@@ -21,7 +21,6 @@ struct ArpDeviceLabels {
     ip_addr: String,
     hw_addr: String,
     device: String,
-    flags: String,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
@@ -63,6 +62,7 @@ impl Arp {
         // let router_hostname = router_hostname.to_str().unwrap();
         // log::info!("router_hostname: {}", router_hostname);
         // let domain_name = router_hostname.split('.').collect::<Vec<_>>()[1..].join(".");
+        log::debug!("Updating arp metrics");
         let domain_name = ".home.local";
         let f = File::open("/proc/net/arp").await?;
         let mut scanner = BufReader::new(f).lines();
@@ -83,21 +83,20 @@ impl Arp {
             let host = match host_cache.get(&ip_addr) {
                 Some(v) => v.clone(),
                 None => {
+                    log::debug!("Looking up hostname of {}", ip_addr);
                     let host = dns_lookup::lookup_addr(&ip_parsed).unwrap_or("unknown".to_string());
                     let host = host.strip_suffix(&domain_name).unwrap_or(&host).to_string();
                     host_cache.insert(ip_addr.clone(), host.clone(), Duration::from_secs(60 * 60));
                     host
                 }
             };
+            let flags = arr[2].to_string();
+            let flags = format!("{}f", flags.trim_start_matches("0x"));
+            let flags = i64::from_str_radix(&flags, 16).unwrap_or(-1);
             self.registry
                 .arp_devices
-                .get_or_create(&ArpDeviceLabels {
-                    ip_addr: ip_addr.to_string(),
-                    hw_addr: hw_addr.to_string(),
-                    flags: arr[2].to_string(),
-                    device: arr[5].to_string(),
-                })
-                .set(1);
+                .get_or_create(&ArpDeviceLabels { ip_addr: ip_addr.to_string(), hw_addr: hw_addr.to_string(), device: arr[5].to_string() })
+                .set(flags);
             self.registry
                 .hostnames
                 .get_or_create(&ArpDeviceHostnameLabels { ip_addr: ip_addr.to_string(), hostname: host.to_string() })

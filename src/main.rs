@@ -127,7 +127,7 @@ async fn main() {
 
         tracing::debug!("listening on {}", args.bind_addr.to_string());
         let listener = tokio::net::TcpListener::bind(args.bind_addr.clone()).await.unwrap();
-        axum::serve(listener, app.into_make_service()).await.unwrap();
+        axum::serve(listener, app).await.unwrap();
     }
 }
 
