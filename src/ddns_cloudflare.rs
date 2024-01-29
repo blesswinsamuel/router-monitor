@@ -69,14 +69,14 @@ impl DdnsCloudflare {
         registry.register("router_monitor_ddns_cloudflare_current_ip", "Current IP", self.metric_current_ip.clone());
     }
 
-    pub fn start(&self) -> Result<()> {
-        self.validate_api_token().context("validate_api_token failed")?;
-        let zone_id = self.get_zone_id().context("get_zone_id failed")?;
+    pub async fn start(&self) -> Result<()> {
+        self.validate_api_token().await.context("validate_api_token failed")?;
+        let zone_id = self.get_zone_id().await.context("get_zone_id failed")?;
         log::info!("cloudflare zone id: {}", zone_id);
-        let mut current_dns_record = self.get_dns_record(&zone_id).context("get_dns_record failed")?;
+        let mut current_dns_record = self.get_dns_record(&zone_id).await.context("get_dns_record failed")?;
         log::info!("current cloudflare dns record: {:?}", current_dns_record);
         loop {
-            match self.update_ip(zone_id.clone(), current_dns_record.clone()) {
+            match self.update_ip(zone_id.clone(), current_dns_record.clone()).await {
                 Ok(new_dns_record) => {
                     current_dns_record = new_dns_record;
                 }
@@ -88,8 +88,8 @@ impl DdnsCloudflare {
         }
     }
 
-    fn update_ip(&self, zone_id: String, current_dns_record: Option<DnsRecordResponse>) -> Result<Option<DnsRecordResponse>> {
-        let ip = self.get_my_ip().context("get_ip failed")?;
+    async fn update_ip(&self, zone_id: String, current_dns_record: Option<DnsRecordResponse>) -> Result<Option<DnsRecordResponse>> {
+        let ip = self.get_my_ip().await.context("get_ip failed")?;
         self.metric_current_ip.get_or_create(&CurrentIPLabels { current_ip: ip.clone() }).set(1);
         log::debug!("my_ip: {:?}", ip);
         let new_record = DnsRecordRequest {
@@ -102,7 +102,7 @@ impl DdnsCloudflare {
         log::debug!("new_record: {:?}", new_record);
         match current_dns_record {
             None => {
-                let created_record = self.create_dns_record(&zone_id, &new_record).context("create_dns_record failed")?;
+                let created_record = self.create_dns_record(&zone_id, &new_record).await.context("create_dns_record failed")?;
                 log::info!("created dns record: {:?}", created_record);
                 return Ok(Some(created_record));
             }
@@ -112,7 +112,8 @@ impl DdnsCloudflare {
                     || dns_record.proxied != new_record.proxied
                     || dns_record.record_type != new_record.record_type =>
             {
-                let updated_record = self.update_dns_record(&zone_id, &dns_record.id, &new_record).context("update_dns_record failed")?;
+                let updated_record =
+                    self.update_dns_record(&zone_id, &dns_record.id, &new_record).await.context("update_dns_record failed")?;
                 log::info!("updated dns record: {:?}", updated_record);
                 return Ok(Some(updated_record));
             }
@@ -123,41 +124,43 @@ impl DdnsCloudflare {
         };
     }
 
-    fn get_my_ip(&self) -> Result<String> {
-        let client = reqwest::blocking::Client::new();
-        let resp = client.get("https://api.ipify.org").send().context("request failed")?;
+    async fn get_my_ip(&self) -> Result<String> {
+        let client = reqwest::Client::new();
+        let resp = client.get("https://api.ipify.org").send().await.context("request failed")?;
         if !resp.status().is_success() {
-            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text()?));
+            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text().await?));
         }
-        Ok(resp.text()?)
+        Ok(resp.text().await?)
     }
 
-    fn validate_api_token(&self) -> Result<()> {
-        let client = reqwest::blocking::Client::new();
+    async fn validate_api_token(&self) -> Result<()> {
+        let client = reqwest::Client::new();
         let resp = client
             .get("https://api.cloudflare.com/client/v4/user/tokens/verify")
             .header("X-Auth-Email", self.ddns_cloudflare_email.clone())
             .header("Authorization", format!("Bearer {}", self.ddns_cloudflare_api_token))
             .header("Content-Type", "application/json")
             .send()
+            .await
             .context("request failed")?;
         if !resp.status().is_success() {
-            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text()?));
+            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text().await?));
         }
         Ok(())
     }
 
-    fn get_zone_id(&self) -> Result<String> {
-        let client = reqwest::blocking::Client::new();
+    async fn get_zone_id(&self) -> Result<String> {
+        let client = reqwest::Client::new();
         let resp = client
             .get(format!("https://api.cloudflare.com/client/v4/zones?name={}", self.ddns_cloudflare_domain))
             .header("X-Auth-Email", self.ddns_cloudflare_email.clone())
             .header("Authorization", format!("Bearer {}", self.ddns_cloudflare_api_token))
             .header("Content-Type", "application/json")
             .send()
+            .await
             .context("request failed")?;
         if !resp.status().is_success() {
-            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text()?));
+            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text().await?));
         }
         #[derive(Serialize, Deserialize, Debug)]
         struct ZoneResponseResult {
@@ -167,7 +170,7 @@ impl DdnsCloudflare {
         struct ZoneResponse {
             result: Vec<ZoneResponseResult>,
         }
-        let body = resp.json::<serde_json::Value>().context("failed to parse zone id response")?;
+        let body = resp.json::<serde_json::Value>().await.context("failed to parse zone id response")?;
         let body =
             serde_json::from_value::<ZoneResponse>(body.clone()).context("failed to parse zone id response into ZoneResponse struct")?;
         if body.result.len() == 0 {
@@ -176,67 +179,70 @@ impl DdnsCloudflare {
         Ok(body.result[0].id.clone())
     }
 
-    fn get_dns_record(&self, zone_id: &str) -> Result<Option<DnsRecordResponse>> {
-        let client = reqwest::blocking::Client::new();
+    async fn get_dns_record(&self, zone_id: &str) -> Result<Option<DnsRecordResponse>> {
+        let client = reqwest::Client::new();
         let resp = client
             .get(format!("https://api.cloudflare.com/client/v4/zones/{}/dns_records?name={}", zone_id, self.ddns_cloudflare_record))
             .header("X-Auth-Email", self.ddns_cloudflare_email.clone())
             .header("Authorization", format!("Bearer {}", self.ddns_cloudflare_api_token))
             .header("Content-Type", "application/json")
             .send()
+            .await
             .context("request failed")?;
         if !resp.status().is_success() {
-            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text()?));
+            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text().await?));
         }
         #[derive(Serialize, Deserialize, Debug)]
         struct DnsRecordResponseWithResult {
             result: Vec<DnsRecordResponse>,
         }
-        let body = resp.json::<serde_json::Value>().context("failed to parse dns record response")?;
+        let body = resp.json::<serde_json::Value>().await.context("failed to parse dns record response")?;
         let body = serde_json::from_value::<DnsRecordResponseWithResult>(body.clone())
             .context("failed to parse dns record response into DnsRecordResponse struct")?;
         return Ok(body.result.first().cloned());
     }
 
-    fn create_dns_record(&self, zone_id: &str, record: &DnsRecordRequest) -> Result<DnsRecordResponse> {
-        let client = reqwest::blocking::Client::new();
+    async fn create_dns_record(&self, zone_id: &str, record: &DnsRecordRequest) -> Result<DnsRecordResponse> {
+        let client = reqwest::Client::new();
         let resp = client
             .post(format!("https://api.cloudflare.com/client/v4/zones/{}/dns_records", zone_id,))
             .header("X-Auth-Email", self.ddns_cloudflare_email.clone())
             .header("Authorization", format!("Bearer {}", self.ddns_cloudflare_api_token))
             .json(record)
             .send()
+            .await
             .context("request failed")?;
         if !resp.status().is_success() {
-            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text()?));
+            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text().await?));
         }
         #[derive(Serialize, Deserialize, Debug)]
         struct DnsRecordResponseWithResult {
             result: DnsRecordResponse,
         }
-        let body = resp.json::<serde_json::Value>().context("failed to parse dns record response")?;
+        let body = resp.json::<serde_json::Value>().await.context("failed to parse dns record response")?;
         let body = serde_json::from_value::<DnsRecordResponseWithResult>(body.clone())
             .context("failed to parse dns record response into DnsRecordResponse struct")?;
         return Ok(body.result);
     }
 
-    fn update_dns_record(&self, zone_id: &str, record_id: &str, record: &DnsRecordRequest) -> Result<DnsRecordResponse> {
-        let client = reqwest::blocking::Client::new();
+    async fn update_dns_record(&self, zone_id: &str, record_id: &str, record: &DnsRecordRequest) -> Result<DnsRecordResponse> {
+        let client = reqwest::Client::new();
         let resp = client
             .put(format!("https://api.cloudflare.com/client/v4/zones/{}/dns_records/{}", zone_id, record_id,))
             .header("X-Auth-Email", self.ddns_cloudflare_email.clone())
             .header("Authorization", format!("Bearer {}", self.ddns_cloudflare_api_token))
             .json(record)
             .send()
+            .await
             .context("request failed")?;
         if !resp.status().is_success() {
-            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text()?));
+            return Err(anyhow::anyhow!("invalid response: {} (body: {:?})", resp.status(), resp.text().await?));
         }
         #[derive(Serialize, Deserialize, Debug)]
         struct DnsRecordResponseWithResult {
             result: DnsRecordResponse,
         }
-        let body = resp.json::<serde_json::Value>().context("failed to parse dns record response")?;
+        let body = resp.json::<serde_json::Value>().await.context("failed to parse dns record response")?;
         let body = serde_json::from_value::<DnsRecordResponseWithResult>(body.clone())
             .context("failed to parse dns record response into DnsRecordResponse struct")?;
         return Ok(body.result);

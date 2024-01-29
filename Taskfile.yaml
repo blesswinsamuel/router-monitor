@@ -3,7 +3,7 @@ version: 3
 tasks:
   run:
     cmd: >
-      op run -- RUST_LOG=debug cargo run --
+      op run -- env RUST_LOG=debug cargo run --
         --bind-addr 0.0.0.0:9155
         --interface eth0
         --ddns-cloudflare-api-token $DDNS_CLOUDFLARE_API_TOKEN
