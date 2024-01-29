@@ -7,6 +7,7 @@ use clap::Parser;
 
 use prometheus_client::encoding::text::encode;
 use prometheus_client::registry::Registry;
+use tokio::task;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -79,8 +80,8 @@ async fn main() {
 
     let internet_check = internet_check::InternetCheck::new();
     internet_check.register(&mut registry);
-    thread::spawn(move || {
-        internet_check.start();
+    task::spawn(async move {
+        internet_check.start().await;
     });
 
     if let (
@@ -104,8 +105,8 @@ async fn main() {
             ddns_cloudflare_ttl.into(),
         );
         ddns_cloudflare.register(&mut registry);
-        thread::spawn(move || {
-            match ddns_cloudflare.start() {
+        task::spawn(async move {
+            match ddns_cloudflare.start().await {
                 Ok(_) => {}
                 Err(e) => {
                     log::error!("ddns_cloudflare error: {:#}", e);
