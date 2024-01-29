@@ -34,8 +34,8 @@ label_replace(
 )` +
   (extraFields
     ? `
-+ on(ip_addr) group_left(hw_addr, device, flags) router_monitor_arp_devices{instance=~"$instance"}
-+ on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~"$instance"}
+* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~"$instance"}[${queryType}]))
+* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~"$instance"}[${queryType}])
 `
     : '')
 
@@ -92,7 +92,7 @@ const panels: PanelRowAndGroups = [
     NewPanelRow({ datasource, height: 3 }, [
       NewStatPanel({
         title: 'Internet',
-        targets: [{ expr: 'router_monitor_internet_connection_is_up{instance=~"$instance"}' }],
+        targets: [{ expr: 'max(router_monitor_internet_connection_is_up{instance=~"$instance"})' }],
         defaultUnit: Unit.SHORT,
         mappings: [{ options: { '0': { text: 'Down' }, '1': { text: 'Up' } }, type: MappingType.ValueToText }],
         thresholds: {
@@ -105,7 +105,7 @@ const panels: PanelRowAndGroups = [
       }),
       NewStatPanel({
         title: 'Internet Downtime',
-        targets: [{ expr: '(1 - avg_over_time(router_monitor_internet_connection_is_up{instance=~"$instance"}[$__range])) * $__range_s' }],
+        targets: [{ expr: '(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~"$instance"})[$__range])) * $__range_s' }],
         thresholds: {
           mode: ThresholdsMode.Absolute,
           steps: [
@@ -114,21 +114,23 @@ const panels: PanelRowAndGroups = [
           ],
         },
         defaultUnit: Unit.SECONDS,
+        interval: '1m',
+        maxDataPoints: 1000,
       }),
       NewStatPanel({
         title: 'Average Connection Latency',
         targets: [
           {
-            expr: 'rate(router_monitor_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval])',
+            expr: 'avg(rate(router_monitor_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval]))',
           },
         ],
-        reduceCalc: 'mean',
+        reduceCalc: 'lastNotNull',
         thresholds: {
           mode: ThresholdsMode.Absolute,
           steps: [
             { color: 'green', value: null },
             { color: '#EAB839', value: 0.1 },
-            { color: 'red', value: 0.2 },
+            { color: 'red', value: 0.3 },
           ],
         },
         defaultUnit: Unit.SECONDS,
@@ -150,7 +152,7 @@ const panels: PanelRowAndGroups = [
       NewStatPanel({
         title: 'No. of devices',
         description: 'Number of devices connected',
-        targets: [{ expr: 'count(router_monitor_arp_devices{instance=~"$instance"})' }],
+        targets: [{ expr: 'count(last_over_time((router_monitor_arp_devices{instance=~"$instance"} == 2)[$__range]))' }],
         defaultUnit: Unit.SHORT,
       }),
       NewBarGaugePanel({
@@ -179,11 +181,11 @@ const panels: PanelRowAndGroups = [
       title: 'Connection Latency',
       targets: [
         {
-          expr: 'rate(router_monitor_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval])/\nrate(router_monitor_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval])',
-          legendFormat: 'average',
+          expr: 'rate(router_monitor_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval])',
+          legendFormat: '{{ addr }} average',
         },
         {
-          expr: '1 - router_monitor_internet_connection_is_up{instance=~"$instance"}',
+          expr: '1 - max(router_monitor_internet_connection_is_up{instance=~"$instance"})',
           legendFormat: 'down',
         },
         // {
@@ -217,12 +219,44 @@ const panels: PanelRowAndGroups = [
         },
       ],
     }),
+    NewTimeSeriesPanel({
+      title: 'Connection down',
+      targets: [
+        {
+          expr: '1 - router_monitor_internet_connection_is_up{instance=~"$instance"}',
+          legendFormat: '{{ addr }} down',
+        },
+      ],
+      type: 'bar',
+      options: {
+        legend: { calcs: [], displayMode: LegendDisplayMode.List },
+      },
+      defaultUnit: Unit.SECONDS,
+      // overrides: [
+      //   {
+      //     matcher: { id: 'byName', options: 'down' },
+      //     properties: [
+      //       { id: 'color', value: { mode: 'fixed', fixedColor: 'red' } },
+      //       { id: 'custom.drawStyle', value: 'bars' },
+      //       { id: 'custom.fillOpacity', value: 100 },
+      //       { id: 'custom.lineWidth', value: 0 },
+      //       { id: 'max', value: 1 },
+      //       { id: 'unit', value: 'short' },
+      //     ],
+      //   },
+      // ],
+    }),
   ]),
   NewPanelRow({ datasource, height: 12 }, [
     NewTablePanel({
       title: 'Connected Devices',
       targets: [
-        { expr: 'label_del(router_monitor_arp_devices{instance=~"$instance"} + on(ip_addr) group_left(hostname) router_monitor_hostnames{instance=~"$instance"}, "job", "instance")', format: 'table', type: 'instant' },
+        {
+          expr: 'last_over_time(sum by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~"$instance"})[$__range]) * on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (router_monitor_hostnames{instance=~"$instance"})[$__range])',
+          // expr: 'sum by (ip_addr, hw_addr, device) (last_over_time(router_monitor_arp_devices{instance=~"$instance"}[$__range])) * on(ip_addr) group_left(hostname) max by (ip_addr, hostname) (last_over_time(router_monitor_hostnames{instance=~"$instance"}[$__range]))',
+          format: 'table',
+          type: 'instant',
+        },
         {
           expr: 'label_move(sum by (dst) (increase(router_monitor_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]) > 0), "dst", "ip_addr")',
           format: 'table',
@@ -243,7 +277,7 @@ const panels: PanelRowAndGroups = [
         {
           matcher: { id: 'byName', options: 'Flags' },
           properties: [
-            { id: 'mappings', value: [{ type: 'value', options: { '0x0': { text: 'INVALID', color: 'red', index: 0 }, '0x2': { text: 'VALID', color: 'green', index: 1 } } }] },
+            { id: 'mappings', value: [{ type: 'value', options: { '0': { text: 'INVALID', color: 'red', index: 0 }, '2': { text: 'VALID', color: 'green', index: 1 } } }] },
             { id: 'custom.cellOptions', value: { type: 'color-background' } },
             { id: 'custom.width', value: 75 },
           ],
@@ -272,14 +306,14 @@ const panels: PanelRowAndGroups = [
         {
           id: 'organize',
           options: {
-            excludeByName: tableExcludeByName(['Value #A', 'Time']),
-            indexByName: tableIndexByName(['flags', 'hostname', 'ip_addr', 'hw_addr', 'device']),
+            excludeByName: tableExcludeByName(['Time']),
+            indexByName: tableIndexByName(['hostname', 'ip_addr', 'hw_addr', 'device']),
             renameByName: {
               hostname: 'Hostname',
               device: 'Interface',
               hw_addr: 'Mac Address',
               ip_addr: 'IP Address',
-              flags: 'Flags',
+              'Value #A': 'Flags',
               'Value #B': 'Downloaded',
               'Value #C': 'Uploaded',
             },
