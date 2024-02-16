@@ -927,7 +927,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__range]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__range])\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -988,7 +988,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__range]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__range])\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -1049,7 +1049,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__interval])\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1142,7 +1142,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__interval])\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1235,7 +1235,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__rate_interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__rate_interval])\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1330,7 +1330,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device) last_over_time(group by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"}[$__rate_interval]))\n* on(ip_addr) group_left(hostname) last_over_time(router_monitor_hostnames{instance=~\"$instance\"}[$__rate_interval])\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
