@@ -1,0 +1,42 @@
+version: 3
+
+tasks:
+  build-setup:
+    cmds:
+      - socat TCP-LISTEN:5555,fork TCP:localhost:22
+      - podman --remote system connection add cloudlab-oracle-arm --identity ~/.ssh/id_ed25519 ssh://root@cloudlab-oracle-arm:5555/run/podman/podman.sock
+      - podman --remote system connection default cloudlab-oracle-arm
+      - podman --log-level=debug --remote info --debug
+      - podman --remote info
+
+  docker-build-generate:
+    cmds:
+      - podman build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate
+
+  docker-build:
+    cmds:
+      - podman build . -t blesswinsamuel/router-monitor
+
+  go-generate:
+    cmds:
+      - podman create blesswinsamuel/router-monitor:generate > /tmp/container_id
+      - defer: rm /tmp/container_id
+      - defer: podman rm -f $(cat /tmp/container_id)
+      - podman cp $(cat /tmp/container_id):/generated/ ./
+      - defer: rm -rf ./generated
+      - cp -r generated/* .
+    deps:
+      - docker-build-generate
+
+  go-build:
+    cmds:
+      - podman build . -t blesswinsamuel/router-monitor
+      - podman create blesswinsamuel/router-monitor > /tmp/container_id
+      - defer: rm /tmp/container_id
+      - defer: podman rm -f $(cat /tmp/container_id)
+      - podman cp $(cat /tmp/container_id):/bin/router-monitor ./
+
+  copy-to-router:
+    cmds:
+      - scp router-monitor root@router:/root/router-monitor
+      - ssh root@router nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/router-monitor'
