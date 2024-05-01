@@ -1,12 +1,13 @@
-BasedOnStyle: LLVM
-UseTab: Never
-IndentWidth: 4
-TabWidth: 4
-BreakBeforeBraces: Allman
-AllowShortIfStatementsOnASingleLine: false
-IndentCaseLabels: false
-ColumnLimit: 0
-AccessModifierOffset: -4
-NamespaceIndentation: All
-FixNamespaceComments: false
+BasedOnStyle: Google
+SortIncludes: Never
+# UseTab: Never
+# IndentWidth: 4
+# TabWidth: 4
+# BreakBeforeBraces: Allman
+# AllowShortIfStatementsOnASingleLine: false
+# IndentCaseLabels: false
+# ColumnLimit: 0
+# AccessModifierOffset: -4
+# NamespaceIndentation: All
+# FixNamespaceComments: false
 CommentPragmas: "^[^ ]" # https://stackoverflow.com/questions/32970045/how-to-prevent-clang-format-to-add-space-after-comment-char
