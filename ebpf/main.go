@@ -8,13 +8,18 @@ import (
 	"time"
 
 	"github.com/cilium/ebpf/link"
-	"github.com/cilium/ebpf/rlimit"
 )
 
 func main() {
-	// Remove resource limits for kernels <5.11.
-	if err := rlimit.RemoveMemlock(); err != nil {
-		log.Fatal("Removing memlock:", err)
+	if len(os.Args) < 2 {
+		log.Fatalf("Please specify a network interface")
+	}
+
+	// Look up the network interface by name.
+	ifaceName := os.Args[1]
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		log.Fatalf("lookup network iface %q: %s", ifaceName, err)
 	}
 
 	// Load the compiled eBPF ELF and load it into the kernel.
@@ -24,23 +29,18 @@ func main() {
 	}
 	defer objs.Close()
 
-	ifname := "lan" // Change this to an interface on your machine.
-	iface, err := net.InterfaceByName(ifname)
-	if err != nil {
-		log.Fatalf("Getting interface %s: %s", ifname, err)
-	}
-
 	// Attach count_packets to the network interface.
 	link, err := link.AttachXDP(link.XDPOptions{
 		Program:   objs.CountPackets,
 		Interface: iface.Index,
 	})
 	if err != nil {
-		log.Fatal("Attaching XDP:", err)
+		log.Fatalf("could not attach XDP program: %s", err)
 	}
 	defer link.Close()
 
-	log.Printf("Counting incoming packets on %s..", ifname)
+	log.Printf("Attached XDP program to iface %q (index %d)", iface.Name, iface.Index)
+	log.Printf("Press Ctrl-C to exit and remove the program")
 
 	// Periodically fetch the packet counter from PktCount,
 	// exit the program when interrupted.
