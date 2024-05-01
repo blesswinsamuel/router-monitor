@@ -2,3 +2,4 @@
 router-monitor
 *_bpfel.o
 *_bpfel.go
+/bin

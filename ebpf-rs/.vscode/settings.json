@@ -1,0 +1,3 @@
+{
+  "rust-analyzer.linkedProjects": ["Cargo.toml", "router-monitor-ebpf/Cargo.toml"]
+}
