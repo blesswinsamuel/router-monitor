@@ -12,7 +12,17 @@ RUN apt-get update && apt-get install -y \
     # pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
+# FROM golang:alpine
+
+# RUN apk add --no-cache \
+#     clang \
+#     llvm \
+#     linux-headers \
+#     libbpf-dev \
+#     ;
+
+# RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
+RUN ln -sf /usr/include/aarch64-linux-gnu/asm/ /usr/include/asm
 
 WORKDIR /src
 
@@ -20,9 +30,11 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY . .
+COPY router_monitor.c gen.go ./
 
 RUN go generate ./...
+
+COPY . .
 
 RUN go build -o /bin/router-monitor
 

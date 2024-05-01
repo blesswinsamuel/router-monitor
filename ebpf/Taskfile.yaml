@@ -39,4 +39,4 @@ tasks:
   copy-to-router:
     cmds:
       - scp router-monitor root@router:/root/router-monitor
-      - ssh root@router nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/router-monitor'
+      - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/router-monitor'"
