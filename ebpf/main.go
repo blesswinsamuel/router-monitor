@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/binary"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -38,6 +40,20 @@ func main() {
 		log.Fatalf("could not attach XDP program: %s", err)
 	}
 	defer link.Close()
+
+	allowedIPs := []string{"192.168.1.10"}
+	for _, ip := range allowedIPs {
+		ipAddr := net.ParseIP(ip)
+		if ipAddr == nil {
+			log.Fatalf("invalid IP address %q", ip)
+		}
+		ipParsed := net.ParseIP(ip).To4()
+		ipInt := binary.NativeEndian.Uint32(ipParsed)
+		fmt.Println(ipParsed, ipInt)
+		if err := objs.AllowedIps.Put(ipInt, uint32(1)); err != nil {
+			log.Fatalf("inserting allowed IP %q: %s", ip, err)
+		}
+	}
 
 	log.Printf("Attached XDP program to iface %q (index %d)", iface.Name, iface.Index)
 	log.Printf("Press Ctrl-C to exit and remove the program")
