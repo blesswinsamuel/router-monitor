@@ -11,15 +11,15 @@ tasks:
 
   docker-build-generate:
     cmds:
-      - podman build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate
+      - podman build . -f Dockerfile.generate -t blesswinsamuel/ebpf-firewall:generate
 
   docker-build:
     cmds:
-      - podman build . -t blesswinsamuel/router-monitor
+      - podman build . -t blesswinsamuel/ebpf-firewall
 
   go-generate:
     cmds:
-      - podman create blesswinsamuel/router-monitor:generate > /tmp/container_id
+      - podman create blesswinsamuel/ebpf-firewall:generate > /tmp/container_id
       - defer: rm /tmp/container_id
       - defer: podman rm -f $(cat /tmp/container_id)
       - podman cp $(cat /tmp/container_id):/generated/ ./
@@ -30,13 +30,13 @@ tasks:
 
   go-build:
     cmds:
-      - podman build . -t blesswinsamuel/router-monitor
-      - podman create blesswinsamuel/router-monitor > /tmp/container_id
+      - podman build . -t blesswinsamuel/ebpf-firewall
+      - podman create blesswinsamuel/ebpf-firewall > /tmp/container_id
       - defer: rm /tmp/container_id
       - defer: podman rm -f $(cat /tmp/container_id)
-      - podman cp $(cat /tmp/container_id):/bin/router-monitor ./
+      - podman cp $(cat /tmp/container_id):/bin/ebpf-firewall ./
 
   copy-to-router:
     cmds:
-      - scp router-monitor root@router:/root/router-monitor
-      - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/router-monitor'"
+      - scp ebpf-firewall root@router:/root/ebpf-firewall
+      - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/ebpf-firewall'"

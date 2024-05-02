@@ -30,12 +30,12 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY router_monitor.c gen.go ./
+COPY ebpf_firewall.c gen.go ./
 
 RUN go generate ./...
 
 COPY . .
 
-RUN go build -o /bin/router-monitor
+RUN go build -o /bin/ebpf-firewall
 
-CMD ["/bin/router-monitor"]
+CMD ["/bin/ebpf-firewall"]
