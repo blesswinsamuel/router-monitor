@@ -40,8 +40,8 @@ func main() {
 	}
 
 	// Load the compiled eBPF ELF and load it into the kernel.
-	var objs routerMonitorObjects
-	if err := loadRouterMonitorObjects(&objs, nil); err != nil {
+	var objs ebpfFirewallObjects
+	if err := loadEbpfFirewallObjects(&objs, nil); err != nil {
 		log.Panic("Loading eBPF objects:", err)
 	}
 	defer objs.Close()
@@ -99,8 +99,8 @@ func main() {
 			}
 			log.Println("objs.PacketStats.Length()", info)
 			iter := objs.PacketStats.Iterate()
-			var key routerMonitorPacketStatsKey
-			var value routerMonitorPacketStatsValue
+			var key ebpfFirewallPacketStatsKey
+			var value ebpfFirewallPacketStatsValue
 			for iter.Next(&key, &value) {
 				srcIP := int2ip(key.Srcip).String()
 				dstIP := int2ip(key.Dstip).String()

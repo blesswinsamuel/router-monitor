@@ -1,4 +1,4 @@
-module github.com/blesswinsamuel/router-monitor
+module github.com/blesswinsamuel/ebpf-firewall
 
 go 1.22.2
 

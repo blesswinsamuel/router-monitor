@@ -30,8 +30,8 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY router_monitor.c gen.go ./
+COPY ebpf_firewall.c gen.go ./
 
 RUN go generate ./...
 
-RUN mkdir -p /generated/ && cp routermonitor_* /generated/
+RUN mkdir -p /generated/ && cp ebpffirewall_* /generated/
