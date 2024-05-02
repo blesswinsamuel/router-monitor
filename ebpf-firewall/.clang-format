@@ -1,5 +1,6 @@
 BasedOnStyle: Google
 SortIncludes: Never
+ColumnLimit: 180
 # UseTab: Never
 # IndentWidth: 4
 # TabWidth: 4

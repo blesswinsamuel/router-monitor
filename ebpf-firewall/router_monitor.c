@@ -15,11 +15,12 @@ struct {
   __uint(max_entries, 1);
 } pkt_count SEC(".maps");
 
-struct key {
+struct packet_stats_key {
   __u32 srcip;
+  __u32 dstip;
 };
 
-struct value {
+struct packet_stats_value {
   __u64 packets;
   __u64 bytes;
 };
@@ -27,8 +28,8 @@ struct value {
 struct {
   __uint(type, BPF_MAP_TYPE_HASH);
   __uint(max_entries, 255);
-  __type(key, struct key);
-  __type(value, struct value);
+  __type(key, struct packet_stats_key);
+  __type(value, struct packet_stats_value);
 } packet_stats SEC(".maps");
 
 struct {
@@ -38,11 +39,29 @@ struct {
   __type(value, __u32);
 } allowed_ips SEC(".maps");
 
+static void update_packet_stats(__u32 srcip, __u32 dstip, int bytes) {
+  // https://docs.kernel.org/bpf/map_hash.html#examples
+  struct packet_stats_key key = {
+      .srcip = srcip,
+      .dstip = dstip,
+  };
+  struct packet_stats_value *value = bpf_map_lookup_elem(&packet_stats, &key);
+
+  if (value) {
+    __sync_fetch_and_add(&value->packets, 1);
+    __sync_fetch_and_add(&value->bytes, bytes);
+  } else {
+    struct packet_stats_value newval = {1, bytes};
+
+    bpf_map_update_elem(&packet_stats, &key, &newval, BPF_NOEXIST);
+  }
+}
+
 // count_packets atomically increases a packet counter on every invocation.
 SEC("xdp")
 int count_packets(struct xdp_md *ctx) {
-  __u32 key1 = 0;
-  __u64 *count = bpf_map_lookup_elem(&pkt_count, &key1);
+  __u32 key0 = 0;
+  __u64 *count = bpf_map_lookup_elem(&pkt_count, &key0);
   if (count) {
     __sync_fetch_and_add(count, 1);
   }
@@ -76,12 +95,14 @@ int count_packets(struct xdp_md *ctx) {
     return XDP_PASS;
   }
 
+  __u32 ip_saddr = ip->saddr;
+  __u32 ip_daddr = ip->daddr;
+  update_packet_stats(ip_saddr, ip_daddr, ctx->data_end - ctx->data);
+
   // Locate the TCP header that follows the IP header
   struct tcphdr *tcp = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
   // Validate that the packet is long enough to include the full TCP header
-  if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) +
-          sizeof(struct tcphdr) >
-      data_end) {
+  if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr) > data_end) {
     return XDP_PASS;
   }
 
@@ -90,20 +111,18 @@ int count_packets(struct xdp_md *ctx) {
     return XDP_PASS;
   }
 
-  // Construct the key for the lookup by using the source IP address from the IP header
-  __u32 key = ip->saddr;
   // Attempt to find this key in the 'allowed_ips' map
-  __u32 *value = bpf_map_lookup_elem(&allowed_ips, &key);
+  __u32 *value = bpf_map_lookup_elem(&allowed_ips, &ip_saddr);
   bpf_printk("Value addr: %d!\\n", value);
   //   bpf_printk("Value: %d!\\n", *value);
   if (value) {
     // If a matching key is found, the packet is from an allowed IP and can proceed
-    bpf_printk("Authorized TCP packet to ssh: %d!\\n", key);
+    bpf_printk("Authorized TCP packet to ssh: %d!\\n", ip_saddr);
     return XDP_PASS;
   }
 
   // If no matching key is found, the packet is not from an allowed IP and will be dropped
-  bpf_printk("Unauthorized TCP packet to ssh: %d!\\n", key);
+  bpf_printk("Unauthorized TCP packet to ssh: %d!\\n", ip_saddr);
   return XDP_DROP;
 }
 
