@@ -38,8 +38,6 @@ struct {
   __type(value, __u32);
 } allowed_ips SEC(".maps");
 
-// BPF_HASH(allowed_ips, u32);
-
 // count_packets atomically increases a packet counter on every invocation.
 SEC("xdp")
 int count_packets(struct xdp_md *ctx) {
