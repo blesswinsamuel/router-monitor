@@ -38,5 +38,6 @@ tasks:
 
   copy-to-router:
     cmds:
+      - ssh root@router "pkill -f ebpf-firewall" || true
       - scp ebpf-firewall root@router:/root/ebpf-firewall
       - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/ebpf-firewall'"

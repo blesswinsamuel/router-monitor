@@ -8,9 +8,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
+	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
+	"github.com/google/gopacket/layers"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -20,11 +23,11 @@ var (
 	promPacketsTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ebpf_firewall_packets_total",
 		Help: "The total number of processed events",
-	}, []string{"src", "dst"})
+	}, []string{"src", "dst", "ethproto"})
 	promBytesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "ebpf_firewall_bytes_total",
 		Help: "The total number of processed events",
-	}, []string{"src", "dst"})
+	}, []string{"src", "dst", "ethproto"})
 )
 
 func main() {
@@ -46,15 +49,46 @@ func main() {
 	}
 	defer objs.Close()
 
-	// Attach count_packets to the network interface.
-	link, err := link.AttachXDP(link.XDPOptions{
-		Program:   objs.CountPackets,
-		Interface: iface.Index,
-	})
-	if err != nil {
-		log.Panicf("could not attach XDP program: %s", err)
+	// xdpOrTc := os.Getenv("XDP_OR_TC")
+	// if xdpOrTc == "" {
+	// 	xdpOrTc = "xdp"
+	// }
+	// switch xdpOrTc {
+	// case "xdp":
+	{
+		link, err := link.AttachXDP(link.XDPOptions{
+			Program:   objs.XdpFirewall,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			log.Panicf("could not attach XDP program: %s", err)
+		}
+		defer link.Close()
 	}
-	defer link.Close()
+	// case "tc_both":
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   objs.TcPacketCounter,
+			Attach:    ebpf.AttachTCXIngress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			log.Panicf("could not attach XDP program: %s", err)
+		}
+		defer link.Close()
+	}
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   objs.TcPacketCounter,
+			Attach:    ebpf.AttachTCXEgress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			log.Panicf("could not attach XDP program: %s", err)
+		}
+		defer link.Close()
+	}
+	// }
 
 	allowedIPs := []string{"192.168.1.10"}
 	for _, ip := range allowedIPs {
@@ -81,8 +115,8 @@ func main() {
 	// Periodically fetch the packet counter from PktCount,
 	// exit the program when interrupted.
 	tick := time.Tick(time.Second)
-	stop := make(chan os.Signal, 5)
-	signal.Notify(stop, os.Interrupt)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	for {
 		select {
 		case <-tick:
@@ -102,10 +136,24 @@ func main() {
 			var key ebpfFirewallPacketStatsKey
 			var value ebpfFirewallPacketStatsValue
 			for iter.Next(&key, &value) {
-				srcIP := int2ip(key.Srcip).String()
-				dstIP := int2ip(key.Dstip).String()
-				promPacketsTotal.WithLabelValues(srcIP, dstIP).Set(float64(value.Packets))
-				promBytesTotal.WithLabelValues(srcIP, dstIP).Set(float64(value.Bytes))
+				srcIP := ""
+				dstIP := ""
+				if layers.EthernetType(key.EthProto) == layers.EthernetTypeIPv6 {
+					srcIP = int2ip6(key.Srcip).String()
+					dstIP = int2ip6(key.Dstip).String()
+				} else {
+					srcIP = int2ip4(key.Srcip).String()
+					dstIP = int2ip4(key.Dstip).String()
+				}
+				if key.Srcip == 0 {
+					srcIP = "internet"
+				}
+				if key.Dstip == 0 {
+					dstIP = "internet"
+				}
+				ethProto := layers.EthernetType(key.EthProto).String()
+				promPacketsTotal.WithLabelValues(srcIP, dstIP, ethProto).Set(float64(value.Packets))
+				promBytesTotal.WithLabelValues(srcIP, dstIP, ethProto).Set(float64(value.Bytes))
 			}
 			if err := iter.Err(); err != nil {
 				log.Panic("Map lookup:", err)
@@ -118,8 +166,14 @@ func main() {
 	}
 }
 
-func int2ip(nn uint32) net.IP {
+func int2ip4(nn uint32) net.IP {
 	ip := make(net.IP, 4)
+	binary.NativeEndian.PutUint32(ip, nn)
+	return ip
+}
+
+func int2ip6(nn uint32) net.IP {
+	ip := make(net.IP, 16)
 	binary.NativeEndian.PutUint32(ip, nn)
 	return ip
 }
