@@ -51,13 +51,16 @@ static inline void update_packet_stats(__u32 srcip, __u32 dstip, __be16 eth_prot
   };
   struct packet_stats_value *value = bpf_map_lookup_elem(&packet_stats, &key);
 
+  bpf_printk("Packet (%x): %x -> %x, %d %d", eth_proto, srcip, dstip, &packet_stats, value);
   if (value) {
     __sync_fetch_and_add(&value->packets, 1);
     __sync_fetch_and_add(&value->bytes, bytes);
+    // bpf_printk("exists Packet (%x): %x -> %x, packets: %d, bytes: %d", eth_proto, srcip, dstip, value->packets, value->bytes);
   } else {
     struct packet_stats_value newval = {1, bytes};
 
     bpf_map_update_elem(&packet_stats, &key, &newval, BPF_NOEXIST);
+    // bpf_printk("new Packet (%x): %x -> %x, packets: %d, bytes: %d", eth_proto, srcip, dstip, newval.packets, newval.bytes);
   }
 }
 
@@ -100,81 +103,86 @@ static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
       if (!is_ip_in_subnet(ip_daddr, lan_subnet_ip, lan_subnet_mask)) {
         ip_daddr = 0x00;
       }
+      if (!(ip_saddr == 0 && ip_daddr == 167880896) && !(ip_saddr == 167880896 && ip_daddr == 0)) {
+        // for testing
+        return;
+      }
+
       update_packet_stats(ip_saddr, ip_daddr, eth_proto, pkt_len);
     } break;
     case ETH_P_IPV6: {
-      update_packet_stats(ip_saddr, ip_daddr, eth_proto, pkt_len);
+      // update_packet_stats(ip_saddr, ip_daddr, eth_proto, pkt_len);
     } break;
     default:
       return;
   }
 }
 
-// xdp_firewall - main eBPF XDP program
-SEC("xdp")
-int xdp_firewall(struct xdp_md *xdp) {
-  void *data = (void *)(long)xdp->data;
-  void *data_end = (void *)(long)xdp->data_end;
+// // xdp_firewall - main eBPF XDP program
+// SEC("xdp")
+// int xdp_firewall(struct xdp_md *xdp) {
+//   void *data = (void *)(long)xdp->data;
+//   void *data_end = (void *)(long)xdp->data_end;
 
-  // process_eth(data, data_end, xdp->data_end - xdp->data);
+//   // process_eth(data, data_end, xdp->data_end - xdp->data);
 
-  // return XDP_PASS;
+//   // return XDP_PASS;
 
-  // Define a pointer to the Ethernet header at the start of the packet data
-  struct ethhdr *eth = data;
-  // Ensure the packet includes a full Ethernet header; if not, we let it continue up the stack
-  if ((void *)eth + sizeof(struct ethhdr) > data_end) {
-    return XDP_PASS;
-  }
+//   // Define a pointer to the Ethernet header at the start of the packet data
+//   struct ethhdr *eth = data;
+//   // Ensure the packet includes a full Ethernet header; if not, we let it continue up the stack
+//   if ((void *)eth + sizeof(struct ethhdr) > data_end) {
+//     return XDP_PASS;
+//   }
 
-  // Check if the packet's protocol indicates it's an IP packet
-  if (eth->h_proto != __constant_htons(ETH_P_IP)) {
-    // If not IP, continue with regular packet processing
-    return XDP_PASS;
-  }
+//   // Check if the packet's protocol indicates it's an IP packet
+//   if (eth->h_proto != __constant_htons(ETH_P_IP)) {
+//     // If not IP, continue with regular packet processing
+//     return XDP_PASS;
+//   }
 
-  // Access the IP header positioned right after the Ethernet header
-  struct iphdr *ip = data + sizeof(struct ethhdr);
-  // Ensure the packet includes the full IP header; if not, pass it up the stack
-  if ((void *)ip + sizeof(struct iphdr) > data_end) {
-    return XDP_PASS;
-  }
+//   // Access the IP header positioned right after the Ethernet header
+//   struct iphdr *ip = data + sizeof(struct ethhdr);
+//   // Ensure the packet includes the full IP header; if not, pass it up the stack
+//   if ((void *)ip + sizeof(struct iphdr) > data_end) {
+//     return XDP_PASS;
+//   }
 
-  // Confirm the packet uses TCP by checking the protocol field in the IP header
-  if (ip->protocol != IPPROTO_TCP) {
-    return XDP_PASS;
-  }
+//   // Confirm the packet uses TCP by checking the protocol field in the IP header
+//   if (ip->protocol != IPPROTO_TCP) {
+//     return XDP_PASS;
+//   }
 
-  __u32 ip_saddr = ip->saddr;
-  __u32 ip_daddr = ip->daddr;
-  // update_packet_stats(ip_saddr, ip_daddr, xdp->data_end - xdp->data);
+//   __u32 ip_saddr = ip->saddr;
+//   __u32 ip_daddr = ip->daddr;
+//   // update_packet_stats(ip_saddr, ip_daddr, xdp->data_end - xdp->data);
 
-  // Locate the TCP header that follows the IP header
-  struct tcphdr *tcp = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
-  // Validate that the packet is long enough to include the full TCP header
-  if ((void *)tcp + sizeof(struct tcphdr) > data_end) {
-    return XDP_PASS;
-  }
+//   // Locate the TCP header that follows the IP header
+//   struct tcphdr *tcp = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
+//   // Validate that the packet is long enough to include the full TCP header
+//   if ((void *)tcp + sizeof(struct tcphdr) > data_end) {
+//     return XDP_PASS;
+//   }
 
-  // Check if the destination port of the packet is the one we're monitoring (SSH port, typically port 22, here set as 3333 for the example)
-  if (tcp->dest != __constant_htons(3333)) {
-    return XDP_PASS;
-  }
+//   // Check if the destination port of the packet is the one we're monitoring (SSH port, typically port 22, here set as 3333 for the example)
+//   if (tcp->dest != __constant_htons(3333)) {
+//     return XDP_PASS;
+//   }
 
-  // Attempt to find this key in the 'allowed_ips' map
-  __u32 *value = bpf_map_lookup_elem(&allowed_ips, &ip_saddr);
-  bpf_printk("Value addr: %d!", value);
-  //   bpf_printk("Value: %d!", *value);
-  if (value) {
-    // If a matching key is found, the packet is from an allowed IP and can proceed
-    bpf_printk("Authorized TCP packet to ssh: %d!", ip_saddr);
-    return XDP_PASS;
-  }
+//   // Attempt to find this key in the 'allowed_ips' map
+//   __u32 *value = bpf_map_lookup_elem(&allowed_ips, &ip_saddr);
+//   bpf_printk("Value addr: %d!", value);
+//   //   bpf_printk("Value: %d!", *value);
+//   if (value) {
+//     // If a matching key is found, the packet is from an allowed IP and can proceed
+//     bpf_printk("Authorized TCP packet to ssh: %d!", ip_saddr);
+//     return XDP_PASS;
+//   }
 
-  // If no matching key is found, the packet is not from an allowed IP and will be dropped
-  bpf_printk("Unauthorized TCP packet to ssh: %d!", ip_saddr);
-  return XDP_DROP;
-}
+//   // If no matching key is found, the packet is not from an allowed IP and will be dropped
+//   bpf_printk("Unauthorized TCP packet to ssh: %d!", ip_saddr);
+//   return XDP_DROP;
+// }
 
 // tc_packet_counter - main eBPF TC program
 SEC("tc")
@@ -191,3 +199,5 @@ int tc_packet_counter(struct __sk_buff *skb) {
 char __license[] SEC("license") = "Dual MIT/GPL";
 
 // cat /sys/kernel/debug/tracing/trace_pipe
+
+// https://github.com/dkorunic/pktstat-bpf/blob/b935ea9d4c7fbdae91d90d184a5f6a5dbfc84447/counter.c
