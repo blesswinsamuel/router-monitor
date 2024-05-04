@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/features"
@@ -20,17 +19,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// var (
-// 	promPacketsTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
-// 		Name: "ebpf_firewall_packets_total",
-// 		Help: "The total number of processed events",
-// 	}, []string{"src", "dst", "ethproto"})
-// 	promBytesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
-// 		Name: "ebpf_firewall_bytes_total",
-// 		Help: "The total number of processed events",
-// 	}, []string{"src", "dst", "ethproto"})
-// )
-
 type ebpfFirewallCollector struct {
 	objs *ebpfFirewallObjects
 
@@ -38,8 +26,6 @@ type ebpfFirewallCollector struct {
 	bytesTotal   *prometheus.Desc
 }
 
-// You must create a constructor for you collector that
-// initializes every descriptor and returns a pointer to the collector
 func newEbpfFirewallCollector(objs *ebpfFirewallObjects) *ebpfFirewallCollector {
 	return &ebpfFirewallCollector{
 		objs: objs,
@@ -63,13 +49,6 @@ func (collector *ebpfFirewallCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements required collect function for all promehteus collectors
 func (collector *ebpfFirewallCollector) Collect(ch chan<- prometheus.Metric) {
-	var count uint64
-	err := collector.objs.PktCount.Lookup(uint32(0), &count)
-	if err != nil {
-		log.Panic("Map lookup:", err)
-	}
-	log.Printf("Received %d packets", count)
-
 	iter := collector.objs.PacketStats.Iterate()
 	var key ebpfFirewallPacketStatsKey
 	var value ebpfFirewallPacketStatsValue
@@ -166,21 +145,7 @@ func main() {
 		defer link.Close()
 	}
 
-	allowedIPs := []string{"192.168.1.10"}
-	for _, ip := range allowedIPs {
-		ipAddr := net.ParseIP(ip)
-		if ipAddr == nil {
-			log.Panicf("invalid IP address %q", ip)
-		}
-		ipParsed := net.ParseIP(ip).To4()
-		ipInt := binary.NativeEndian.Uint32(ipParsed)
-		fmt.Println(ipParsed, ipInt)
-		if err := objs.AllowedIps.Put(ipInt, uint32(1)); err != nil {
-			log.Panicf("inserting allowed IP %q: %s", ip, err)
-		}
-	}
-
-	log.Printf("Attached XDP program to iface %q (index %d)", iface.Name, iface.Index)
+	log.Printf("Attached program to iface %q (index %d)", iface.Name, iface.Index)
 	log.Printf("Press Ctrl-C to exit and remove the program")
 
 	go func() {
@@ -191,20 +156,10 @@ func main() {
 		log.Panic(http.ListenAndServe(":8080", nil))
 	}()
 
-	// Periodically fetch the packet counter from PktCount,
-	// exit the program when interrupted.
-	tick := time.Tick(time.Second)
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	for {
-		select {
-		case <-tick:
-
-		case <-stop:
-			log.Print("Received signal, exiting..")
-			return
-		}
-	}
+	<-stop
+	log.Print("Received signal, exiting..")
 }
 
 func int2ip4(nn uint32) net.IP {
