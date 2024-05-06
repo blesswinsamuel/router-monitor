@@ -41,3 +41,13 @@ tasks:
       - ssh root@router "pkill -f ebpf-firewall" || true
       - scp ebpf-firewall root@router:/root/ebpf-firewall
       - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/ebpf-firewall'"
+
+  nix-build:
+    cmds:
+      # - nix build --eval-store auto -j0 --store 'ssh-ng://root@cloudlab-oracle-arm' --builders "ssh-ng://root@cloudlab-oracle-arm aarch64-linux" '.#packages.aarch64-linux.default'
+      - nix build --eval-store auto -j0 --store 'ssh-ng://root@cloudlab-oracle-arm' '.#packages.aarch64-linux.default'
+      # - nix build --eval-store auto -j0 --store 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'
+
+  nix-copy-to-router:
+    cmds:
+      - nix copy --no-check-sigs --from 'ssh-ng://root@cloudlab-oracle-arm' --to 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'

@@ -11,9 +11,10 @@
 #include <linux/pkt_cls.h>
 
 struct packet_stats_key {
+  __u16 eth_proto;
   __u32 srcip;
   __u32 dstip;
-  __be16 eth_proto;
+  __u8 ip_proto;
 };
 
 struct packet_stats_value {
@@ -28,15 +29,16 @@ struct {
   __type(value, struct packet_stats_value);
 } packet_stats SEC(".maps");
 
-static inline void update_packet_stats(__u32 srcip, __u32 dstip, __be16 eth_proto, int bytes) {
+static inline void update_packet_stats(__u16 eth_proto, __u32 srcip, __u32 dstip, __u8 ip_proto, __u64 bytes) {
   struct packet_stats_key key = {
-      .srcip = srcip,
-      .dstip = dstip,
-      .eth_proto = eth_proto,
+      .srcip = 0,
+      .dstip = 0x0A01A8C0,
+      .eth_proto = 0,
+      .ip_proto = ip_proto,
   };
   struct packet_stats_value *value = bpf_map_lookup_elem(&packet_stats, &key);
 
-  bpf_printk("Packet (%x): %x -> %x, %d %d", eth_proto, srcip, dstip, &packet_stats, value);
+  bpf_printk("Packet (0x%04X): 0x%08X -> 0x%08X, %d %d", eth_proto, srcip, dstip, &packet_stats, value);
   if (value) {
     __sync_fetch_and_add(&value->packets, 1);
     __sync_fetch_and_add(&value->bytes, bytes);
@@ -58,6 +60,7 @@ static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
   if ((void *)eth + sizeof(struct ethhdr) > data_end) {
     return;
   }
+  __u16 eth_proto = bpf_ntohs(eth->h_proto);
 
   // Access the IP header positioned right after the Ethernet header
   struct iphdr *ip = data + sizeof(struct ethhdr);
@@ -66,8 +69,7 @@ static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
   }
   __u32 ip_saddr = ip->saddr;
   __u32 ip_daddr = ip->daddr;
-
-  __be16 eth_proto = bpf_ntohs(eth->h_proto);
+  __u8 ip_proto = ip->protocol;
 
   // process only IPv4 and IPv6
   switch (eth_proto) {
@@ -77,20 +79,20 @@ static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
       // bpf_printk("IP packet: %x -> %x", ip_saddr, ip_daddr);
       // bpf_printk("is_ip_in_subnet: %d -> %d", is_ip_in_subnet(ip_saddr, lan_subnet_ip, lan_subnet_mask), is_ip_in_subnet(ip_daddr, lan_subnet_ip, lan_subnet_mask));
       if (!is_ip_in_subnet(ip_saddr, lan_subnet_ip, lan_subnet_mask)) {
-        ip_saddr = 0x00;
+        ip_saddr = 0;
       }
       if (!is_ip_in_subnet(ip_daddr, lan_subnet_ip, lan_subnet_mask)) {
-        ip_daddr = 0x00;
+        ip_daddr = 0;
       }
       if (!(ip_saddr == 0 && ip_daddr == 167880896) && !(ip_saddr == 167880896 && ip_daddr == 0)) {
         // for testing
         return;
       }
 
-      update_packet_stats(ip_saddr, ip_daddr, eth_proto, pkt_len);
+      update_packet_stats(eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
     } break;
     case ETH_P_IPV6: {
-      // update_packet_stats(ip_saddr, ip_daddr, eth_proto, pkt_len);
+      // update_packet_stats(eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
     } break;
     default:
       return;
