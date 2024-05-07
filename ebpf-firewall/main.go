@@ -83,10 +83,10 @@ func main() {
 
 	go func() {
 		prometheus.MustRegister(newEbpfFirewallCollector(&objs))
-		prometheus.MustRegister(newArpCollector("/proc/net/arp", ".home.lan"))
+		prometheus.MustRegister(newArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX")))
 		internetChecker := newInternetChecker(10 * time.Second)
 		internetChecker.Register(prometheus.DefaultRegisterer)
-		internetChecker.Start(context.Background())
+		go internetChecker.Start(context.Background())
 
 		http.Handle("/metrics", promhttp.Handler())
 		port := os.Getenv("PORT")

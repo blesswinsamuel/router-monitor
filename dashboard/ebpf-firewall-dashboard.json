@@ -23,7 +23,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
+          "expr": "max(ebpf_firewall_internet_connection_is_up{instance=~\"$instance\"})",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -100,7 +100,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})[$__range])) * $__range_s",
+          "expr": "(1 - avg_over_time(max(ebpf_firewall_internet_connection_is_up{instance=~\"$instance\"})[$__range])) * $__range_s",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -167,7 +167,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "avg(rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
+          "expr": "avg(rate(ebpf_firewall_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(ebpf_firewall_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -236,7 +236,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -305,7 +305,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "count(last_over_time((router_monitor_arp_devices{instance=~\"$instance\"} == 2)[$__range]))",
+          "expr": "count(last_over_time((ebpf_firewall_arp_devices{instance=~\"$instance\"} == 2)[$__range]))",
           "range": true,
           "instant": false,
           "format": "time_series",
@@ -367,7 +367,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by(src) (increase(router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]))",
+          "expr": "sum by(src) (increase(ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]))",
           "legendFormat": "Download",
           "range": true,
           "instant": false,
@@ -376,7 +376,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "sum by(dst) (increase(router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]))",
+          "expr": "sum by(dst) (increase(ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]))",
           "legendFormat": "Upload",
           "range": true,
           "instant": false,
@@ -461,7 +461,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "rate(ebpf_firewall_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(ebpf_firewall_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
           "legendFormat": "{{ addr }} average",
           "range": true,
           "instant": false,
@@ -470,7 +470,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "1 - max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
+          "expr": "1 - max(ebpf_firewall_internet_connection_is_up{instance=~\"$instance\"})",
           "legendFormat": "down",
           "range": true,
           "instant": false,
@@ -479,7 +479,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "95p",
           "range": true,
           "instant": false,
@@ -488,7 +488,7 @@
         },
         {
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
           "legendFormat": "50p",
           "range": true,
           "instant": false,
@@ -606,7 +606,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "1 - router_monitor_internet_connection_is_up{instance=~\"$instance\"}",
+          "expr": "1 - ebpf_firewall_internet_connection_is_up{instance=~\"$instance\"}",
           "legendFormat": "{{ addr }} down",
           "range": true,
           "instant": false,
@@ -688,27 +688,43 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "last_over_time(sum by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~\"$instance\"})[$__range]) * on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (router_monitor_hostnames{instance=~\"$instance\"})[$__range])",
+          "expr": "last_over_time(sum by (ip_addr, hw_addr, device) (ebpf_firewall_arp_devices{instance=~\"$instance\"})[$__range]) * on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (ebpf_firewall_hostnames{instance=~\"$instance\"})[$__range])",
           "range": false,
           "instant": true,
           "format": "table",
-          "refId": "A"
+          "refId": "DEVICE"
         },
         {
           "editorMode": "code",
-          "expr": "label_move(sum by (dst) (increase(router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"dst\", \"ip_addr\")",
+          "expr": "label_move(sum by (dst) (increase(ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"dst\", \"ip_addr\")",
           "range": false,
           "instant": true,
           "format": "table",
-          "refId": "B"
+          "refId": "INGRESS_BYTES"
         },
         {
           "editorMode": "code",
-          "expr": "label_move(sum by (src) (increase(router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"src\", \"ip_addr\")",
+          "expr": "label_move(sum by (dst) (increase(ebpf_firewall_packets_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"dst\", \"ip_addr\")",
           "range": false,
           "instant": true,
           "format": "table",
-          "refId": "C"
+          "refId": "INGRESS_PACKETS"
+        },
+        {
+          "editorMode": "code",
+          "expr": "label_move(sum by (src) (increase(ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"src\", \"ip_addr\")",
+          "range": false,
+          "instant": true,
+          "format": "table",
+          "refId": "EGRESS_BYTES"
+        },
+        {
+          "editorMode": "code",
+          "expr": "label_move(sum by (src) (increase(ebpf_firewall_packets_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"src\", \"ip_addr\")",
+          "range": false,
+          "instant": true,
+          "format": "table",
+          "refId": "EGRESS_PACKETS"
         }
       ],
       "transformations": [
@@ -736,9 +752,11 @@
               "device": "Interface",
               "hw_addr": "Mac Address",
               "ip_addr": "IP Address",
-              "Value #A": "Flags",
-              "Value #B": "Downloaded",
-              "Value #C": "Uploaded"
+              "Value #DEVICE": "Flags",
+              "Value #INGRESS_BYTES": "Downloaded",
+              "Value #EGRESS_BYTES": "Uploaded",
+              "Value #INGRESS_PACKETS": "DL Pkts",
+              "Value #EGRESS_PACKETS": "UL Pkts"
             }
           }
         }
@@ -829,6 +847,22 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "DL Pkts"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "Uploaded"
             },
             "properties": [
@@ -843,6 +877,22 @@
                   "mode": "basic",
                   "valueDisplayMode": "text"
                 }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UL Pkts"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.width",
+                "value": 100
               }
             ]
           },
@@ -927,7 +977,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (\n      ebpf_firewall_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -988,7 +1038,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (\n      ebpf_firewall_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": false,
           "instant": true,
@@ -1049,7 +1099,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      ebpf_firewall_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1142,7 +1192,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      ebpf_firewall_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1235,7 +1285,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      ebpf_firewall_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1330,7 +1380,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      router_monitor_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (\n      ebpf_firewall_arp_devices{instance=~\"$instance\"} \n      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~\"$instance\"}\n    )\n  ) * 0 + 1)\n",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1425,7 +1475,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1518,7 +1568,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1611,7 +1661,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      ebpf_firewall_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1706,7 +1756,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      ebpf_firewall_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
           "instant": false,
@@ -1797,16 +1847,16 @@
   ],
   "schemaVersion": 36,
   "tags": [
-    "router-monitor"
+    "ebpf-firewall"
   ],
   "timezone": "browser",
-  "description": "Dashboard for Router Monitor",
+  "description": "Dashboard for EBPF Firewall",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "title": "Router Monitor",
-  "uid": "router-monitor",
+  "title": "EBPF Firewall",
+  "uid": "ebpf-firewall",
   "version": 1,
   "templating": {
     "list": [
@@ -1832,7 +1882,7 @@
         "type": "query",
         "label": "Local IPs",
         "name": "localips",
-        "query": "label_values(router_monitor_packets_total, dst)",
+        "query": "label_values(ebpf_firewall_packets_total, dst)",
         "includeAll": true,
         "sort": 1,
         "refresh": 2
@@ -1847,7 +1897,7 @@
         "type": "query",
         "label": "Instance",
         "name": "instance",
-        "query": "label_values(router_monitor_internet_connection_is_up, instance)",
+        "query": "label_values(ebpf_firewall_internet_connection_is_up, instance)",
         "sort": 1,
         "refresh": 2
       }

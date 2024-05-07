@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -32,15 +33,11 @@ func newArpCollector(filename string, stripDomainSuffix string) *arpCollector {
 		filename:          filename,
 		stripDomainSuffix: stripDomainSuffix,
 		hostCache:         make(map[string]hostCacheValue),
-		arpDevices: prometheus.NewDesc("ebpf_firewall_arp_devices",
-			"",
-			[]string{"ip_addr", "hw_addr", "device"},
-			nil,
+		arpDevices: prometheus.NewDesc("ebpf_firewall_arp_devices", "",
+			[]string{"ip_addr", "hw_addr", "device"}, nil,
 		),
-		firewallHostnames: prometheus.NewDesc("ebpf_firewall_hostnames",
-			"",
-			[]string{"ip_addr", "hostname"},
-			nil,
+		firewallHostnames: prometheus.NewDesc("ebpf_firewall_hostnames", "",
+			[]string{"ip_addr", "hostname"}, nil,
 		),
 	}
 }
@@ -92,8 +89,11 @@ func (collector *arpCollector) Collect(ch chan<- prometheus.Metric) {
 				collector.hostCache[ipAddr] = hostCacheValue{Hostname: hostname, Expiry: time.Now().Add(30 * time.Minute)}
 				collector.hostCacheMutex.Unlock()
 			}
-
-			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, 1, ipAddr, hwAddr, hostname)
+			flag, err := strconv.ParseInt(fields[2], 0, 0)
+			if err != nil {
+				log.Printf("Error parsing flag: %v", err)
+			}
+			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(flag), ipAddr, hwAddr, fields[5])
 			ch <- prometheus.MustNewConstMetric(collector.firewallHostnames, prometheus.GaugeValue, 1, ipAddr, hostname)
 		}
 
