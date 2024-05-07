@@ -1,6 +1,5 @@
-.DS_Store
-
-
-# Added by cargo
-
-/target
+/result
+ebpf-firewall
+*_bpfel.o
+*_bpfel.go
+/bin

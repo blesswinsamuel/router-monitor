@@ -1,11 +1,41 @@
-FROM debian:bullseye-slim
+# https://ebpf-go.dev/guides/getting-started/
+FROM golang:latest
 
-# RUN apt-get update && apt-get install -y libpcap-dev && apt-get clean
-RUN apt-get update && apt-get install -y openssl ca-certificates && apt-get clean
+RUN apt-get update && apt-get install -y \
+    clang \
+    llvm \
+    libbpf-dev \
+    # libelf-dev \
+    # libpcap-dev \
+    # libssl-dev \
+    # libz-dev \
+    # pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY ./target/aarch64-unknown-linux-gnu/release/router-monitor /router-monitor
+# FROM golang:alpine
 
-# # https://github.com/cross-rs/cross/issues/119#issuecomment-333534345
-# ENV SSL_CERT_DIR /etc/ssl/certs
+# RUN apk add --no-cache \
+#     clang \
+#     llvm \
+#     linux-headers \
+#     libbpf-dev \
+#     ;
 
-ENTRYPOINT [ "/router-monitor" ]
+# RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
+RUN ln -sf /usr/include/aarch64-linux-gnu/asm/ /usr/include/asm
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY ebpf_firewall.c gen.go ./
+
+RUN go generate ./...
+
+COPY . .
+
+RUN go build -o /bin/ebpf-firewall
+
+CMD ["/bin/ebpf-firewall"]
