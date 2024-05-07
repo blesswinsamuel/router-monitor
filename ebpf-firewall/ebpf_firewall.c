@@ -27,15 +27,22 @@ struct {
   __uint(max_entries, 4096);
   __type(key, struct packet_stats_key);
   __type(value, struct packet_stats_value);
-} packet_stats SEC(".maps");
+} packet_stats_ingress SEC(".maps");
 
-static inline void update_packet_stats(__u16 eth_proto, __u32 srcip, __u32 dstip, __u8 ip_proto, __u64 bytes) {
+struct {
+  __uint(type, BPF_MAP_TYPE_HASH);
+  __uint(max_entries, 4096);
+  __type(key, struct packet_stats_key);
+  __type(value, struct packet_stats_value);
+} packet_stats_egress SEC(".maps");
+
+static inline void update_packet_stats(void *packet_stats, __u16 eth_proto, __u32 srcip, __u32 dstip, __u8 ip_proto, __u64 bytes) {
   struct packet_stats_key key = {0};
   key.eth_proto = eth_proto;
   key.srcip = srcip;
   key.dstip = dstip;
   key.ip_proto = ip_proto;
-  struct packet_stats_value *value = bpf_map_lookup_elem(&packet_stats, &key);
+  struct packet_stats_value *value = bpf_map_lookup_elem(packet_stats, &key);
 
   // bpf_printk("Packet (0x%04X): 0x%08X -> 0x%08X (0x%04X), %d %d", eth_proto, srcip, dstip, ip_proto, &packet_stats, value);
   if (value) {
@@ -44,13 +51,13 @@ static inline void update_packet_stats(__u16 eth_proto, __u32 srcip, __u32 dstip
   } else {
     struct packet_stats_value newval = {1, bytes};
 
-    bpf_map_update_elem(&packet_stats, &key, &newval, BPF_NOEXIST);
+    bpf_map_update_elem(packet_stats, &key, &newval, BPF_NOEXIST);
   }
 }
 
 static inline int is_ip_in_subnet(__u32 ip, __u32 subnet_ip, __u32 subnet_mask) { return (ip & subnet_mask) == subnet_ip; }
 
-static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
+static inline void process_eth(void *packet_stats, void *data, void *data_end, __u64 pkt_len) {
   // Define a pointer to the Ethernet header at the start of the packet data
   struct ethhdr *eth = data;
   // Ensure the packet includes a full Ethernet header; if not, we let it continue up the stack
@@ -86,10 +93,10 @@ static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
       //   return;
       // }
 
-      update_packet_stats(eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
+      update_packet_stats(packet_stats, eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
     } break;
     case ETH_P_IPV6: {
-      // update_packet_stats(eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
+      update_packet_stats(packet_stats, eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
     } break;
     default:
       return;
@@ -97,11 +104,21 @@ static inline void process_eth(void *data, void *data_end, __u64 pkt_len) {
 }
 
 SEC("tc")
-int tc_packet_counter(struct __sk_buff *skb) {
+int tc_packet_counter_ingress(struct __sk_buff *skb) {
   void *data = (void *)(long)skb->data;
   void *data_end = (void *)(long)skb->data_end;
 
-  process_eth(data, data_end, skb->len);
+  process_eth(&packet_stats_ingress, data, data_end, skb->len);
+
+  return TC_ACT_UNSPEC;
+}
+
+SEC("tc")
+int tc_packet_counter_egress(struct __sk_buff *skb) {
+  void *data = (void *)(long)skb->data;
+  void *data_end = (void *)(long)skb->data_end;
+
+  process_eth(&packet_stats_egress, data, data_end, skb->len);
 
   return TC_ACT_UNSPEC;
 }
