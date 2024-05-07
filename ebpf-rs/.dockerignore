@@ -1,5 +1,0 @@
-.dockerignore
-.gitignore
-Dockerfile
-Taskfile.yaml
-/bin
