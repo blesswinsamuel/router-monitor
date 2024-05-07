@@ -12,28 +12,28 @@ import (
 type internetChecker struct {
 	interval time.Duration
 
-	connectionDuration *prometheus.HistogramVec
-	connectionIsUp     *prometheus.GaugeVec
+	internetConnectionDuration *prometheus.HistogramVec
+	internetConnectionIsUp     *prometheus.GaugeVec
 }
 
 func newInternetChecker(interval time.Duration) *internetChecker {
 	return &internetChecker{
 		interval: interval,
-		connectionDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "ebpf_firewall_connection_duration_seconds",
+		internetConnectionDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "ebpf_firewall_internet_connection_duration_seconds",
 			Help:    "",
-			Buckets: prometheus.DefBuckets,
+			Buckets: []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0},
 		}, []string{"addr"}),
-		connectionIsUp: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ebpf_firewall_connection_is_up",
+		internetConnectionIsUp: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "ebpf_firewall_internet_connection_is_up",
 			Help: "",
 		}, []string{"addr"}),
 	}
 }
 
 func (collector *internetChecker) Register(registry prometheus.Registerer) {
-	registry.MustRegister(collector.connectionDuration)
-	registry.MustRegister(collector.connectionIsUp)
+	registry.MustRegister(collector.internetConnectionDuration)
+	registry.MustRegister(collector.internetConnectionIsUp)
 }
 
 func (collector *internetChecker) Start(ctx context.Context) {
@@ -49,9 +49,9 @@ func (collector *internetChecker) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			startTime := time.Now()
-			connectionIsUp := 0
 			for _, addr := range addrs {
+				connectionIsUp := 0
+				startTime := time.Now()
 				conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
 				if err != nil {
 					log.Printf("Failed to connect to %s: %v", addr, err)
@@ -60,8 +60,8 @@ func (collector *internetChecker) Start(ctx context.Context) {
 					connectionIsUp = 1
 				}
 				timeSinceStart := time.Since(startTime).Seconds()
-				collector.connectionDuration.WithLabelValues(addr).Observe(timeSinceStart)
-				collector.connectionIsUp.WithLabelValues(addr).Set(float64(connectionIsUp))
+				collector.internetConnectionDuration.WithLabelValues(addr).Observe(timeSinceStart)
+				collector.internetConnectionIsUp.WithLabelValues(addr).Set(float64(connectionIsUp))
 			}
 		case <-ctx.Done():
 			ticker.Stop()
