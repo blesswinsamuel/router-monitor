@@ -22,7 +22,8 @@ RUN apt-get update && apt-get install -y \
 #     ;
 
 # RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
-RUN ln -sf /usr/include/aarch64-linux-gnu/asm/ /usr/include/asm
+# RUN ln -sf /usr/include/aarch64-linux-gnu/asm/ /usr/include/asm
+RUN ln -sf /usr/include/x86_64-linux-gnu/asm/ /usr/include/asm
 
 WORKDIR /src
 
