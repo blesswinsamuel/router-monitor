@@ -30,11 +30,7 @@ tasks:
 
   go-build:
     cmds:
-      - podman build . -t blesswinsamuel/ebpf-firewall
-      - podman create blesswinsamuel/ebpf-firewall > /tmp/container_id
-      - defer: rm /tmp/container_id
-      - defer: podman rm -f $(cat /tmp/container_id)
-      - podman cp $(cat /tmp/container_id):/bin/ebpf-firewall ./
+      - GOOS=linux GOARCH=arm64 go build -o ebpf-firewall
 
   copy-to-router:
     cmds:
