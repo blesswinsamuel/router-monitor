@@ -34,7 +34,7 @@ COPY internal ./internal
 
 RUN go generate ./...
 
-COPY . .
+COPY cmd ./cmd
 
 RUN go build -o /bin/ebpf-firewall ./cmd/ebpf-firewall
 
