@@ -44,10 +44,11 @@ tasks:
 
   nix-build:
     cmds:
+      # - nix run github:nix-community/gomod2nix#gomod2nix -- generate
       # - nix build --eval-store auto -j0 --store 'ssh-ng://root@cloudlab-oracle-arm' --builders "ssh-ng://root@cloudlab-oracle-arm aarch64-linux" '.#packages.aarch64-linux.default'
       - nix build --eval-store auto -j0 --store 'ssh-ng://root@cloudlab-oracle-arm' '.#packages.aarch64-linux.default'
       # - nix build --eval-store auto -j0 --store 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'
 
   nix-copy-to-router:
     cmds:
-      - nix copy --no-check-sigs --from 'ssh-ng://root@cloudlab-oracle-arm' --to 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'
+      - nix copy --verbose --no-check-sigs --from 'ssh-ng://root@cloudlab-oracle-arm' --to 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'
