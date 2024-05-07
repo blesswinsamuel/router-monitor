@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -31,12 +30,12 @@ func newEbpfFirewallCollector(objs *ebpfFirewallObjects) *ebpfFirewallCollector 
 		objs: objs,
 		packetsTotal: prometheus.NewDesc("ebpf_firewall_packets_total",
 			"",
-			[]string{"src", "dst", "ethproto"},
+			[]string{"ethproto", "src", "dst", "ipproto"},
 			nil,
 		),
 		bytesTotal: prometheus.NewDesc("ebpf_firewall_bytes_total",
 			"",
-			[]string{"src", "dst", "ethproto"},
+			[]string{"ethproto", "src", "dst", "ipproto"},
 			nil,
 		),
 	}
@@ -73,9 +72,10 @@ func (collector *ebpfFirewallCollector) Collect(ch chan<- prometheus.Metric) {
 			dstIP = "internet"
 		}
 		ethProto := layers.EthernetType(key.EthProto).String()
-		fmt.Println(srcIP, dstIP, key.EthProto, ethProto, value.Packets, value.Bytes)
-		ch <- prometheus.MustNewConstMetric(collector.packetsTotal, prometheus.CounterValue, float64(value.Packets), srcIP, dstIP, ethProto)
-		ch <- prometheus.MustNewConstMetric(collector.bytesTotal, prometheus.CounterValue, float64(value.Bytes), srcIP, dstIP, ethProto)
+		ipProto := layers.IPProtocol(key.IpProto).String()
+		// fmt.Println(ethProto, srcIP, dstIP, ipProto, ethProto, value.Packets, value.Bytes)
+		ch <- prometheus.MustNewConstMetric(collector.packetsTotal, prometheus.CounterValue, float64(value.Packets), ethProto, srcIP, dstIP, ipProto)
+		ch <- prometheus.MustNewConstMetric(collector.bytesTotal, prometheus.CounterValue, float64(value.Bytes), ethProto, srcIP, dstIP, ipProto)
 	}
 }
 
@@ -122,17 +122,17 @@ func main() {
 	// 	}
 	// 	defer link.Close()
 	// }
-	// {
-	// 	link, err := link.AttachTCX(link.TCXOptions{
-	// 		Program:   objs.TcPacketCounter,
-	// 		Attach:    ebpf.AttachTCXIngress,
-	// 		Interface: iface.Index,
-	// 	})
-	// 	if err != nil {
-	// 		log.Panicf("could not attach XDP program: %s", err)
-	// 	}
-	// 	defer link.Close()
-	// }
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   objs.TcPacketCounter,
+			Attach:    ebpf.AttachTCXIngress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			log.Panicf("could not attach XDP program: %s", err)
+		}
+		defer link.Close()
+	}
 	{
 		link, err := link.AttachTCX(link.TCXOptions{
 			Program:   objs.TcPacketCounter,
