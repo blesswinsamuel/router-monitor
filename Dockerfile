@@ -30,13 +30,13 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY ebpf_firewall.c gen.go ./
+COPY internal ./internal
 
 RUN go generate ./...
 
 COPY . .
 
-RUN go build -o /bin/ebpf-firewall
+RUN go build -o /bin/ebpf-firewall ./cmd/ebpf-firewall
 
 FROM debian:bullseye-slim
 

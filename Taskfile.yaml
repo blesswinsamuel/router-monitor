@@ -24,13 +24,13 @@ tasks:
       - defer: podman rm -f $(cat /tmp/container_id)
       - podman cp $(cat /tmp/container_id):/generated/ ./
       - defer: rm -rf ./generated
-      - cp -r generated/* .
+      - cp -r generated/* ./internal/firewall/
     deps:
       - docker-build-generate
 
   go-build:
     cmds:
-      - GOOS=linux GOARCH=arm64 go build -o ebpf-firewall
+      - GOOS=linux GOARCH=arm64 go build -o ebpf-firewall ./cmd/ebpf-firewall
 
   copy-to-router:
     cmds:

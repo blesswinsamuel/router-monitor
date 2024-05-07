@@ -1,4 +1,4 @@
-package main
+package firewall
 
 import (
 	"bufio"
@@ -28,7 +28,7 @@ type arpCollector struct {
 	firewallHostnames *prometheus.Desc
 }
 
-func newArpCollector(filename string, stripDomainSuffix string) *arpCollector {
+func NewArpCollector(filename string, stripDomainSuffix string) *arpCollector {
 	return &arpCollector{
 		filename:          filename,
 		stripDomainSuffix: stripDomainSuffix,
