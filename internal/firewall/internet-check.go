@@ -1,4 +1,4 @@
-package main
+package firewall
 
 import (
 	"context"
@@ -16,7 +16,7 @@ type internetChecker struct {
 	internetConnectionIsUp     *prometheus.GaugeVec
 }
 
-func newInternetChecker(interval time.Duration) *internetChecker {
+func NewInternetChecker(interval time.Duration) *internetChecker {
 	return &internetChecker{
 		interval: interval,
 		internetConnectionDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{

@@ -1,25 +1,29 @@
-package main
+package firewall
 
 import (
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 
 	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/features"
+	"github.com/cilium/ebpf/link"
 	"github.com/google/gopacket/layers"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type ebpfFirewallCollector struct {
-	objs *ebpfFirewallObjects
+	objs  *ebpfFirewallObjects
+	links []link.Link
 
 	packetsTotal *prometheus.Desc
 	bytesTotal   *prometheus.Desc
 }
 
-func newEbpfFirewallCollector(objs *ebpfFirewallObjects) *ebpfFirewallCollector {
+func NewEbpfFirewallCollector() *ebpfFirewallCollector {
 	return &ebpfFirewallCollector{
-		objs: objs,
 		packetsTotal: prometheus.NewDesc("ebpf_firewall_packets_total",
 			"",
 			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
@@ -73,6 +77,67 @@ func (collector *ebpfFirewallCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	collect("ingress", collector.objs.PacketStatsIngress)
 	collect("egress", collector.objs.PacketStatsEgress)
+}
+
+func (collector *ebpfFirewallCollector) Load() error {
+	// Load the compiled eBPF ELF and load it into the kernel.
+	collector.objs = &ebpfFirewallObjects{}
+	if err := loadEbpfFirewallObjects(collector.objs, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (collector *ebpfFirewallCollector) Close() {
+	for _, link := range collector.links {
+		link.Close()
+	}
+	collector.objs.Close()
+}
+
+func (collector *ebpfFirewallCollector) Attach(iface *net.Interface) error {
+	err := features.HaveProgramType(ebpf.SchedACT)
+	if errors.Is(err, ebpf.ErrNotSupported) {
+		return fmt.Errorf("SchedACT not supported on this kernel")
+	}
+	if err != nil {
+		return fmt.Errorf("error checking SchedACT support: %w", err)
+	}
+
+	// {
+	// 	link, err := link.AttachXDP(link.XDPOptions{
+	// 		Program:   objs.XdpFirewall,
+	// 		Interface: iface.Index,
+	// 	})
+	// 	if err != nil {
+	// 		log.Panicf("could not attach XDP program: %s", err)
+	// 	}
+	//  collector.links = append(collector.links, link)
+	// }
+
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   collector.objs.TcPacketCounterIngress,
+			Attach:    ebpf.AttachTCXIngress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			return fmt.Errorf("could not attach XDP program: %w", err)
+		}
+		collector.links = append(collector.links, link)
+	}
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   collector.objs.TcPacketCounterEgress,
+			Attach:    ebpf.AttachTCXEgress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			return fmt.Errorf("could not attach XDP program: %w", err)
+		}
+		collector.links = append(collector.links, link)
+	}
+	return nil
 }
 
 func int2ip4(nn uint32) net.IP {

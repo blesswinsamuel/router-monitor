@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: |
           go generate ./...
-          GOOS=linux GOARCH=arm64 go build -o router-monitor
+          GOOS=linux GOARCH=arm64 go build -o router-monitor ./cmd/ebpf-firewall
 
       - name: Create release tarball
         if: ${{ startsWith(github.ref, 'refs/tags/') }}

@@ -30,8 +30,8 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY ebpf_firewall.c gen.go ./
+COPY internal ./internal
 
 RUN go generate ./...
 
-RUN mkdir -p /generated/ && cp ebpffirewall_* /generated/
+RUN mkdir -p /generated/ && cp internal/firewall/ebpffirewall_* /generated/
