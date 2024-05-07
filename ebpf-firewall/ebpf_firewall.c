@@ -30,11 +30,12 @@ struct {
 } packet_stats SEC(".maps");
 
 static inline void update_packet_stats(__u16 eth_proto, __u32 srcip, __u32 dstip, __u8 ip_proto, __u64 bytes) {
-  struct packet_stats_key key = {0};
-  key.eth_proto = eth_proto;
-  key.srcip = srcip;
-  key.dstip = dstip;
-  key.ip_proto = ip_proto;
+  struct packet_stats_key key = {
+      .eth_proto = eth_proto,
+      .srcip = srcip,
+      .dstip = dstip,
+      .ip_proto = ip_proto,
+  };
   struct packet_stats_value *value = bpf_map_lookup_elem(&packet_stats, &key);
 
   // bpf_printk("Packet (0x%04X): 0x%08X -> 0x%08X (0x%04X), %d %d", eth_proto, srcip, dstip, ip_proto, &packet_stats, value);

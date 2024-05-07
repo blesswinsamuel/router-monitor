@@ -1,5 +1,3 @@
 /result
 ebpf-firewall
-*_bpfel.o
-*_bpfel.go
 /bin
