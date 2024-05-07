@@ -1,5 +1,5 @@
 # https://ebpf-go.dev/guides/getting-started/
-FROM golang:latest
+FROM golang:latest AS builder
 
 RUN apt-get update && apt-get install -y \
     clang \
@@ -37,5 +37,9 @@ RUN go generate ./...
 COPY . .
 
 RUN go build -o /bin/ebpf-firewall
+
+FROM debian:bullseye-slim
+
+COPY --from=builder /bin/ebpf-firewall /bin/ebpf-firewall
 
 CMD ["/bin/ebpf-firewall"]
