@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/blesswinsamuel/ebpf-firewall/internal/firewall"
+	"github.com/cilium/ebpf/rlimit"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -18,6 +19,11 @@ import (
 func main() {
 	if len(os.Args) < 2 {
 		log.Panicf("Please specify a network interface")
+	}
+
+	// Allow the current process to lock memory for eBPF resources.
+	if err := rlimit.RemoveMemlock(); err != nil {
+		log.Fatal(err)
 	}
 
 	// Look up the network interface by name.
