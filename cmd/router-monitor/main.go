@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/blesswinsamuel/ebpf-firewall/internal/firewall"
+	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -27,7 +27,7 @@ func main() {
 		log.Panicf("lookup network iface %q: %s", ifaceName, err)
 	}
 
-	ebpfFirewallCollector := firewall.NewEbpfFirewallCollector()
+	ebpfFirewallCollector := routermonitor.NewEbpfCollector()
 	if err := ebpfFirewallCollector.Load(); err != nil {
 		log.Panicf("could not load ebpfFirewall: %s", err)
 	}
@@ -41,8 +41,8 @@ func main() {
 
 	go func() {
 		prometheus.MustRegister(ebpfFirewallCollector)
-		prometheus.MustRegister(firewall.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX")))
-		internetChecker := firewall.NewInternetChecker(10 * time.Second)
+		prometheus.MustRegister(routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX")))
+		internetChecker := routermonitor.NewInternetChecker(10 * time.Second)
 		internetChecker.Register(prometheus.DefaultRegisterer)
 		go internetChecker.Start(context.Background())
 

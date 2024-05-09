@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "bun --watch ebpf-firewall-dashboard.ts"
+    "dev": "bun --watch router-monitor-dashboard.ts"
   },
   "dependencies": {
     "grafana-dashboard-helpers": "file:../../grafana-dashboards"

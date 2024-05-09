@@ -13,7 +13,7 @@
 }:
 
 buildGoApplication {
-  pname = "ebpf-firewall";
+  pname = "router-monitor";
   version = "0.1";
   pwd = ./.;
   src = ./.;

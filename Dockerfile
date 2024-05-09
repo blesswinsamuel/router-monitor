@@ -36,10 +36,10 @@ RUN go generate ./...
 
 COPY cmd ./cmd
 
-RUN go build -o /bin/ebpf-firewall ./cmd/ebpf-firewall
+RUN go build -o /bin/router-monitor ./cmd/router-monitor
 
 FROM debian:bullseye-slim
 
-COPY --from=builder /bin/ebpf-firewall /bin/ebpf-firewall
+COPY --from=builder /bin/router-monitor /bin/router-monitor
 
-CMD ["/bin/ebpf-firewall"]
+CMD ["/bin/router-monitor"]

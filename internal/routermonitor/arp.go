@@ -1,4 +1,4 @@
-package firewall
+package routermonitor
 
 import (
 	"bufio"
@@ -33,10 +33,10 @@ func NewArpCollector(filename string, stripDomainSuffix string) *arpCollector {
 		filename:          filename,
 		stripDomainSuffix: stripDomainSuffix,
 		hostCache:         make(map[string]hostCacheValue),
-		arpDevices: prometheus.NewDesc("ebpf_firewall_arp_devices", "",
+		arpDevices: prometheus.NewDesc("router_monitor_arp_devices", "",
 			[]string{"ip_addr", "hw_addr", "device"}, nil,
 		),
-		firewallHostnames: prometheus.NewDesc("ebpf_firewall_hostnames", "",
+		firewallHostnames: prometheus.NewDesc("router_monitor_hostnames", "",
 			[]string{"ip_addr", "hostname"}, nil,
 		),
 	}
