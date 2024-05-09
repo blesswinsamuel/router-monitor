@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -42,7 +43,8 @@ func main() {
 	go func() {
 		prometheus.MustRegister(ebpfFirewallCollector)
 		prometheus.MustRegister(routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX")))
-		internetChecker := routermonitor.NewInternetChecker(10 * time.Second)
+		pingAddrs := strings.Split(os.Getenv("INTERNET_CONNECTION_CHECK_PING_ADDRS"), ",")
+		internetChecker := routermonitor.NewInternetChecker(10*time.Second, pingAddrs)
 		internetChecker.Register(prometheus.DefaultRegisterer)
 		go internetChecker.Start(context.Background())
 

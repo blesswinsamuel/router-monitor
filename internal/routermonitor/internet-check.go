@@ -10,15 +10,17 @@ import (
 )
 
 type internetChecker struct {
-	interval time.Duration
+	interval  time.Duration
+	pingAddrs []string
 
 	internetConnectionDuration *prometheus.HistogramVec
 	internetConnectionIsUp     *prometheus.GaugeVec
 }
 
-func NewInternetChecker(interval time.Duration) *internetChecker {
+func NewInternetChecker(interval time.Duration, pingAddrs []string) *internetChecker {
 	return &internetChecker{
-		interval: interval,
+		interval:  interval,
+		pingAddrs: pingAddrs,
 		internetConnectionDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "router_monitor_internet_connection_duration_seconds",
 			Help:    "",
@@ -38,18 +40,11 @@ func (collector *internetChecker) Register(registry prometheus.Registerer) {
 
 func (collector *internetChecker) Start(ctx context.Context) {
 	ticker := time.NewTicker(collector.interval)
-	addrs := []string{
-		"1.1.1.1:53",
-		"64.6.64.6:53",
-		"8.8.8.8:53",
-		"208.67.222.222:53",
-		"9.9.9.9:53",
-	}
 	log.Println("Checking if internet connection is up.")
 	for {
 		select {
 		case <-ticker.C:
-			for _, addr := range addrs {
+			for _, addr := range collector.pingAddrs {
 				connectionIsUp := 0
 				startTime := time.Now()
 				conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
