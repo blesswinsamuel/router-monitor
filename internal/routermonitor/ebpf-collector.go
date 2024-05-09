@@ -1,4 +1,4 @@
-package firewall
+package routermonitor
 
 import (
 	"encoding/binary"
@@ -14,22 +14,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type ebpfFirewallCollector struct {
-	objs  *ebpfFirewallObjects
+type ebpfCollectorCollector struct {
+	objs  *ebpfCollectorObjects
 	links []link.Link
 
 	packetsTotal *prometheus.Desc
 	bytesTotal   *prometheus.Desc
 }
 
-func NewEbpfFirewallCollector() *ebpfFirewallCollector {
-	return &ebpfFirewallCollector{
-		packetsTotal: prometheus.NewDesc("ebpf_firewall_packets_total",
+func NewEbpfCollector() *ebpfCollectorCollector {
+	return &ebpfCollectorCollector{
+		packetsTotal: prometheus.NewDesc("router_monitor_packets_total",
 			"",
 			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
 			nil,
 		),
-		bytesTotal: prometheus.NewDesc("ebpf_firewall_bytes_total",
+		bytesTotal: prometheus.NewDesc("router_monitor_bytes_total",
 			"",
 			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
 			nil,
@@ -37,17 +37,17 @@ func NewEbpfFirewallCollector() *ebpfFirewallCollector {
 	}
 }
 
-func (collector *ebpfFirewallCollector) Describe(ch chan<- *prometheus.Desc) {
+func (collector *ebpfCollectorCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.packetsTotal
 	ch <- collector.bytesTotal
 }
 
 // Collect implements required collect function for all promehteus collectors
-func (collector *ebpfFirewallCollector) Collect(ch chan<- prometheus.Metric) {
+func (collector *ebpfCollectorCollector) Collect(ch chan<- prometheus.Metric) {
 	collect := func(trafficDirection string, packetStats *ebpf.Map) {
 		iter := packetStats.Iterate()
-		var key ebpfFirewallPacketStatsKey
-		var value ebpfFirewallPacketStatsValue
+		var key ebpfCollectorPacketStatsKey
+		var value ebpfCollectorPacketStatsValue
 		for iter.Next(&key, &value) {
 			if err := iter.Err(); err != nil {
 				log.Panic("Map lookup:", err)
@@ -79,23 +79,23 @@ func (collector *ebpfFirewallCollector) Collect(ch chan<- prometheus.Metric) {
 	collect("egress", collector.objs.PacketStatsEgress)
 }
 
-func (collector *ebpfFirewallCollector) Load() error {
+func (collector *ebpfCollectorCollector) Load() error {
 	// Load the compiled eBPF ELF and load it into the kernel.
-	collector.objs = &ebpfFirewallObjects{}
-	if err := loadEbpfFirewallObjects(collector.objs, nil); err != nil {
+	collector.objs = &ebpfCollectorObjects{}
+	if err := loadEbpfCollectorObjects(collector.objs, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (collector *ebpfFirewallCollector) Close() {
+func (collector *ebpfCollectorCollector) Close() {
 	for _, link := range collector.links {
 		link.Close()
 	}
 	collector.objs.Close()
 }
 
-func (collector *ebpfFirewallCollector) Attach(iface *net.Interface) error {
+func (collector *ebpfCollectorCollector) Attach(iface *net.Interface) error {
 	err := features.HaveProgramType(ebpf.SchedACT)
 	if errors.Is(err, ebpf.ErrNotSupported) {
 		return fmt.Errorf("SchedACT not supported on this kernel")

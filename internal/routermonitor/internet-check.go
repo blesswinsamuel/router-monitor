@@ -1,4 +1,4 @@
-package firewall
+package routermonitor
 
 import (
 	"context"
@@ -20,12 +20,12 @@ func NewInternetChecker(interval time.Duration) *internetChecker {
 	return &internetChecker{
 		interval: interval,
 		internetConnectionDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "ebpf_firewall_internet_connection_duration_seconds",
+			Name:    "router_monitor_internet_connection_duration_seconds",
 			Help:    "",
 			Buckets: []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0},
 		}, []string{"addr"}),
 		internetConnectionIsUp: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "ebpf_firewall_internet_connection_is_up",
+			Name: "router_monitor_internet_connection_is_up",
 			Help: "",
 		}, []string{"addr"}),
 	}

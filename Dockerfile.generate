@@ -34,4 +34,4 @@ COPY internal ./internal
 
 RUN go generate ./...
 
-RUN mkdir -p /generated/ && cp internal/firewall/ebpffirewall_* /generated/
+RUN mkdir -p /generated/ && cp internal/routermonitor/ebpfcollector_* /generated/

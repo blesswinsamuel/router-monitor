@@ -27,7 +27,7 @@ const totalBytesByLocalIPQuery = (labels: string, ipLabel: string, queryType: st
 label_replace(
   sum by(${ipLabel}) (
     ${queryFunc}(
-      ebpf_firewall_bytes_total{${labels},instance=~"$instance"}[${queryType}]
+      router_monitor_bytes_total{${labels},instance=~"$instance"}[${queryType}]
     ) > 0
   ),
   "ip_addr", "$1", "${ipLabel}", "(.*)"
@@ -36,8 +36,8 @@ label_replace(
     ? `
 * on(ip_addr) group_left(hw_addr, device, hostname) (${queryType === '$__range' ? 'keep_last_value' : ''}(
     sum by (ip_addr, hw_addr, device, hostname) (
-      ebpf_firewall_arp_devices{instance=~"$instance"} 
-      * on (ip_addr) group_left (hostname) ebpf_firewall_hostnames{instance=~"$instance"}
+      router_monitor_arp_devices{instance=~"$instance"} 
+      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~"$instance"}
     )
   ) * 0 + 1)
 ` // hack: $__range is used only in pie chart, which is an instant query
@@ -96,7 +96,7 @@ const panels: PanelRowAndGroups = [
     NewPanelRow({ datasource, height: 3 }, [
       NewStatPanel({
         title: 'Internet',
-        targets: [{ expr: 'max(ebpf_firewall_internet_connection_is_up{instance=~"$instance"})' }],
+        targets: [{ expr: 'max(router_monitor_internet_connection_is_up{instance=~"$instance"})' }],
         defaultUnit: Unit.SHORT,
         mappings: [{ options: { '0': { text: 'Down' }, '1': { text: 'Up' } }, type: MappingType.ValueToText }],
         thresholds: {
@@ -109,7 +109,7 @@ const panels: PanelRowAndGroups = [
       }),
       NewStatPanel({
         title: 'Internet Downtime',
-        targets: [{ expr: '(1 - avg_over_time(max(ebpf_firewall_internet_connection_is_up{instance=~"$instance"})[$__range])) * $__range_s' }],
+        targets: [{ expr: '(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~"$instance"})[$__range])) * $__range_s' }],
         thresholds: {
           mode: ThresholdsMode.Absolute,
           steps: [
@@ -125,7 +125,7 @@ const panels: PanelRowAndGroups = [
         title: 'Average Connection Latency',
         targets: [
           {
-            expr: 'avg(rate(ebpf_firewall_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(ebpf_firewall_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval]))',
+            expr: 'avg(rate(router_monitor_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval]))',
           },
         ],
         reduceCalc: 'lastNotNull',
@@ -141,7 +141,7 @@ const panels: PanelRowAndGroups = [
       }),
       NewStatPanel({
         title: 'Max Connection Latency',
-        targets: [{ expr: 'histogram_quantile(0.99, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))' }],
+        targets: [{ expr: 'histogram_quantile(0.99, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))' }],
         defaultUnit: Unit.SECONDS,
         reduceCalc: 'max',
         thresholds: {
@@ -156,14 +156,14 @@ const panels: PanelRowAndGroups = [
       NewStatPanel({
         title: 'No. of devices',
         description: 'Number of devices connected',
-        targets: [{ expr: 'count(last_over_time((ebpf_firewall_arp_devices{instance=~"$instance"} == 2)[$__range]))' }],
+        targets: [{ expr: 'count(last_over_time((router_monitor_arp_devices{instance=~"$instance"} == 2)[$__range]))' }],
         defaultUnit: Unit.SHORT,
       }),
       NewBarGaugePanel({
         title: 'Bandwidth Usage',
         targets: [
-          { expr: 'sum by(src) (increase(ebpf_firewall_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Download' },
-          { expr: 'sum by(dst) (increase(ebpf_firewall_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Upload' },
+          { expr: 'sum by(src) (increase(router_monitor_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Download' },
+          { expr: 'sum by(dst) (increase(router_monitor_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Upload' },
         ],
         defaultUnit: Unit.BYTES_SI,
         overrides: [
@@ -185,23 +185,23 @@ const panels: PanelRowAndGroups = [
       title: 'Connection Latency',
       targets: [
         {
-          expr: 'rate(ebpf_firewall_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(ebpf_firewall_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval])',
+          expr: 'rate(router_monitor_internet_connection_duration_seconds_sum{instance=~"$instance"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~"$instance"}[$__rate_interval])',
           legendFormat: '{{ addr }} average',
         },
         {
-          expr: '1 - max(ebpf_firewall_internet_connection_is_up{instance=~"$instance"})',
+          expr: '1 - max(router_monitor_internet_connection_is_up{instance=~"$instance"})',
           legendFormat: 'down',
         },
         // {
-        //   expr: 'histogram_quantile(0.99, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))',
+        //   expr: 'histogram_quantile(0.99, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))',
         //   legendFormat: '99p',
         // },
         {
-          expr: 'histogram_quantile(0.95, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))',
+          expr: 'histogram_quantile(0.95, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))',
           legendFormat: '95p',
         },
         {
-          expr: 'histogram_quantile(0.50, sum by (le) (rate(ebpf_firewall_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))',
+          expr: 'histogram_quantile(0.50, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))',
           legendFormat: '50p',
         },
       ],
@@ -227,7 +227,7 @@ const panels: PanelRowAndGroups = [
       title: 'Connection down',
       targets: [
         {
-          expr: '1 - ebpf_firewall_internet_connection_is_up{instance=~"$instance"}',
+          expr: '1 - router_monitor_internet_connection_is_up{instance=~"$instance"}',
           legendFormat: '{{ addr }} down',
         },
       ],
@@ -257,33 +257,33 @@ const panels: PanelRowAndGroups = [
       targets: [
         {
           expr:
-            'last_over_time(sum by (ip_addr, hw_addr, device) (ebpf_firewall_arp_devices{instance=~"$instance"})[$__range]) ' +
-            '* on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (ebpf_firewall_hostnames{instance=~"$instance"})[$__range])',
-          // expr: 'sum by (ip_addr, hw_addr, device) (last_over_time(ebpf_firewall_arp_devices{instance=~"$instance"}[$__range])) * on(ip_addr) group_left(hostname) max by (ip_addr, hostname) (last_over_time(ebpf_firewall_hostnames{instance=~"$instance"}[$__range]))',
+            'last_over_time(sum by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~"$instance"})[$__range]) ' +
+            '* on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (router_monitor_hostnames{instance=~"$instance"})[$__range])',
+          // expr: 'sum by (ip_addr, hw_addr, device) (last_over_time(router_monitor_arp_devices{instance=~"$instance"}[$__range])) * on(ip_addr) group_left(hostname) max by (ip_addr, hostname) (last_over_time(router_monitor_hostnames{instance=~"$instance"}[$__range]))',
           format: 'table',
           type: 'instant',
           refId: 'DEVICE',
         },
         {
-          expr: 'label_move(sum by (dst) (increase(ebpf_firewall_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]) > 0), "dst", "ip_addr")',
+          expr: 'label_move(sum by (dst) (increase(router_monitor_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]) > 0), "dst", "ip_addr")',
           format: 'table',
           type: 'instant',
           refId: 'INGRESS_BYTES',
         },
         {
-          expr: 'label_move(sum by (dst) (increase(ebpf_firewall_packets_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]) > 0), "dst", "ip_addr")',
+          expr: 'label_move(sum by (dst) (increase(router_monitor_packets_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]) > 0), "dst", "ip_addr")',
           format: 'table',
           type: 'instant',
           refId: 'INGRESS_PACKETS',
         },
         {
-          expr: 'label_move(sum by (src) (increase(ebpf_firewall_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]) > 0), "src", "ip_addr")',
+          expr: 'label_move(sum by (src) (increase(router_monitor_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]) > 0), "src", "ip_addr")',
           format: 'table',
           type: 'instant',
           refId: 'EGRESS_BYTES',
         },
         {
-          expr: 'label_move(sum by (src) (increase(ebpf_firewall_packets_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]) > 0), "src", "ip_addr")',
+          expr: 'label_move(sum by (src) (increase(router_monitor_packets_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]) > 0), "src", "ip_addr")',
           format: 'table',
           type: 'instant',
           refId: 'EGRESS_PACKETS',
@@ -366,25 +366,25 @@ const dashboard: Dashboard = {
   ...defaultDashboard,
   description: 'Dashboard for EBPF Firewall',
   graphTooltip: DashboardCursorSync.Crosshair,
-  tags: ['ebpf-firewall'],
+  tags: ['router-monitor'],
   time: {
     from: 'now-24h',
     to: 'now',
   },
   title: 'EBPF Firewall',
-  uid: 'ebpf-firewall',
+  uid: 'router-monitor',
   version: 1,
   panels: autoLayout(panels),
   templating: {
     list: [
       NewPrometheusDatasourceVariable({ name: 'DS_PROMETHEUS', label: 'Prometheus' }),
-      NewQueryVariable({ datasource, name: 'localips', label: 'Local IPs', query: 'label_values(ebpf_firewall_packets_total, dst)', multi: true, includeAll: true }),
-      NewQueryVariable({ datasource, name: 'instance', label: 'Instance', query: 'label_values(ebpf_firewall_internet_connection_is_up, instance)' }),
+      NewQueryVariable({ datasource, name: 'localips', label: 'Local IPs', query: 'label_values(router_monitor_packets_total, dst)', multi: true, includeAll: true }),
+      NewQueryVariable({ datasource, name: 'instance', label: 'Instance', query: 'label_values(router_monitor_internet_connection_is_up, instance)' }),
     ],
   },
 }
 
 writeDashboardAndPostToGrafana({
   dashboard,
-  filename: 'ebpf-firewall-dashboard.json',
+  filename: 'router-monitor-dashboard.json',
 })
