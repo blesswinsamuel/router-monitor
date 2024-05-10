@@ -37,7 +37,9 @@ struct {
 } packet_stats_egress SEC(".maps");
 
 static inline void update_packet_stats(void *packet_stats, __u16 eth_proto, __u32 srcip, __u32 dstip, __u8 ip_proto, __u64 bytes) {
-  struct packet_stats_key key = {0};
+  struct packet_stats_key key;
+  __builtin_memset(&key, 0, sizeof(key));
+
   key.eth_proto = eth_proto;
   key.srcip = srcip;
   key.dstip = dstip;
