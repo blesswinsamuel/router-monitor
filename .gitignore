@@ -3,3 +3,4 @@
 *_bpfel.o
 *_bpfel.go
 /bin
+.DS_Store
