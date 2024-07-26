@@ -30,7 +30,7 @@ tasks:
 
   go-build:
     cmds:
-      - GOOS=linux GOARCH=arm64 go build -o router-monitor ./cmd/router-monitor
+      - GOOS=linux GOARCH=amd64 go build -o router-monitor ./cmd/router-monitor
 
   copy-to-router:
     cmds:
