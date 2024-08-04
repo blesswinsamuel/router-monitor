@@ -80,8 +80,8 @@ static inline void process_eth(void *packet_stats, void *data, void *data_end, _
   // process only IPv4 and IPv6
   switch (eth_proto) {
     case ETH_P_IP: {
-      __u32 lan_subnet_mask = 0x0000FFFF;  // 255.255.0.0
-      __u32 lan_subnet_ip = 0x0000640A;    // 10.100.0.0
+      __u32 lan_subnet_mask = 0x0000FFFF;  // 255.255.0.0 // TODO: make this configurable
+      __u32 lan_subnet_ip = 0x0000640A;    // 10.100.0.0 // TODO: make this configurable
       // bpf_printk("IP packet: %x -> %x", ip_saddr, ip_daddr);
       // bpf_printk("is_ip_in_subnet: %d -> %d", is_ip_in_subnet(ip_saddr, lan_subnet_ip, lan_subnet_mask), is_ip_in_subnet(ip_daddr, lan_subnet_ip, lan_subnet_mask));
       if (!is_ip_in_subnet(ip_saddr, lan_subnet_ip, lan_subnet_mask)) {
