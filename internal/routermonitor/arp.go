@@ -37,7 +37,7 @@ func NewArpCollector(filename string, stripDomainSuffix string) *arpCollector {
 			[]string{"ip_addr", "hw_addr", "device"}, nil,
 		),
 		firewallHostnames: prometheus.NewDesc("router_monitor_hostnames", "",
-			[]string{"ip_addr", "hostname"}, nil,
+			[]string{"ip_addr", "hostname", "device"}, nil,
 		),
 	}
 }
@@ -93,8 +93,9 @@ func (collector *arpCollector) Collect(ch chan<- prometheus.Metric) {
 			if err != nil {
 				log.Printf("Error parsing flag: %v", err)
 			}
-			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(flag), ipAddr, hwAddr, fields[5])
-			ch <- prometheus.MustNewConstMetric(collector.firewallHostnames, prometheus.GaugeValue, 1, ipAddr, hostname)
+			device := fields[5]
+			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(flag), ipAddr, hwAddr, device)
+			ch <- prometheus.MustNewConstMetric(collector.firewallHostnames, prometheus.GaugeValue, 1, ipAddr, hostname, device)
 		}
 
 		if err := scanner.Err(); err != nil {
