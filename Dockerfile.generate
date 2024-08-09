@@ -1,5 +1,5 @@
 # https://ebpf-go.dev/guides/getting-started/
-FROM golang:latest
+FROM --platform=amd64 golang:latest
 
 RUN apt-get update && apt-get install -y \
     clang \
