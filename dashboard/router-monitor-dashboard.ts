@@ -35,10 +35,7 @@ label_replace(
   (extraFields
     ? `
 * on(ip_addr) group_left(hw_addr, device, hostname) (${queryType === '$__range' ? 'keep_last_value' : ''}(
-    sum by (ip_addr, hw_addr, device, hostname) (
-      router_monitor_arp_devices{instance=~"$instance"} 
-      * on (ip_addr) group_left (hostname) router_monitor_hostnames{instance=~"$instance"}
-    )
+    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~"$instance"})
   ) * 0 + 1)
 ` // hack: $__range is used only in pie chart, which is an instant query
     : '')
@@ -256,9 +253,7 @@ const panels: PanelRowAndGroups = [
       title: 'Connected Devices',
       targets: [
         {
-          expr:
-            'last_over_time(sum by (ip_addr, hw_addr, device) (router_monitor_arp_devices{instance=~"$instance"})[$__range]) ' +
-            '* on(ip_addr) group_left(hostname) last_over_time(sum by (ip_addr, hostname) (router_monitor_hostnames{instance=~"$instance"})[$__range])',
+          expr: 'sum by (ip_addr, hw_addr, hostname, device) (router_monitor_arp_devices{instance=~"$instance"})',
           // expr: 'sum by (ip_addr, hw_addr, device) (last_over_time(router_monitor_arp_devices{instance=~"$instance"}[$__range])) * on(ip_addr) group_left(hostname) max by (ip_addr, hostname) (last_over_time(router_monitor_hostnames{instance=~"$instance"}[$__range]))',
           format: 'table',
           type: 'instant',
@@ -364,14 +359,14 @@ const panels: PanelRowAndGroups = [
 
 const dashboard: Dashboard = {
   ...defaultDashboard,
-  description: 'Dashboard for EBPF Firewall',
+  description: 'Dashboard for Router Monitor',
   graphTooltip: DashboardCursorSync.Crosshair,
   tags: ['router-monitor'],
   time: {
     from: 'now-24h',
     to: 'now',
   },
-  title: 'EBPF Firewall',
+  title: 'Router Monitor',
   uid: 'router-monitor',
   version: 1,
   panels: autoLayout(panels),
