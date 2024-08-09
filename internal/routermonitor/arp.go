@@ -24,8 +24,7 @@ type arpCollector struct {
 	hostCache         map[string]hostCacheValue
 	hostCacheMutex    sync.Mutex
 
-	arpDevices        *prometheus.Desc
-	firewallHostnames *prometheus.Desc
+	arpDevices *prometheus.Desc
 }
 
 func NewArpCollector(filename string, stripDomainSuffix string) *arpCollector {
@@ -34,17 +33,13 @@ func NewArpCollector(filename string, stripDomainSuffix string) *arpCollector {
 		stripDomainSuffix: stripDomainSuffix,
 		hostCache:         make(map[string]hostCacheValue),
 		arpDevices: prometheus.NewDesc("router_monitor_arp_devices", "",
-			[]string{"ip_addr", "hw_addr", "device"}, nil,
-		),
-		firewallHostnames: prometheus.NewDesc("router_monitor_hostnames", "",
-			[]string{"ip_addr", "hostname", "device"}, nil,
+			[]string{"ip_addr", "hw_addr", "hostname", "device"}, nil,
 		),
 	}
 }
 
 func (collector *arpCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.arpDevices
-	ch <- collector.firewallHostnames
 }
 
 // Collect implements required collect function for all promehteus collectors
@@ -94,8 +89,7 @@ func (collector *arpCollector) Collect(ch chan<- prometheus.Metric) {
 				log.Printf("Error parsing flag: %v", err)
 			}
 			device := fields[5]
-			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(flag), ipAddr, hwAddr, device)
-			ch <- prometheus.MustNewConstMetric(collector.firewallHostnames, prometheus.GaugeValue, 1, ipAddr, hostname, device)
+			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(flag), ipAddr, hwAddr, hostname, device)
 		}
 
 		if err := scanner.Err(); err != nil {
