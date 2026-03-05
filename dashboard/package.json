@@ -6,7 +6,7 @@
     "grafana-dashboard-helpers": "file:../../grafana-dashboards"
   },
   "devDependencies": {
-    "@types/node": "^20.6.3"
+    "@types/node": "^24.0.0"
   },
   "prettier": {
     "trailingComma": "es5",
