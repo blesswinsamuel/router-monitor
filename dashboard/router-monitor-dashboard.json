@@ -1,50 +1,121 @@
 {
+  "timezone": "browser",
   "editable": true,
-  "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "links": [],
+  "fiscalYearStartMonth": 0,
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "DS_PROMETHEUS",
+        "skipUrlSync": false,
+        "multi": false,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30,
+        "label": "Prometheus",
+        "query": "prometheus",
+        "hide": 0
+      },
+      {
+        "type": "query",
+        "name": "localips",
+        "skipUrlSync": false,
+        "multi": true,
+        "includeAll": true,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30,
+        "label": "Local IPs",
+        "query": "label_values(router_monitor_packets_total, dst)",
+        "hide": 0,
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1
+      },
+      {
+        "type": "query",
+        "name": "instance",
+        "skipUrlSync": false,
+        "multi": false,
+        "includeAll": false,
+        "auto": false,
+        "auto_min": "10s",
+        "auto_count": 30,
+        "label": "Instance",
+        "query": "label_values(router_monitor_internet_connection_is_up, instance)",
+        "hide": 0,
+        "datasource": {
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1
+      }
+    ]
+  },
+  "annotations": {},
+  "title": "Router Monitor",
+  "description": "Dashboard for monitoring router traffic and internet connection status",
+  "uid": "router-monitor",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "tags": [
+    "router-monitor"
+  ],
   "panels": [
     {
-      "type": "row",
-      "title": "Overview",
-      "panels": [],
-      "collapsed": false,
+      "type": "text",
+      "transparent": true,
+      "repeatDirection": "h",
       "gridPos": {
-        "x": 0,
-        "y": 0,
+        "h": 3,
         "w": 24,
-        "h": 1
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "This is a generated dashboard. Any changes made here will be lost on the next generation."
       }
     },
     {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "stat",
-      "title": "Internet",
+      "type": "row",
+      "collapsed": false,
+      "id": 0,
+      "panels": [],
+      "title": "Overview",
       "gridPos": {
         "x": 0,
-        "y": 1,
-        "w": 4,
-        "h": 3
-      },
+        "y": 3,
+        "h": 1,
+        "w": 24
+      }
+    },
+    {
+      "type": "stat",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
+          "refId": "A",
+          "format": "time_series",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Internet",
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
           "mappings": [
             {
               "options": {
@@ -62,341 +133,295 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "transparent",
                 "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
       "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "wideLayout": true,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})[$__range])) * $__range_s",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 3
+      }
+    },
+    {
       "type": "stat",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})[$__range])) * $__range_s",
+          "refId": "A",
+          "format": "time_series",
+          "range": true,
+          "instant": false
+        }
+      ],
       "title": "Internet Downtime",
       "interval": "1m",
       "maxDataPoints": 1000,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
       "gridPos": {
         "x": 4,
-        "y": 1,
+        "y": 4,
         "w": 4,
         "h": 3
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "avg(rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
+          "refId": "A",
+          "format": "time_series",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Average Connection Latency",
       "fieldConfig": {
         "defaults": {
+          "unit": "s",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "transparent",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
       "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "wideLayout": true,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "avg(rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval]))",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "stat",
-      "title": "Average Connection Latency",
       "gridPos": {
         "x": 8,
-        "y": 1,
+        "y": 4,
         "w": 4,
         "h": 3
-      },
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 0.1
-              },
-              {
-                "color": "red",
-                "value": 0.3
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "wideLayout": true,
-        "text": {}
       }
     },
     {
-      "links": [],
+      "type": "stat",
+      "transparent": false,
       "repeatDirection": "h",
-      "tags": [],
       "targets": [
         {
-          "editorMode": "code",
           "expr": "histogram_quantile(0.99, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "range": true,
-          "instant": false,
+          "refId": "A",
           "format": "time_series",
-          "refId": "A"
+          "range": true,
+          "instant": false
         }
       ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "stat",
       "title": "Max Connection Latency",
-      "gridPos": {
-        "x": 12,
-        "y": 1,
-        "w": 4,
-        "h": 3
-      },
       "fieldConfig": {
         "defaults": {
+          "unit": "s",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "transparent",
                 "value": null
-              },
-              {
-                "color": "#EAB839",
-                "value": 0.5
-              },
-              {
-                "color": "red",
-                "value": 1
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
       "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "max"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "wideLayout": true,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "count(last_over_time((router_monitor_arp_devices{instance=~\"$instance\"} == 2)[$__range]))",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "stat",
-      "title": "No. of devices",
-      "description": "Number of devices connected",
       "gridPos": {
-        "x": 16,
-        "y": 1,
+        "x": 12,
+        "y": 4,
         "w": 4,
         "h": 3
-      },
+      }
+    },
+    {
+      "type": "stat",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "count(last_over_time((router_monitor_arp_devices{instance=~\"$instance\"} == 2)[$__range]))",
+          "refId": "A",
+          "format": "time_series",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "No. of devices",
+      "description": "Number of devices connected",
       "fieldConfig": {
         "defaults": {
+          "unit": "short",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "transparent",
                 "value": null
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
       "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "textMode": "auto",
+        "wideLayout": true,
+        "showPercentChange": false,
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
-        "orientation": "auto",
-        "textMode": "auto",
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "showPercentChange": false,
-        "wideLayout": true,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "sum by(src) (increase(router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]))",
-          "legendFormat": "Download",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "sum by(dst) (increase(router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]))",
-          "legendFormat": "Upload",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "B"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+        "percentChangeColorMode": "standard",
+        "orientation": "auto"
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "bargauge",
-      "title": "Bandwidth Usage",
       "gridPos": {
-        "x": 20,
-        "y": 1,
+        "x": 16,
+        "y": 4,
         "w": 4,
         "h": 3
-      },
+      }
+    },
+    {
+      "type": "bargauge",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "sum by(src) (increase(router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]))",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "Download",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "sum by(dst) (increase(router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]))",
+          "refId": "B",
+          "format": "time_series",
+          "legendFormat": "Upload",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "title": "Bandwidth Usage",
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -435,86 +460,71 @@
         ]
       },
       "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "orientation": "horizontal",
-        "displayMode": "basic",
+        "displayMode": "gradient",
         "valueMode": "color",
+        "namePlacement": "auto",
         "showUnfilled": true,
-        "namePlacement": "left",
-        "sizing": "manual",
-        "minVizWidth": 0,
-        "minVizHeight": 15,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "reduceOptions": {
+          "calcs": []
+        },
         "maxVizHeight": 300,
-        "text": {}
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
-          "legendFormat": "{{ addr }} average",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        },
-        {
-          "editorMode": "code",
-          "expr": "1 - max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
-          "legendFormat": "down",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "B"
-        },
-        {
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "95p",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "C"
-        },
-        {
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
-          "legendFormat": "50p",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "D"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+        "orientation": "horizontal"
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "timeseries",
-      "title": "Connection Latency",
-      "maxDataPoints": 100,
       "gridPos": {
-        "x": 0,
+        "x": 20,
         "y": 4,
-        "w": 12,
-        "h": 6
-      },
+        "w": 4,
+        "h": 3
+      }
+    },
+    {
+      "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "rate(router_monitor_internet_connection_duration_seconds_sum{instance=~\"$instance\"}[$__rate_interval]) / rate(router_monitor_internet_connection_duration_seconds_count{instance=~\"$instance\"}[$__rate_interval])",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ addr }} average",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "1 - max(router_monitor_internet_connection_is_up{instance=~\"$instance\"})",
+          "refId": "B",
+          "format": "time_series",
+          "legendFormat": "down",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
+          "refId": "C",
+          "format": "time_series",
+          "legendFormat": "95p",
+          "range": true,
+          "instant": false
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~\"$instance\"}[$__rate_interval])))",
+          "refId": "D",
+          "format": "time_series",
+          "legendFormat": "50p",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Connection Latency",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
+          "unit": "s",
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
@@ -525,28 +535,18 @@
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "auto",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "none"
             }
-          },
-          "unit": "s"
+          }
         },
         "overrides": [
           {
@@ -586,53 +586,47 @@
           }
         ]
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
-          "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "1 - router_monitor_internet_connection_is_up{instance=~\"$instance\"}",
-          "legendFormat": "{{ addr }} down",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "timeseries",
-      "title": "Connection down",
-      "maxDataPoints": 100,
       "gridPos": {
-        "x": 12,
-        "y": 4,
+        "x": 0,
+        "y": 7,
         "w": 12,
         "h": 6
-      },
+      }
+    },
+    {
+      "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "1 - router_monitor_internet_connection_is_up{instance=~\"$instance\"}",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ addr }} down",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Connection down",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
+          "unit": "s",
           "custom": {
             "axisCenteredZero": false,
             "axisColorMode": "text",
@@ -643,90 +637,86 @@
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "normal"
             }
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
-          "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 12,
+        "h": 6
       }
     },
     {
-      "links": [],
+      "type": "table",
+      "transparent": false,
       "repeatDirection": "h",
-      "tags": [],
       "targets": [
         {
-          "editorMode": "code",
           "expr": "sum by (ip_addr, hw_addr, hostname, device) (router_monitor_arp_devices{instance=~\"$instance\"})",
-          "range": false,
-          "instant": true,
+          "refId": "DEVICE",
           "format": "table",
-          "refId": "DEVICE"
+          "instant": true,
+          "range": false
         },
         {
-          "editorMode": "code",
           "expr": "label_move(sum by (dst) (increase(router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"dst\", \"ip_addr\")",
-          "range": false,
-          "instant": true,
+          "refId": "INGRESS_BYTES",
           "format": "table",
-          "refId": "INGRESS_BYTES"
+          "instant": true,
+          "range": false
         },
         {
-          "editorMode": "code",
           "expr": "label_move(sum by (dst) (increase(router_monitor_packets_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"dst\", \"ip_addr\")",
-          "range": false,
-          "instant": true,
+          "refId": "INGRESS_PACKETS",
           "format": "table",
-          "refId": "INGRESS_PACKETS"
+          "instant": true,
+          "range": false
         },
         {
-          "editorMode": "code",
           "expr": "label_move(sum by (src) (increase(router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"src\", \"ip_addr\")",
-          "range": false,
-          "instant": true,
+          "refId": "EGRESS_BYTES",
           "format": "table",
-          "refId": "EGRESS_BYTES"
+          "instant": true,
+          "range": false
         },
         {
-          "editorMode": "code",
           "expr": "label_move(sum by (src) (increase(router_monitor_packets_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]) > 0), \"src\", \"ip_addr\")",
-          "range": false,
-          "instant": true,
+          "refId": "EGRESS_PACKETS",
           "format": "table",
-          "refId": "EGRESS_PACKETS"
+          "instant": true,
+          "range": false
         }
       ],
+      "title": "Connected Devices",
       "transformations": [
         {
           "id": "joinByField",
@@ -761,18 +751,6 @@
           }
         }
       ],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "table",
-      "title": "Connected Devices",
-      "gridPos": {
-        "x": 0,
-        "y": 10,
-        "w": 24,
-        "h": 12
-      },
       "fieldConfig": {
         "defaults": {
           "thresholds": {
@@ -947,57 +925,60 @@
         ]
       },
       "options": {
-        "cellHeight": "sm",
-        "frameIndex": -1,
+        "frameIndex": 0,
         "showHeader": true,
+        "showTypeIcons": false,
+        "footer": {
+          "show": false,
+          "reducer": [],
+          "countRows": false
+        },
+        "cellHeight": "md",
         "sortBy": [
           {
             "displayName": "Downloaded",
             "desc": true
           }
         ]
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 12
       }
     },
     {
       "type": "row",
-      "title": "Network Traffic",
-      "panels": [],
       "collapsed": false,
+      "id": 0,
+      "panels": [],
+      "title": "Network Traffic",
       "gridPos": {
         "x": 0,
-        "y": 22,
-        "w": 24,
-        "h": 1
+        "y": 25,
+        "h": 1,
+        "w": 24
       }
     },
     {
-      "links": [],
+      "type": "piechart",
+      "transparent": false,
       "repeatDirection": "h",
-      "tags": [],
       "targets": [
         {
-          "editorMode": "code",
           "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": false,
-          "instant": true,
+          "refId": "A",
           "format": "time_series",
-          "refId": "A"
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "instant": true,
+          "range": false
         }
       ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "piechart",
       "title": "Total Bytes Downloaded - by local IP (pie chart)",
-      "gridPos": {
-        "x": 0,
-        "y": 23,
-        "w": 12,
-        "h": 12
-      },
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -1005,60 +986,56 @@
         "overrides": []
       },
       "options": {
-        "displayLabels": [],
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false,
+          "fields": ""
+        },
         "legend": {
-          "showLegend": true,
-          "displayMode": "table",
-          "placement": "right",
           "values": [
             "percent",
             "value"
           ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
           "calcs": []
         },
         "orientation": "auto",
-        "pieType": "pie",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": false,
-          "instant": true,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+        "displayLabels": []
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 12
+      }
+    },
+    {
       "type": "piechart",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__range]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) (keep_last_value(\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "instant": true,
+          "range": false
+        }
+      ],
       "title": "Total Bytes Uploaded - by local IP (pie chart)",
-      "gridPos": {
-        "x": 12,
-        "y": 23,
-        "w": 12,
-        "h": 12
-      },
       "fieldConfig": {
         "defaults": {
           "unit": "decbytes"
@@ -1066,65 +1043,67 @@
         "overrides": []
       },
       "options": {
-        "displayLabels": [],
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false,
+          "fields": ""
+        },
         "legend": {
-          "showLegend": true,
-          "displayMode": "table",
-          "placement": "right",
           "values": [
             "percent",
             "value"
           ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
           "calcs": []
         },
         "orientation": "auto",
-        "pieType": "pie",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "displayLabels": []
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 12,
+        "h": 12
       }
     },
     {
-      "links": [],
+      "type": "timeseries",
+      "transparent": false,
       "repeatDirection": "h",
-      "tags": [],
       "targets": [
         {
-          "editorMode": "code",
           "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
+          "refId": "A",
+          "format": "time_series",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
+          "instant": false
         }
       ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "timeseries",
       "title": "Total bytes downloaded - by local IP",
-      "maxDataPoints": 100,
-      "gridPos": {
-        "x": 0,
-        "y": 35,
-        "w": 6,
-        "h": 12
-      },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
+          "unit": "decbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "custom": {
             "axisCenteredZero": false,
@@ -1136,88 +1115,74 @@
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "normal"
             }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "decbytes"
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
           "calcs": [
             "sum"
           ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 6,
+        "h": 12
       }
     },
     {
-      "links": [],
+      "type": "timeseries",
+      "transparent": false,
       "repeatDirection": "h",
-      "tags": [],
       "targets": [
         {
-          "editorMode": "code",
           "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
+          "refId": "A",
+          "format": "time_series",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
+          "instant": false
         }
       ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "timeseries",
       "title": "Total bytes uploaded - by local IP",
-      "maxDataPoints": 100,
-      "gridPos": {
-        "x": 6,
-        "y": 35,
-        "w": 6,
-        "h": 12
-      },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
+          "unit": "decbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "custom": {
             "axisCenteredZero": false,
@@ -1229,88 +1194,155 @@
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "normal"
             }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "decbytes"
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
           "calcs": [
             "sum"
           ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
+      "gridPos": {
+        "x": 6,
+        "y": 38,
+        "w": 6,
+        "h": 12
+      }
+    },
+    {
       "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "range": true,
+          "instant": false
+        }
+      ],
       "title": "Download Data Rate - by local IP",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
       "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min",
+            "max"
+          ],
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
       "gridPos": {
         "x": 12,
-        "y": 35,
+        "y": 38,
         "w": 6,
         "h": 12
-      },
+      }
+    },
+    {
+      "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Upload Data Rate - by local IP",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
+          "unit": "Bps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "custom": {
             "axisCenteredZero": false,
@@ -1322,122 +1354,68 @@
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "auto",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "none"
             }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "Bps"
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
           "calcs": [
             "mean",
             "min",
             "max"
           ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)\n* on(ip_addr) group_left(hw_addr, device, hostname) ((\n    sum by (ip_addr, hw_addr, device, hostname) (router_monitor_arp_devices{instance=~\"$instance\"})\n  ) * 0 + 1)\n",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "timeseries",
-      "title": "Upload Data Rate - by local IP",
-      "maxDataPoints": 100,
       "gridPos": {
         "x": 18,
-        "y": 35,
+        "y": 38,
         "w": 6,
         "h": 12
-      },
+      }
+    },
+    {
+      "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Total bytes downloaded",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisGridShow": true,
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "unit": "decbytes",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1447,60 +1425,84 @@
               }
             ]
           },
-          "unit": "Bps"
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "stacking": {
+              "mode": "normal"
+            }
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
-          "calcs": [
-            "mean",
-            "min",
-            "max"
-          ],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": [
+            "sum"
+          ],
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    increase(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "timeseries",
-      "title": "Total bytes downloaded",
-      "maxDataPoints": 100,
       "gridPos": {
         "x": 0,
-        "y": 47,
+        "y": 50,
         "w": 6,
         "h": 10
-      },
+      }
+    },
+    {
+      "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Total bytes uploaded",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
+          "unit": "decbytes",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "custom": {
             "axisCenteredZero": false,
@@ -1512,120 +1514,66 @@
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "normal"
             }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "decbytes"
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
           "calcs": [
             "sum"
           ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(dst) (\n    increase(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "timeseries",
-      "title": "Total bytes uploaded",
-      "maxDataPoints": 100,
       "gridPos": {
         "x": 6,
-        "y": 47,
+        "y": 50,
         "w": 6,
         "h": 10
-      },
+      }
+    },
+    {
+      "type": "timeseries",
+      "transparent": false,
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
+          "refId": "A",
+          "format": "time_series",
+          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "title": "Download Data Rate",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisGridShow": true,
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
-            "fillOpacity": 100,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "stepAfter",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "unit": "Bps",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1635,153 +1583,86 @@
               }
             ]
           },
-          "unit": "decbytes"
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "stacking": {
+              "mode": "none"
+            }
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
-          "calcs": [
-            "sum"
-          ],
           "displayMode": "table",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": true,
+          "calcs": [
+            "mean",
+            "min",
+            "max"
+          ],
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
-      }
-    },
-    {
-      "links": [],
-      "repeatDirection": "h",
-      "tags": [],
-      "targets": [
-        {
-          "editorMode": "code",
-          "expr": "\nlabel_replace(\n  sum by(src) (\n    rate(\n      router_monitor_bytes_total{dst=~\"$localips\",src=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"src\", \"(.*)\"\n)",
-          "legendFormat": "{{ hostname }} ({{ ip_addr }})",
-          "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
-        }
-      ],
-      "transformations": [],
-      "transparent": false,
+      },
       "datasource": {
         "uid": "${DS_PROMETHEUS}"
       },
-      "type": "timeseries",
-      "title": "Download Data Rate",
-      "maxDataPoints": 100,
       "gridPos": {
         "x": 12,
-        "y": 47,
+        "y": 50,
         "w": 6,
         "h": 10
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisGridShow": true,
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean",
-            "min",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
       }
     },
     {
-      "links": [],
+      "type": "timeseries",
+      "transparent": false,
       "repeatDirection": "h",
-      "tags": [],
       "targets": [
         {
-          "editorMode": "code",
           "expr": "\nlabel_replace(\n  sum by(dst) (\n    rate(\n      router_monitor_bytes_total{src=~\"$localips\",dst=~\"internet\",instance=~\"$instance\"}[$__rate_interval]\n    ) > 0\n  ),\n  \"ip_addr\", \"$1\", \"dst\", \"(.*)\"\n)",
+          "refId": "A",
+          "format": "time_series",
           "legendFormat": "{{ hostname }} ({{ ip_addr }})",
           "range": true,
-          "instant": false,
-          "format": "time_series",
-          "refId": "A"
+          "instant": false
         }
       ],
-      "transformations": [],
-      "transparent": false,
-      "datasource": {
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "type": "timeseries",
       "title": "Upload Data Rate",
-      "maxDataPoints": 100,
-      "gridPos": {
-        "x": 18,
-        "y": 47,
-        "w": 6,
-        "h": 10
-      },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
+          "unit": "Bps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           },
           "custom": {
             "axisCenteredZero": false,
@@ -1793,114 +1674,49 @@
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
             "showPoints": "auto",
             "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
             "thresholdsStyle": {
               "mode": "off"
+            },
+            "stacking": {
+              "mode": "none"
             }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "Bps"
+          }
         },
         "overrides": []
       },
+      "maxDataPoints": 100,
       "options": {
         "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
           "calcs": [
             "mean",
             "min",
             "max"
           ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
           "sort": "desc"
         }
+      },
+      "datasource": {
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 50,
+        "w": 6,
+        "h": 10
       }
     }
-  ],
-  "schemaVersion": 36,
-  "tags": [
-    "router-monitor"
-  ],
-  "timezone": "browser",
-  "description": "Dashboard for Router Monitor",
-  "time": {
-    "from": "now-24h",
-    "to": "now"
-  },
-  "title": "Router Monitor",
-  "uid": "router-monitor",
-  "version": 1,
-  "templating": {
-    "list": [
-      {
-        "multi": false,
-        "options": [],
-        "skipUrlSync": false,
-        "datasource": null,
-        "hide": 0,
-        "type": "datasource",
-        "label": "Prometheus",
-        "name": "DS_PROMETHEUS",
-        "query": "prometheus"
-      },
-      {
-        "multi": true,
-        "options": [],
-        "skipUrlSync": false,
-        "datasource": {
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "hide": 0,
-        "type": "query",
-        "label": "Local IPs",
-        "name": "localips",
-        "query": "label_values(router_monitor_packets_total, dst)",
-        "includeAll": true,
-        "sort": 1,
-        "refresh": 2
-      },
-      {
-        "options": [],
-        "skipUrlSync": false,
-        "datasource": {
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "hide": 0,
-        "type": "query",
-        "label": "Instance",
-        "name": "instance",
-        "query": "label_values(router_monitor_internet_connection_is_up, instance)",
-        "sort": 1,
-        "refresh": 2
-      }
-    ]
-  }
+  ]
 }

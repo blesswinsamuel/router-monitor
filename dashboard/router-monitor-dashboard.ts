@@ -1,24 +1,25 @@
-import { Dashboard, DashboardCursorSync, DataSourceRef, LegendDisplayMode, MappingType, TableCellHeight, ThresholdsMode, VizOrientation, defaultDashboard } from '@grafana/schema'
 import {
   NewBarGaugePanel,
   NewPanelGroup,
   NewPanelRow,
   NewPieChartPanel,
-  NewPrometheusDatasource as NewPrometheusDatasourceVariable,
+  NewPrometheusDatasourceVariable,
   NewQueryVariable,
   NewStatPanel,
   NewTablePanel,
   NewTimeSeriesPanel,
   PanelRow,
   PanelRowAndGroups,
-  Unit,
-  autoLayout,
   tableExcludeByName,
   tableIndexByName,
   writeDashboardAndPostToGrafana,
+  newDashboard,
+  common,
+  units,
+  dashboard,
 } from 'grafana-dashboard-helpers'
 
-const datasource: DataSourceRef = {
+const datasource: dashboard.DataSourceRef = {
   uid: '${DS_PROMETHEUS}',
 }
 
@@ -41,29 +42,31 @@ label_replace(
     : '')
 
 const totalBytesByLocalIPPieChartPanel = (uploadOrDownload: string, labels: string, ipLabel: string) =>
-  NewPieChartPanel({
-    title: `Total Bytes ${uploadOrDownload}ed - by local IP (pie chart)`,
-    targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel, '$__range', 'increase'), legendFormat: '{{ hostname }} ({{ ip_addr }})', type: 'instant' }],
-    defaultUnit: Unit.BYTES_SI,
-  })
+  NewPieChartPanel(
+    {
+      title: `Total Bytes ${uploadOrDownload}ed - by local IP (pie chart)`,
+      unit: units.BytesSI,
+    },
+    { expr: totalBytesByLocalIPQuery(labels, ipLabel, '$__range', 'increase'), legendFormat: '{{ hostname }} ({{ ip_addr }})', type: 'instant' }
+  )
 
 const totalBytesTimeSeriesPanel = (title: string, labels: string, ipLabel: string, isInternetTotalGraph: boolean = false) =>
   NewTimeSeriesPanel({
     title: title,
     targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel, '$__interval', 'increase', !isInternetTotalGraph), legendFormat: `{{ hostname }} ({{ ip_addr }})` }],
-    defaultUnit: Unit.BYTES_SI,
-    thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
+    unit: units.BytesSI,
+    thresholds: { mode: dashboard.ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
     type: 'bar',
-    options: { legend: { calcs: ['sum'], placement: 'bottom' } },
+    legendCalcs: ['sum'],
   })
 
 const dataRateTimeSeriesPanel = (title: string, labels: string, ipLabel: string, isInternetTotalGraph: boolean = false) =>
   NewTimeSeriesPanel({
     title,
     targets: [{ expr: totalBytesByLocalIPQuery(labels, ipLabel, '$__rate_interval', 'rate', !isInternetTotalGraph), legendFormat: `{{ hostname }} ({{ ip_addr }})` }],
-    defaultUnit: Unit.BYTES_PER_SEC_SI,
-    thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
-    options: { legend: { calcs: ['mean', 'min', 'max'], placement: 'bottom' } },
+    unit: units.BytesPerSecondSI,
+    thresholds: { mode: dashboard.ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
+    legendCalcs: ['mean', 'min', 'max'],
   })
 
 const networkTrafficPanels: PanelRow[] = [
@@ -94,10 +97,10 @@ const panels: PanelRowAndGroups = [
       NewStatPanel({
         title: 'Internet',
         targets: [{ expr: 'max(router_monitor_internet_connection_is_up{instance=~"$instance"})' }],
-        defaultUnit: Unit.SHORT,
-        mappings: [{ options: { '0': { text: 'Down' }, '1': { text: 'Up' } }, type: MappingType.ValueToText }],
+        unit: units.Short,
+        mappings: [{ options: { '0': { text: 'Down' }, '1': { text: 'Up' } }, type: dashboard.MappingType.ValueToText }],
         thresholds: {
-          mode: ThresholdsMode.Absolute,
+          mode: dashboard.ThresholdsMode.Absolute,
           steps: [
             { color: 'red', value: null },
             { color: 'green', value: 1 },
@@ -108,13 +111,13 @@ const panels: PanelRowAndGroups = [
         title: 'Internet Downtime',
         targets: [{ expr: '(1 - avg_over_time(max(router_monitor_internet_connection_is_up{instance=~"$instance"})[$__range])) * $__range_s' }],
         thresholds: {
-          mode: ThresholdsMode.Absolute,
+          mode: dashboard.ThresholdsMode.Absolute,
           steps: [
             { color: 'green', value: null },
             { color: 'red', value: 1 },
           ],
         },
-        defaultUnit: Unit.SECONDS,
+        unit: units.Seconds,
         interval: '1m',
         maxDataPoints: 1000,
       }),
@@ -127,22 +130,22 @@ const panels: PanelRowAndGroups = [
         ],
         reduceCalc: 'lastNotNull',
         thresholds: {
-          mode: ThresholdsMode.Absolute,
+          mode: dashboard.ThresholdsMode.Absolute,
           steps: [
             { color: 'green', value: null },
             { color: '#EAB839', value: 0.1 },
             { color: 'red', value: 0.3 },
           ],
         },
-        defaultUnit: Unit.SECONDS,
+        unit: units.Seconds,
       }),
       NewStatPanel({
         title: 'Max Connection Latency',
         targets: [{ expr: 'histogram_quantile(0.99, sum by (le) (rate(router_monitor_internet_connection_duration_seconds_bucket{instance=~"$instance"}[$__rate_interval])))' }],
-        defaultUnit: Unit.SECONDS,
+        unit: units.Seconds,
         reduceCalc: 'max',
         thresholds: {
-          mode: ThresholdsMode.Absolute,
+          mode: dashboard.ThresholdsMode.Absolute,
           steps: [
             { color: 'green', value: null },
             { color: '#EAB839', value: 0.5 },
@@ -154,27 +157,20 @@ const panels: PanelRowAndGroups = [
         title: 'No. of devices',
         description: 'Number of devices connected',
         targets: [{ expr: 'count(last_over_time((router_monitor_arp_devices{instance=~"$instance"} == 2)[$__range]))' }],
-        defaultUnit: Unit.SHORT,
+        unit: units.Short,
       }),
-      NewBarGaugePanel({
-        title: 'Bandwidth Usage',
-        targets: [
-          { expr: 'sum by(src) (increase(router_monitor_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Download' },
-          { expr: 'sum by(dst) (increase(router_monitor_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Upload' },
-        ],
-        defaultUnit: Unit.BYTES_SI,
-        overrides: [
-          {
-            matcher: { id: 'byName', options: 'Upload' },
-            properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'blue' } }],
+      NewBarGaugePanel(
+        {
+          title: 'Bandwidth Usage',
+          overridesByName: {
+            Upload: { color: { mode: 'fixed', fixedColor: 'blue' } },
+            Download: { color: { mode: 'fixed', fixedColor: 'green' } },
           },
-          {
-            matcher: { id: 'byName', options: 'Download' },
-            properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'green' } }],
-          },
-        ],
-        options: { orientation: VizOrientation.Horizontal },
-      }),
+          orientation: common.VizOrientation.Horizontal,
+        },
+        { expr: 'sum by(src) (increase(router_monitor_bytes_total{dst=~"$localips",src=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Download' },
+        { expr: 'sum by(dst) (increase(router_monitor_bytes_total{src=~"$localips",dst=~"internet",instance=~"$instance"}[$__range]))', legendFormat: 'Upload' }
+      ),
     ]),
   ]),
   NewPanelRow({ datasource, height: 6 }, [
@@ -202,10 +198,8 @@ const panels: PanelRowAndGroups = [
           legendFormat: '50p',
         },
       ],
-      options: {
-        legend: { calcs: [], displayMode: LegendDisplayMode.List },
-      },
-      defaultUnit: Unit.SECONDS,
+      legendCalcs: [],
+      unit: units.Seconds,
       overrides: [
         {
           matcher: { id: 'byName', options: 'down' },
@@ -229,10 +223,8 @@ const panels: PanelRowAndGroups = [
         },
       ],
       type: 'bar',
-      options: {
-        legend: { calcs: [], displayMode: LegendDisplayMode.List },
-      },
-      defaultUnit: Unit.SECONDS,
+      legendCalcs: [],
+      unit: units.Seconds,
       // overrides: [
       //   {
       //     matcher: { id: 'byName', options: 'down' },
@@ -284,53 +276,24 @@ const panels: PanelRowAndGroups = [
           refId: 'EGRESS_PACKETS',
         },
       ],
-      options: {
-        cellHeight: TableCellHeight.Sm,
-        sortBy: [{ displayName: 'Downloaded', desc: true }],
+      cellHeight: common.TableCellHeight.Sm,
+      sortBy: [{ col: 'Downloaded', desc: true }],
+      thresholds: { mode: dashboard.ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
+      overridesByName: {
+        Flags: {
+          mappings: [{ type: 'value', options: { '0': { text: 'INVALID', color: 'red', index: 0 }, '2': { text: 'VALID', color: 'green', index: 1 } } }],
+          'custom.cellOptions': { type: 'color-background' },
+          'custom.width': 75,
+        },
+        Downloaded: { unit: units.BytesSI, 'custom.cellOptions': { type: 'gauge', mode: 'basic', valueDisplayMode: 'text' } },
+        'DL Pkts': { unit: units.Short, 'custom.width': 100 },
+        Uploaded: { unit: units.BytesSI, 'custom.cellOptions': { type: 'gauge', mode: 'basic', valueDisplayMode: 'text' } },
+        'UL Pkts': { unit: units.Short, 'custom.width': 100 },
+        Hostname: { 'custom.width': 240 },
+        'IP Address': { 'custom.width': 180 },
+        'Mac Address': { 'custom.width': 180 },
+        Interface: { 'custom.width': 100 },
       },
-      thresholds: { mode: ThresholdsMode.Absolute, steps: [{ color: 'green', value: null }] },
-      overrides: [
-        {
-          matcher: { id: 'byName', options: 'Flags' },
-          properties: [
-            { id: 'mappings', value: [{ type: 'value', options: { '0': { text: 'INVALID', color: 'red', index: 0 }, '2': { text: 'VALID', color: 'green', index: 1 } } }] },
-            { id: 'custom.cellOptions', value: { type: 'color-background' } },
-            { id: 'custom.width', value: 75 },
-          ],
-        },
-        {
-          matcher: { id: 'byName', options: 'Downloaded' },
-          properties: [
-            { id: 'unit', value: Unit.BYTES_SI },
-            { id: 'custom.cellOptions', value: { type: 'gauge', mode: 'basic', valueDisplayMode: 'text' } },
-          ],
-        },
-        {
-          matcher: { id: 'byName', options: 'DL Pkts' },
-          properties: [
-            { id: 'unit', value: Unit.SHORT },
-            { id: 'custom.width', value: 100 },
-          ],
-        },
-        {
-          matcher: { id: 'byName', options: 'Uploaded' },
-          properties: [
-            { id: 'unit', value: Unit.BYTES_SI },
-            { id: 'custom.cellOptions', value: { type: 'gauge', mode: 'basic', valueDisplayMode: 'text' } },
-          ],
-        },
-        {
-          matcher: { id: 'byName', options: 'UL Pkts' },
-          properties: [
-            { id: 'unit', value: Unit.SHORT },
-            { id: 'custom.width', value: 100 },
-          ],
-        },
-        { matcher: { id: 'byName', options: 'Hostname' }, properties: [{ id: 'custom.width', value: 240 }] },
-        { matcher: { id: 'byName', options: 'IP Address' }, properties: [{ id: 'custom.width', value: 180 }] },
-        { matcher: { id: 'byName', options: 'Mac Address' }, properties: [{ id: 'custom.width', value: 180 }] },
-        { matcher: { id: 'byName', options: 'Interface' }, properties: [{ id: 'custom.width', value: 100 }] },
-      ],
       transformations: [
         { id: 'joinByField', options: { byField: 'ip_addr', mode: 'outer' } },
         {
@@ -357,29 +320,24 @@ const panels: PanelRowAndGroups = [
   NewPanelGroup({ title: 'Network Traffic' }, networkTrafficPanels),
 ]
 
-const dashboard: Dashboard = {
-  ...defaultDashboard,
-  description: 'Dashboard for Router Monitor',
-  graphTooltip: DashboardCursorSync.Crosshair,
+const routerMonitorDashboard = newDashboard({
+  title: 'Router Monitor',
+  description: 'Dashboard for monitoring router traffic and internet connection status',
   tags: ['router-monitor'],
+  uid: 'router-monitor',
   time: {
     from: 'now-24h',
     to: 'now',
   },
-  title: 'Router Monitor',
-  uid: 'router-monitor',
-  version: 1,
-  panels: autoLayout(panels),
-  templating: {
-    list: [
-      NewPrometheusDatasourceVariable({ name: 'DS_PROMETHEUS', label: 'Prometheus' }),
-      NewQueryVariable({ datasource, name: 'localips', label: 'Local IPs', query: 'label_values(router_monitor_packets_total, dst)', multi: true, includeAll: true }),
-      NewQueryVariable({ datasource, name: 'instance', label: 'Instance', query: 'label_values(router_monitor_internet_connection_is_up, instance)' }),
-    ],
-  },
-}
+  panels: panels,
+  variables: [
+    NewPrometheusDatasourceVariable({ name: 'DS_PROMETHEUS', label: 'Prometheus' }),
+    NewQueryVariable({ datasource, name: 'localips', label: 'Local IPs', query: 'label_values(router_monitor_packets_total, dst)', multi: true, includeAll: true }),
+    NewQueryVariable({ datasource, name: 'instance', label: 'Instance', query: 'label_values(router_monitor_internet_connection_is_up, instance)' }),
+  ],
+})
 
 writeDashboardAndPostToGrafana({
-  dashboard,
+  dashboard: routerMonitorDashboard.build(),
   filename: 'router-monitor-dashboard.json',
 })
