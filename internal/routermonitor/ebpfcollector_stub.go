@@ -41,6 +41,10 @@ type ebpfCollectorPrograms struct {
 	TcPacketCounterIngress *ebpf.Program `ebpf:"tc_packet_counter_ingress"`
 }
 
+func loadEbpfCollector() (*ebpf.CollectionSpec, error) {
+	return nil, fmt.Errorf("ebpf collector is only supported on x86 (386/amd64) targets")
+}
+
 func loadEbpfCollectorObjects(interface{}, *ebpf.CollectionOptions) error {
 	return fmt.Errorf("ebpf collector is only supported on x86 (386/amd64) targets")
 }
