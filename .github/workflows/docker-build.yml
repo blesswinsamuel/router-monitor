@@ -24,6 +24,7 @@ jobs:
         run: |
           go vet ./...
           GOARCH=amd64 go test ./...
+          GOOS=linux GOARCH=amd64 go build -o /tmp/router-monitor ./cmd/router-monitor
       # - name: Install LLVM and Clang
       #   uses: KyleMayes/install-llvm-action@v2
       #   with:
