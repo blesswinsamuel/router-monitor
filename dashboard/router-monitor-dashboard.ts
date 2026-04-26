@@ -8,8 +8,6 @@ import {
   NewStatPanel,
   NewTablePanel,
   NewTimeSeriesPanel,
-  PanelRow,
-  PanelRowAndGroups,
   tableExcludeByName,
   tableIndexByName,
   writeDashboardAndPostToGrafana,
@@ -18,9 +16,10 @@ import {
   units,
   dashboard,
 } from 'grafana-dashboard-helpers'
+import type { PanelRow, PanelRowAndGroups } from 'grafana-dashboard-helpers'
 
 const datasource: dashboard.DataSourceRef = {
-  uid: '${DS_PROMETHEUS}',
+  uid: '$DS_PROMETHEUS',
 }
 
 const totalBytesByLocalIPQuery = (labels: string, ipLabel: string, queryType: string, queryFunc: string, extraFields: boolean = true) =>

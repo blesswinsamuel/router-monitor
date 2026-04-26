@@ -22,7 +22,7 @@ type arpCollector struct {
 	filename          string
 	stripDomainSuffix string
 	hostCache         map[string]hostCacheValue
-	hostCacheMutex    sync.Mutex
+	hostCacheMutex    sync.RWMutex
 
 	arpDevices *prometheus.Desc
 }
@@ -32,7 +32,7 @@ func NewArpCollector(filename string, stripDomainSuffix string) *arpCollector {
 		filename:          filename,
 		stripDomainSuffix: stripDomainSuffix,
 		hostCache:         make(map[string]hostCacheValue),
-		arpDevices: prometheus.NewDesc("router_monitor_arp_devices", "",
+		arpDevices: prometheus.NewDesc("router_monitor_arp_devices", "ARP entries discovered from /proc/net/arp.",
 			[]string{"ip_addr", "hw_addr", "hostname", "device"}, nil,
 		),
 	}
@@ -67,7 +67,9 @@ func (collector *arpCollector) Collect(ch chan<- prometheus.Metric) {
 
 			ipAddr := fields[0]
 			var hostname string
+			collector.hostCacheMutex.RLock()
 			host, ok := collector.hostCache[ipAddr]
+			collector.hostCacheMutex.RUnlock()
 			hostname = host.Hostname
 			if !ok || host.Expiry.Before(time.Now()) {
 				hosts, err := net.LookupAddr(ipAddr)

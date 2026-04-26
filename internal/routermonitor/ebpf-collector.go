@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync/atomic"
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/features"
@@ -20,18 +21,26 @@ type ebpfCollectorCollector struct {
 
 	packetsTotal *prometheus.Desc
 	bytesTotal   *prometheus.Desc
+
+	collectErrorsTotal *prometheus.Desc
+	collectErrors      atomic.Uint64
 }
 
 func NewEbpfCollector() *ebpfCollectorCollector {
 	return &ebpfCollectorCollector{
 		packetsTotal: prometheus.NewDesc("router_monitor_packets_total",
-			"",
+			"Number of observed packets by flow labels.",
 			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
 			nil,
 		),
 		bytesTotal: prometheus.NewDesc("router_monitor_bytes_total",
-			"",
+			"Number of observed bytes by flow labels.",
 			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
+			nil,
+		),
+		collectErrorsTotal: prometheus.NewDesc("router_monitor_ebpf_collect_errors_total",
+			"Number of eBPF map iteration errors while collecting metrics.",
+			nil,
 			nil,
 		),
 	}
@@ -40,6 +49,7 @@ func NewEbpfCollector() *ebpfCollectorCollector {
 func (collector *ebpfCollectorCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.packetsTotal
 	ch <- collector.bytesTotal
+	ch <- collector.collectErrorsTotal
 }
 
 // Collect implements required collect function for all promehteus collectors
@@ -49,15 +59,11 @@ func (collector *ebpfCollectorCollector) Collect(ch chan<- prometheus.Metric) {
 		var key ebpfCollectorPacketStatsKey
 		var value ebpfCollectorPacketStatsValue
 		for iter.Next(&key, &value) {
-			if err := iter.Err(); err != nil {
-				log.Panic("Map lookup:", err)
-			}
-
 			srcIP := ""
 			dstIP := ""
 			if layers.EthernetType(key.EthProto) == layers.EthernetTypeIPv6 {
-				srcIP = int2ip6(key.Srcip).String()
-				dstIP = int2ip6(key.Dstip).String()
+				srcIP = "ipv6"
+				dstIP = "ipv6"
 			} else {
 				srcIP = int2ip4(key.Srcip).String()
 				dstIP = int2ip4(key.Dstip).String()
@@ -74,9 +80,16 @@ func (collector *ebpfCollectorCollector) Collect(ch chan<- prometheus.Metric) {
 			ch <- prometheus.MustNewConstMetric(collector.packetsTotal, prometheus.CounterValue, float64(value.Packets), trafficDirection, ethProto, srcIP, dstIP, ipProto)
 			ch <- prometheus.MustNewConstMetric(collector.bytesTotal, prometheus.CounterValue, float64(value.Bytes), trafficDirection, ethProto, srcIP, dstIP, ipProto)
 		}
+
+		if err := iter.Err(); err != nil {
+			collector.collectErrors.Add(1)
+			log.Printf("Map lookup failed for %s traffic: %v", trafficDirection, err)
+		}
 	}
 	collect("ingress", collector.objs.PacketStatsIngress)
 	collect("egress", collector.objs.PacketStatsEgress)
+
+	ch <- prometheus.MustNewConstMetric(collector.collectErrorsTotal, prometheus.CounterValue, float64(collector.collectErrors.Load()))
 }
 
 func (collector *ebpfCollectorCollector) Load() error {
@@ -142,12 +155,6 @@ func (collector *ebpfCollectorCollector) Attach(iface *net.Interface) error {
 
 func int2ip4(nn uint32) net.IP {
 	ip := make(net.IP, 4)
-	binary.NativeEndian.PutUint32(ip, nn)
-	return ip
-}
-
-func int2ip6(nn uint32) net.IP {
-	ip := make(net.IP, 16)
 	binary.NativeEndian.PutUint32(ip, nn)
 	return ip
 }
