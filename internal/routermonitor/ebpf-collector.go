@@ -19,6 +19,9 @@ type ebpfCollectorCollector struct {
 	objs  *ebpfCollectorObjects
 	links []link.Link
 
+	lanSubnetIP   uint32
+	lanSubnetMask uint32
+
 	packetsTotal *prometheus.Desc
 	bytesTotal   *prometheus.Desc
 
@@ -28,6 +31,8 @@ type ebpfCollectorCollector struct {
 
 func NewEbpfCollector() *ebpfCollectorCollector {
 	return &ebpfCollectorCollector{
+		lanSubnetIP:   0x0000640A,
+		lanSubnetMask: 0x0000FFFF,
 		packetsTotal: prometheus.NewDesc("router_monitor_packets_total",
 			"Number of observed packets by flow labels.",
 			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
@@ -44,6 +49,11 @@ func NewEbpfCollector() *ebpfCollectorCollector {
 			nil,
 		),
 	}
+}
+
+func (collector *ebpfCollectorCollector) SetLANSubnet(lanSubnetIP uint32, lanSubnetMask uint32) {
+	collector.lanSubnetIP = lanSubnetIP
+	collector.lanSubnetMask = lanSubnetMask
 }
 
 func (collector *ebpfCollectorCollector) Describe(ch chan<- *prometheus.Desc) {
@@ -94,8 +104,29 @@ func (collector *ebpfCollectorCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (collector *ebpfCollectorCollector) Load() error {
 	// Load the compiled eBPF ELF and load it into the kernel.
+	spec, err := loadEbpfCollector()
+	if err != nil {
+		return err
+	}
+
+	lanSubnetIPVar, ok := spec.Variables["lan_subnet_ip"]
+	if !ok {
+		return fmt.Errorf("missing eBPF variable: lan_subnet_ip")
+	}
+	if err := lanSubnetIPVar.Set(collector.lanSubnetIP); err != nil {
+		return fmt.Errorf("set eBPF lan_subnet_ip: %w", err)
+	}
+
+	lanSubnetMaskVar, ok := spec.Variables["lan_subnet_mask"]
+	if !ok {
+		return fmt.Errorf("missing eBPF variable: lan_subnet_mask")
+	}
+	if err := lanSubnetMaskVar.Set(collector.lanSubnetMask); err != nil {
+		return fmt.Errorf("set eBPF lan_subnet_mask: %w", err)
+	}
+
 	collector.objs = &ebpfCollectorObjects{}
-	if err := loadEbpfCollectorObjects(collector.objs, nil); err != nil {
+	if err := spec.LoadAndAssign(collector.objs, nil); err != nil {
 		return err
 	}
 	return nil

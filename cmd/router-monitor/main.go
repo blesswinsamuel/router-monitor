@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
@@ -19,6 +20,8 @@ import (
 )
 
 var defaultPingAddrs = []string{"1.1.1.1:53", "8.8.8.8:53"}
+
+const defaultLANSubnetCIDR = "10.100.0.0/16"
 
 func parsePingAddrs(raw string) ([]string, error) {
 	if strings.TrimSpace(raw) == "" {
@@ -45,6 +48,43 @@ func parsePingAddrs(raw string) ([]string, error) {
 	return addrs, nil
 }
 
+func parseLANSubnet(raw string) (uint32, uint32, error) {
+	cidr := strings.TrimSpace(raw)
+	if cidr == "" {
+		cidr = defaultLANSubnetCIDR
+	}
+
+	_, subnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return 0, 0, fmt.Errorf("parse CIDR %q: %w", cidr, err)
+	}
+
+	ip := subnet.IP.To4()
+	if ip == nil {
+		return 0, 0, fmt.Errorf("LAN_SUBNET_CIDR must be IPv4, got %q", cidr)
+	}
+	if len(subnet.Mask) != net.IPv4len {
+		return 0, 0, fmt.Errorf("unexpected subnet mask size for %q", cidr)
+	}
+
+	lanSubnetIP := binary.LittleEndian.Uint32(ip)
+	lanSubnetMask := binary.LittleEndian.Uint32(subnet.Mask)
+	return lanSubnetIP, lanSubnetMask, nil
+}
+
+func parseDurationWithDefault(raw string, fallback time.Duration) (time.Duration, error) {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return fallback, nil
+	}
+
+	duration, err := time.ParseDuration(value)
+	if err != nil {
+		return 0, err
+	}
+	return duration, nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatalf("Please specify a network interface")
@@ -62,7 +102,18 @@ func main() {
 		log.Fatalf("invalid INTERNET_CONNECTION_CHECK_PING_ADDRS: %v", err)
 	}
 
+	lanSubnetIP, lanSubnetMask, err := parseLANSubnet(os.Getenv("LAN_SUBNET_CIDR"))
+	if err != nil {
+		log.Fatalf("invalid LAN_SUBNET_CIDR: %v", err)
+	}
+
+	arpCacheTTL, err := parseDurationWithDefault(os.Getenv("ARP_HOST_CACHE_TTL"), 30*time.Minute)
+	if err != nil {
+		log.Fatalf("invalid ARP_HOST_CACHE_TTL: %v", err)
+	}
+
 	ebpfFirewallCollector := routermonitor.NewEbpfCollector()
+	ebpfFirewallCollector.SetLANSubnet(lanSubnetIP, lanSubnetMask)
 	if err := ebpfFirewallCollector.Load(); err != nil {
 		log.Fatalf("could not load ebpfFirewall: %s", err)
 	}
@@ -75,7 +126,7 @@ func main() {
 	log.Printf("Press Ctrl-C to exit and remove the program")
 
 	prometheus.MustRegister(ebpfFirewallCollector)
-	prometheus.MustRegister(routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX")))
+	prometheus.MustRegister(routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX"), arpCacheTTL))
 	internetChecker := routermonitor.NewInternetChecker(10*time.Second, pingAddrs)
 	internetChecker.Register(prometheus.DefaultRegisterer)
 
