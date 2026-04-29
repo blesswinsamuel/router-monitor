@@ -20,6 +20,14 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+      - name: Generate eBPF bindings
+        run: |
+          docker build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate
+          docker create blesswinsamuel/router-monitor:generate > /tmp/container_id
+          docker cp $(cat /tmp/container_id):/generated/ ./generated
+          cp -r generated/* ./internal/routermonitor/
+          rm -rf ./generated
+          docker rm -f $(cat /tmp/container_id)
       - name: Go quality checks
         run: |
           go vet ./...
