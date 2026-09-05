@@ -1,0 +1,31 @@
+# Local development for router-monitor.
+#
+# Usage (from repo root):
+#
+#   local-compose up          # foreground; Ctrl-C stops
+#   local-compose up -d       # detached
+#   local-compose logs -f
+#   local-compose down
+#
+# Actions:
+#   local-compose run go-build
+#   local-compose run copy-to-router
+#   local-compose run go-generate
+
+version: "1"
+name: router-monitor
+
+services:
+  dashboard:
+    command: bun run dev
+    working_dir: ./dashboard
+    build:
+      command: bun install
+      working_dir: ./dashboard
+    restart: always
+
+actions:
+  go-generate: task go-generate
+  go-build: task go-build
+  copy-to-router: task copy-to-router
+  test: go test ./...
