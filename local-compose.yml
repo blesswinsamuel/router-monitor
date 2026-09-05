@@ -8,10 +8,9 @@
 #   local-compose down
 #
 # Actions:
-#   local-compose run deploy-dev
-#   local-compose run logs-dev
-#   local-compose run stop-dev
-#   local-compose run buf-generate
+#   local-compose run deploy
+#   local-compose run logs
+#   local-compose run stop
 #   local-compose run test
 
 version: "1"
@@ -26,13 +25,8 @@ services:
       working_dir: ./web
     restart: always
 
-
 actions:
-  deploy-dev: task deploy-dev
-  logs-dev: task logs-dev
-  stop-dev: task stop-dev
-  status-dev: task status-dev
-  buf-generate: task buf-generate
-  go-generate: task go-generate
-  go-build: task go-build
+  deploy: task deploy-dev
+  logs: task logs-dev
+  stop: task stop-dev
   test: go test ./...

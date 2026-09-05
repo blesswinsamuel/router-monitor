@@ -54,6 +54,18 @@ tasks:
       - sleep 1
       - ssh root@router "systemctl is-active router-monitor-dev"
 
+  deploy:
+    deps:
+      - deploy-dev
+
+  logs:
+    deps:
+      - logs-dev
+
+  stop:
+    deps:
+      - stop-dev
+
   logs-dev:
     cmds:
       - ssh root@router "journalctl -u router-monitor-dev -f"
