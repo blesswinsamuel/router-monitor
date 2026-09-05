@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { CheckCircle2, XCircle, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
-import { formatLatency } from '@/lib/utils'
+import { formatLatency } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import {
   LineChart,

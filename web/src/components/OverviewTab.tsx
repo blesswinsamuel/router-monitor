@@ -3,7 +3,7 @@ import { ArrowDownCircle, ArrowUpCircle, Globe, Laptop, Clock } from 'lucide-rea
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { formatBytes, formatRate, formatLatency } from '@/lib/utils'
+import { formatBytes, formatRate, formatLatency } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import {
   AreaChart,

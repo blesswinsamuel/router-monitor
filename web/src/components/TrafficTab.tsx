@@ -2,7 +2,8 @@ import { ArrowLeftRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { cn, formatBytes, formatPackets } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { formatBytes, formatPackets } from '@/lib/format'
 
 interface TrafficTabProps {
   flows: any[]
