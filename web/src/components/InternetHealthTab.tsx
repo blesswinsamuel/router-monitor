@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, XCircle, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
@@ -9,10 +9,20 @@ import {
   Line,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
   CartesianGrid,
 } from 'recharts'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from './ui/chart'
+
+function safeKey(addr: string): string {
+  return addr.replace(/[^a-zA-Z0-9_-]/g, '_')
+}
+
+const PALETTE = ['#10b981', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4']
 
 interface InternetHealthTabProps {
   health: any
@@ -41,7 +51,8 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
         const timeMap = new Map<number, any>()
 
         for (const s of res.series) {
-          const targetName = s.labels['target'] || 'target'
+          const rawTarget = s.labels['target'] || 'target'
+          const targetKey = safeKey(rawTarget)
           for (const pt of s.points) {
             const ts = Number(pt.timestampUnix)
             let entry = timeMap.get(ts)
@@ -50,7 +61,7 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
               entry = { time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
               timeMap.set(ts, entry)
             }
-            entry[targetName] = Number((pt.value * 1000).toFixed(1))
+            entry[targetKey] = Number((pt.value * 1000).toFixed(1))
           }
         }
 
@@ -73,6 +84,17 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
   }, [])
 
   const targets = health?.targets || []
+
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {}
+    targets.forEach((t: any, idx: number) => {
+      config[safeKey(t.addr)] = {
+        label: t.addr,
+        color: PALETTE[idx % PALETTE.length],
+      }
+    })
+    return config
+  }, [targets])
 
   return (
     <div className="space-y-6">
@@ -130,42 +152,57 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
                 Collecting latency time series into SQLite database...
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ChartContainer config={chartConfig} className="h-[280px] w-full aspect-auto">
                 <LineChart data={latencyHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
                   <YAxis
-                    stroke="hsl(var(--muted-foreground))"
+                    tickLine={false}
+                    axisLine={false}
                     fontSize={11}
                     unit="ms"
                     width={50}
                   />
-                  <Tooltip
-                    formatter={(val: any) => [`${val} ms`, '']}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      borderColor: 'hsl(var(--border))',
-                      borderRadius: '8px',
-                      color: 'hsl(var(--foreground))',
-                      fontSize: '12px',
-                    }}
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        formatter={(val, name, item) => (
+                          <>
+                            <div
+                              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <div className="flex flex-1 justify-between items-center leading-none gap-2">
+                              <span className="text-muted-foreground font-mono">
+                                {chartConfig[name as keyof typeof chartConfig]?.label ?? name}
+                              </span>
+                              <span className="font-mono font-medium text-foreground tabular-nums">
+                                {val} ms
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      />
+                    }
                   />
-                  {targets.map((t: any, i: number) => {
-                    const colors = ['#10b981', '#0ea5e9', '#8b5cf6', '#f59e0b']
+                  {targets.map((t: any) => {
+                    const key = safeKey(t.addr)
                     return (
                       <Line
                         key={t.addr}
                         type="monotone"
-                        dataKey={t.addr}
-                        stroke={colors[i % colors.length]}
+                        dataKey={key}
+                        stroke={`var(--color-${key})`}
                         strokeWidth={2}
                         dot={false}
-                        name={t.addr}
+                        name={key}
                       />
                     )
                   })}
                 </LineChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             )}
           </div>
         </CardContent>
