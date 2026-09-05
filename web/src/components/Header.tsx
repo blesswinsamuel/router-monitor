@@ -2,6 +2,7 @@ import React from 'react'
 import { Activity, Moon, Sun, RefreshCw, Radio, Server } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
+import { cn } from '@/lib/utils'
 
 interface HeaderProps {
   interfaceName: string
@@ -44,7 +45,7 @@ export function Header({
             <div className="flex items-center space-x-2">
               <h1 className="font-bold text-lg leading-none">Router Monitor</h1>
               {isLive ? (
-                <Badge variant="success" className="flex items-center gap-1 text-[11px] py-0 px-2">
+                <Badge variant="outline" className="flex items-center gap-1 text-[11px] py-0 px-2 border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -66,7 +67,10 @@ export function Header({
         </div>
 
         <div className="flex items-center space-x-2">
-          <Badge variant={internetIsUp ? "success" : "destructive"} className="gap-1 hidden sm:flex">
+          <Badge
+            variant={internetIsUp ? "outline" : "destructive"}
+            className={cn("gap-1 hidden sm:flex", internetIsUp && "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400")}
+          >
             <Radio className="w-3 h-3" />
             {internetIsUp ? "Internet Online" : "Internet Offline"}
           </Badge>

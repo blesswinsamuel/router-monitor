@@ -94,7 +94,10 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
                   <div className="text-2xl font-bold font-mono">
                     {formatLatency(t.lastLatencySeconds)}
                   </div>
-                  <Badge variant={isUp ? "success" : "destructive"}>
+                  <Badge
+                    variant={isUp ? "outline" : "destructive"}
+                    className={isUp ? "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : ""}
+                  >
                     {isUp ? "Up" : "Down"}
                   </Badge>
                 </div>
