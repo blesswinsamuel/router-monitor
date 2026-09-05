@@ -24,7 +24,7 @@ task go-generate                    # regenerate eBPF artifacts via Docker
 ```
 
 ### Web UI (Frontend)
-The web application is located in `web/` (React 18 + Vite + TypeScript + Tailwind CSS). It is embedded into the Go binary at `internal/web/dist/`.
+The web application is located in `web/` (React 19 + Vite 8 + TypeScript + Tailwind CSS v4). It is embedded into the Go binary at `internal/web/dist/`.
 
 ```bash
 cd web && bun install               # install frontend dependencies (or task web-install)
@@ -36,6 +36,10 @@ task web-build                      # builds web frontend and syncs to internal/
 ## Frontend & shadcn/ui Guidelines
 
 - **Always use shadcn CLI tooling**: All UI component primitives in `web/src/components/ui/` **must** be generated using the official shadcn tooling (`bunx --bun shadcn@latest add <component>`). **Never manually write or hand-craft shadcn component primitives.**
+- **Preset `bJMVaeaO`**: The project uses shadcn preset `bJMVaeaO` (`radix-nova` style, `stone` base palette, Tailwind CSS v4 with OKLCH variables). To apply or re-apply this preset, run:
+  ```bash
+  cd web && bunx --bun shadcn@latest apply --preset bJMVaeaO -y
+  ```
 - **Adding components**: To add a new UI primitive, navigate to `web/` and run:
   ```bash
   bunx --bun shadcn@latest add <component-name>
@@ -44,8 +48,9 @@ task web-build                      # builds web frontend and syncs to internal/
   ```bash
   bunx --bun shadcn@latest add <component-name> --overwrite
   ```
-- **Configuration**: Configuration lives in `web/components.json`. It specifies the Vite template, Tailwind CSS configuration, path aliases (`@/components/ui`, `@/lib/utils`), and Lucide icons.
-- **Custom Styling**: Do not modify generated component primitives in `web/src/components/ui/` with custom non-standard variants unless strictly necessary. Instead, use standard variants (`default`, `secondary`, `outline`, `destructive`) and compose styling via `className` and `cn(...)` in application components.
+- **Configuration**: Configuration lives in `web/components.json`. It specifies the Vite template, Tailwind CSS v4 configuration, path aliases (`@/components/ui`, `@/lib/utils`), and Lucide icons.
+- **Custom Utilities vs shadcn `utils.ts`**: shadcn CLI overwrites `web/src/lib/utils.ts` during initialization and preset application (keeping only `export { cn } from "cn"`). Therefore, domain utilities and formatters must live in `web/src/lib/format.ts` (or other files), not in `utils.ts`.
+- **Custom Styling**: Do not modify generated component primitives in `web/src/components/ui/` with custom non-standard variants unless strictly necessary. Instead, use standard variants and compose styling via `className` and `cn(...)` in application components.
 - **Package Manager**: Use `bun` for frontend package management and script execution in `web/`.
 
 ## Repo Structure
