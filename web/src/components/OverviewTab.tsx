@@ -120,47 +120,47 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Download Speed</CardTitle>
-            <ArrowDownCircle className="w-5 h-5 text-emerald-500" />
+            <CardTitle className="text-sm font-medium">Download Rate</CardTitle>
+            <ArrowDownCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-500">
+            <div className="text-2xl font-bold tracking-tight">
               {formatRate(overview?.currentDownloadBytesPerSec)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total: <span className="font-semibold text-foreground">{formatBytes(overview?.totalDownloadBytes)}</span>
+              Total: <span className="font-mono text-foreground font-medium">{formatBytes(overview?.totalDownloadBytes)}</span>
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Upload Speed</CardTitle>
-            <ArrowUpCircle className="w-5 h-5 text-sky-500" />
+            <CardTitle className="text-sm font-medium">Upload Rate</CardTitle>
+            <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-sky-500">
+            <div className="text-2xl font-bold tracking-tight">
               {formatRate(overview?.currentUploadBytesPerSec)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total: <span className="font-semibold text-foreground">{formatBytes(overview?.totalUploadBytes)}</span>
+              Total: <span className="font-mono text-foreground font-medium">{formatBytes(overview?.totalUploadBytes)}</span>
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Internet Health</CardTitle>
-            <Globe className="w-5 h-5 text-primary" />
+            <CardTitle className="text-sm font-medium">Internet Health</CardTitle>
+            <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold">
+              <span className="text-2xl font-bold tracking-tight">
                 {formatLatency(overview?.internetLatencySeconds)}
               </span>
               <Badge
                 variant={overview?.internetIsUp ? "outline" : "destructive"}
-                className={overview?.internetIsUp ? "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : ""}
+                className={overview?.internetIsUp ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-normal" : "font-normal"}
               >
                 {overview?.internetIsUp ? "Online" : "Offline"}
               </Badge>
@@ -171,11 +171,11 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Connected Devices</CardTitle>
-            <Laptop className="w-5 h-5 text-purple-500" />
+            <CardTitle className="text-sm font-medium">Connected Devices</CardTitle>
+            <Laptop className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold tracking-tight">
               {overview?.connectedDevicesCount || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Active ARP table entries</p>
