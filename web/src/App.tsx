@@ -140,20 +140,20 @@ export function App() {
         )}
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
+          <TabsList className="bg-muted/80 p-1">
+            <TabsTrigger value="overview" className="flex items-center gap-2 px-3.5">
               <LayoutDashboard className="w-4 h-4" />
               <span>Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="devices" className="flex items-center gap-2">
+            <TabsTrigger value="devices" className="flex items-center gap-2 px-3.5">
               <Laptop className="w-4 h-4" />
               <span>Devices ({devices.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="traffic" className="flex items-center gap-2">
+            <TabsTrigger value="traffic" className="flex items-center gap-2 px-3.5">
               <ArrowLeftRight className="w-4 h-4" />
               <span>Traffic</span>
             </TabsTrigger>
-            <TabsTrigger value="health" className="flex items-center gap-2">
+            <TabsTrigger value="health" className="flex items-center gap-2 px-3.5">
               <Activity className="w-4 h-4" />
               <span>Health</span>
             </TabsTrigger>
