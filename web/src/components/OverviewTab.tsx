@@ -10,12 +10,27 @@ import {
   Area,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
   CartesianGrid,
   LineChart,
   Line,
 } from 'recharts'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from './ui/chart'
+
+const trafficChartConfig = {
+  download: {
+    label: 'Download',
+    color: '#10b981',
+  },
+  upload: {
+    label: 'Upload',
+    color: '#0ea5e9',
+  },
+} satisfies ChartConfig
 
 export interface LivePoint {
   time: string
@@ -208,42 +223,71 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[260px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={liveHistory}>
-                <defs>
-                  <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                  </linearGradient>
-                  <linearGradient id="ulGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={11}
-                  tickFormatter={(val) => formatBytes(val)}
-                  width={75}
-                />
-                <Tooltip
-                  formatter={(val: any) => [formatRate(Number(val)), '']}
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '8px',
-                    color: 'hsl(var(--foreground))',
-                    fontSize: '12px',
-                  }}
-                />
-                <Area type="monotone" dataKey="download" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#dlGrad)" isAnimationActive={false} name="Download" />
-                <Area type="monotone" dataKey="upload" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#ulGrad)" isAnimationActive={false} name="Upload" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartContainer config={trafficChartConfig} className="h-[260px] w-full aspect-auto">
+            <AreaChart data={liveHistory}>
+              <defs>
+                <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-download)" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="var(--color-download)" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="ulGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-upload)" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="var(--color-upload)" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                tickFormatter={(val) => formatBytes(val)}
+                width={75}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    indicator="dot"
+                    formatter={(value, name, item) => (
+                      <>
+                        <div
+                          className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div className="flex flex-1 justify-between items-center leading-none gap-2">
+                          <span className="text-muted-foreground">
+                            {trafficChartConfig[name as keyof typeof trafficChartConfig]?.label ?? name}
+                          </span>
+                          <span className="font-mono font-medium text-foreground tabular-nums">
+                            {formatRate(Number(value))}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  />
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey="download"
+                stroke="var(--color-download)"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#dlGrad)"
+                isAnimationActive={false}
+              />
+              <Area
+                type="monotone"
+                dataKey="upload"
+                stroke="var(--color-upload)"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#ulGrad)"
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ChartContainer>
         </CardContent>
       </Card>
 
@@ -283,30 +327,57 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                 No historical records in TSDB for this window yet. Data is gathered every 5 seconds.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ChartContainer config={trafficChartConfig} className="h-[260px] w-full aspect-auto">
                 <LineChart data={historyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
                   <YAxis
-                    stroke="hsl(var(--muted-foreground))"
+                    tickLine={false}
+                    axisLine={false}
                     fontSize={11}
                     tickFormatter={(val) => formatBytes(val)}
                     width={75}
                   />
-                  <Tooltip
-                    formatter={(val: any) => [formatRate(Number(val)), '']}
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      borderColor: 'hsl(var(--border))',
-                      borderRadius: '8px',
-                      color: 'hsl(var(--foreground))',
-                      fontSize: '12px',
-                    }}
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        formatter={(value, name, item) => (
+                          <>
+                            <div
+                              className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <div className="flex flex-1 justify-between items-center leading-none gap-2">
+                              <span className="text-muted-foreground">
+                                {trafficChartConfig[name as keyof typeof trafficChartConfig]?.label ?? name}
+                              </span>
+                              <span className="font-mono font-medium text-foreground tabular-nums">
+                                {formatRate(Number(value))}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      />
+                    }
                   />
-                  <Line type="monotone" dataKey="download" stroke="#10b981" strokeWidth={2} dot={false} name="Download" />
-                  <Line type="monotone" dataKey="upload" stroke="#0ea5e9" strokeWidth={2} dot={false} name="Upload" />
+                  <Line
+                    type="monotone"
+                    dataKey="download"
+                    stroke="var(--color-download)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="upload"
+                    stroke="var(--color-upload)"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             )}
           </div>
         </CardContent>
