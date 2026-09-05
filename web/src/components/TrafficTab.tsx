@@ -2,7 +2,7 @@ import { ArrowLeftRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { formatBytes, formatPackets } from '@/lib/utils'
+import { cn, formatBytes, formatPackets } from '@/lib/utils'
 
 interface TrafficTabProps {
   flows: any[]
@@ -88,7 +88,10 @@ export function TrafficTab({ flows, protocols, totalBytes, totalPackets }: Traff
                     return (
                       <TableRow key={`${flow.direction}-${flow.srcIp}-${flow.dstIp}-${idx}`}>
                         <TableCell>
-                          <Badge variant={isIngress ? "success" : "secondary"}>
+                          <Badge
+                            variant={isIngress ? "outline" : "secondary"}
+                            className={cn(isIngress && "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400")}
+                          >
                             {flow.direction}
                           </Badge>
                         </TableCell>

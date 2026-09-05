@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { formatBytes, formatPackets } from '@/lib/utils'
+import { cn, formatBytes, formatPackets } from '@/lib/utils'
 
 interface DevicesTabProps {
   devices: any[]
@@ -104,7 +104,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                         <Badge variant="outline">{device.device || 'lan'}</Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={device.isValid ? "success" : "secondary"} className="text-[11px]">
+                        <Badge
+                          variant={device.isValid ? "outline" : "secondary"}
+                          className={cn("text-[11px]", device.isValid && "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400")}
+                        >
                           {device.isValid ? "Active" : `Flags: ${device.flags}`}
                         </Badge>
                       </TableCell>

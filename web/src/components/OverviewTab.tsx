@@ -158,7 +158,10 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
               <span className="text-2xl font-bold">
                 {formatLatency(overview?.internetLatencySeconds)}
               </span>
-              <Badge variant={overview?.internetIsUp ? "success" : "destructive"}>
+              <Badge
+                variant={overview?.internetIsUp ? "outline" : "destructive"}
+                className={overview?.internetIsUp ? "border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : ""}
+              >
                 {overview?.internetIsUp ? "Online" : "Offline"}
               </Badge>
             </div>
