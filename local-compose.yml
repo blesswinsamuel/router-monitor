@@ -8,14 +8,24 @@
 #   local-compose down
 #
 # Actions:
-#   local-compose run go-build
-#   local-compose run copy-to-router
-#   local-compose run go-generate
+#   local-compose run deploy-dev
+#   local-compose run logs-dev
+#   local-compose run stop-dev
+#   local-compose run buf-generate
+#   local-compose run test
 
 version: "1"
 name: router-monitor
 
 services:
+  web:
+    command: bun run dev
+    working_dir: ./web
+    build:
+      command: bun install
+      working_dir: ./web
+    restart: always
+
   dashboard:
     command: bun run dev
     working_dir: ./dashboard
@@ -25,7 +35,11 @@ services:
     restart: always
 
 actions:
+  deploy-dev: task deploy-dev
+  logs-dev: task logs-dev
+  stop-dev: task stop-dev
+  status-dev: task status-dev
+  buf-generate: task buf-generate
   go-generate: task go-generate
   go-build: task go-build
-  copy-to-router: task copy-to-router
   test: go test ./...
