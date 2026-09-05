@@ -8,6 +8,7 @@
 #   local-compose down
 #
 # Actions:
+#   local-compose run generate
 #   local-compose run deploy
 #   local-compose run logs
 #   local-compose run stop
@@ -26,6 +27,7 @@ services:
     restart: always
 
 actions:
+  generate: task go-generate
   deploy: task deploy-dev
   logs: task logs-dev
   stop: task stop-dev
