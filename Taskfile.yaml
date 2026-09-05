@@ -5,10 +5,6 @@ tasks:
     cmds:
       - buf generate
 
-  docker-build-generate:
-    cmds:
-      - docker build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate
-
   go-generate:
     sources:
       - internal/routermonitor/ebpf-collector.c
@@ -21,9 +17,7 @@ tasks:
       - docker create blesswinsamuel/router-monitor:generate > /tmp/container_id
       - defer: rm /tmp/container_id
       - defer: docker rm -f $(cat /tmp/container_id)
-      - docker cp $(cat /tmp/container_id):/generated/ ./
-      - defer: rm -rf ./generated
-      - cp -r generated/* ./internal/routermonitor/
+      - docker cp $(cat /tmp/container_id):/generated/. ./internal/routermonitor/
 
   web-install:
     cmds:
@@ -52,6 +46,10 @@ tasks:
     cmds:
       - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o router-monitor-dev ./cmd/router-monitor
 
+  deploy:
+    deps:
+      - deploy-dev
+
   deploy-dev:
     deps:
       - build
@@ -62,25 +60,25 @@ tasks:
       - sleep 1
       - ssh root@router "systemctl is-active router-monitor-dev"
 
-  deploy:
-    deps:
-      - deploy-dev
-
   logs:
     deps:
       - logs-dev
-
-  stop:
-    deps:
-      - stop-dev
 
   logs-dev:
     cmds:
       - ssh root@router "journalctl -u router-monitor-dev -f"
 
+  stop:
+    deps:
+      - stop-dev
+
   stop-dev:
     cmds:
       - ssh root@router "systemctl stop router-monitor-dev"
+
+  status:
+    deps:
+      - status-dev
 
   status-dev:
     cmds:
