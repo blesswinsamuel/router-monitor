@@ -19,7 +19,7 @@ type hostCacheValue struct {
 	Expiry   time.Time
 }
 
-type arpCollector struct {
+type ArpCollector struct {
 	filename          string
 	stripDomainSuffix string
 	hostCacheTTL      time.Duration
@@ -32,12 +32,12 @@ type arpCollector struct {
 	arpDevices *prometheus.Desc
 }
 
-func NewArpCollector(filename string, stripDomainSuffix string, hostCacheTTL time.Duration) *arpCollector {
+func NewArpCollector(filename string, stripDomainSuffix string, hostCacheTTL time.Duration) *ArpCollector {
 	if hostCacheTTL <= 0 {
 		hostCacheTTL = 30 * time.Minute
 	}
 
-	collector := &arpCollector{
+	collector := &ArpCollector{
 		filename:          filename,
 		stripDomainSuffix: stripDomainSuffix,
 		hostCacheTTL:      hostCacheTTL,
@@ -54,65 +54,80 @@ func NewArpCollector(filename string, stripDomainSuffix string, hostCacheTTL tim
 	return collector
 }
 
-func (collector *arpCollector) Describe(ch chan<- *prometheus.Desc) {
+func (collector *ArpCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.arpDevices
 }
 
-// Collect implements required collect function for all promehteus collectors
-func (collector *arpCollector) Collect(ch chan<- prometheus.Metric) {
-	collect := func() error {
-		file, err := os.Open(collector.filename)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
+type ArpDeviceEntry struct {
+	IPAddr   string
+	HWAddr   string
+	Hostname string
+	Device   string
+	Flag     int64
+	IsValid  bool
+}
 
-		scanner := bufio.NewScanner(file)
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			fields := strings.Fields(line)
-			if len(fields) != 6 {
-				continue
-			}
-
-			hwAddr := fields[3]
-			if hwAddr == "00:00:00:00:00:00" {
-				continue
-			}
-
-			ipAddr := fields[0]
-			var hostname string
-			collector.hostCacheMutex.RLock()
-			host, ok := collector.hostCache[ipAddr]
-			collector.hostCacheMutex.RUnlock()
-			hostname = host.Hostname
-			if hostname == "" {
-				hostname = "unknown:" + ipAddr
-			}
-			if !ok || host.Expiry.Before(time.Now()) {
-				collector.enqueueLookup(ipAddr)
-			}
-			flag, err := strconv.ParseInt(fields[2], 0, 0)
-			if err != nil {
-				log.Printf("Error parsing flag: %v", err)
-			}
-			device := fields[5]
-			ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(flag), ipAddr, hwAddr, hostname, device)
-		}
-
-		if err := scanner.Err(); err != nil {
-			return err
-		}
-
+func (collector *ArpCollector) GetDevices() []ArpDeviceEntry {
+	file, err := os.Open(collector.filename)
+	if err != nil {
 		return nil
 	}
-	if err := collect(); err != nil {
-		log.Printf("Error collecting ARP stats: %v", err)
+	defer file.Close()
+
+	var devices []ArpDeviceEntry
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.Fields(line)
+		if len(fields) != 6 {
+			continue
+		}
+
+		hwAddr := fields[3]
+		if hwAddr == "00:00:00:00:00:00" {
+			continue
+		}
+
+		ipAddr := fields[0]
+		var hostname string
+		collector.hostCacheMutex.RLock()
+		host, ok := collector.hostCache[ipAddr]
+		collector.hostCacheMutex.RUnlock()
+		hostname = host.Hostname
+		if hostname == "" {
+			hostname = "unknown:" + ipAddr
+		}
+		if !ok || host.Expiry.Before(time.Now()) {
+			collector.enqueueLookup(ipAddr)
+		}
+		flag, err := strconv.ParseInt(fields[2], 0, 0)
+		if err != nil {
+			log.Printf("Error parsing flag: %v", err)
+		}
+		device := fields[5]
+		devices = append(devices, ArpDeviceEntry{
+			IPAddr:   ipAddr,
+			HWAddr:   hwAddr,
+			Hostname: hostname,
+			Device:   device,
+			Flag:     flag,
+			IsValid:  flag == 2,
+		})
+	}
+
+	return devices
+}
+
+// Collect implements required collect function for all promehteus collectors
+func (collector *ArpCollector) Collect(ch chan<- prometheus.Metric) {
+	devices := collector.GetDevices()
+	for _, d := range devices {
+		ch <- prometheus.MustNewConstMetric(collector.arpDevices, prometheus.GaugeValue, float64(d.Flag), d.IPAddr, d.HWAddr, d.Hostname, d.Device)
 	}
 }
 
-func (collector *arpCollector) enqueueLookup(ipAddr string) {
+func (collector *ArpCollector) enqueueLookup(ipAddr string) {
 	collector.hostCacheMutex.Lock()
 	if _, ok := collector.pendingLookups[ipAddr]; ok {
 		collector.hostCacheMutex.Unlock()
@@ -130,7 +145,7 @@ func (collector *arpCollector) enqueueLookup(ipAddr string) {
 	}
 }
 
-func (collector *arpCollector) lookupLoop() {
+func (collector *ArpCollector) lookupLoop() {
 	for ipAddr := range collector.lookupQueue {
 		hostname := "unknown:" + ipAddr
 

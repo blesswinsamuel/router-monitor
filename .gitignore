@@ -1,6 +1,9 @@
 /result
 /router-monitor
+/router-monitor-dev
 *_bpfel.o
 *_bpfel.go
 /bin
+node_modules
+web/dist
 .DS_Store

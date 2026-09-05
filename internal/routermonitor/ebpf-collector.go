@@ -15,7 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type ebpfCollectorCollector struct {
+type EbpfCollector struct {
 	objs  *ebpfCollectorObjects
 	links []link.Link
 
@@ -29,8 +29,8 @@ type ebpfCollectorCollector struct {
 	collectErrors      atomic.Uint64
 }
 
-func NewEbpfCollector() *ebpfCollectorCollector {
-	return &ebpfCollectorCollector{
+func NewEbpfCollector() *EbpfCollector {
+	return &EbpfCollector{
 		lanSubnetIP:   0x0000640A,
 		lanSubnetMask: 0x0000FFFF,
 		packetsTotal: prometheus.NewDesc("router_monitor_packets_total",
@@ -51,19 +51,19 @@ func NewEbpfCollector() *ebpfCollectorCollector {
 	}
 }
 
-func (collector *ebpfCollectorCollector) SetLANSubnet(lanSubnetIP uint32, lanSubnetMask uint32) {
+func (collector *EbpfCollector) SetLANSubnet(lanSubnetIP uint32, lanSubnetMask uint32) {
 	collector.lanSubnetIP = lanSubnetIP
 	collector.lanSubnetMask = lanSubnetMask
 }
 
-func (collector *ebpfCollectorCollector) Describe(ch chan<- *prometheus.Desc) {
+func (collector *EbpfCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- collector.packetsTotal
 	ch <- collector.bytesTotal
 	ch <- collector.collectErrorsTotal
 }
 
 // Collect implements required collect function for all promehteus collectors
-func (collector *ebpfCollectorCollector) Collect(ch chan<- prometheus.Metric) {
+func (collector *EbpfCollector) Collect(ch chan<- prometheus.Metric) {
 	collect := func(trafficDirection string, packetStats *ebpf.Map) {
 		iter := packetStats.Iterate()
 		var key ebpfCollectorPacketStatsKey
@@ -102,7 +102,64 @@ func (collector *ebpfCollectorCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(collector.collectErrorsTotal, prometheus.CounterValue, float64(collector.collectErrors.Load()))
 }
 
-func (collector *ebpfCollectorCollector) Load() error {
+type FlowStat struct {
+	Direction string
+	EthProto  string
+	IPProto   string
+	SrcIP     string
+	DstIP     string
+	Packets   uint64
+	Bytes     uint64
+}
+
+func (collector *EbpfCollector) GetFlowStats() []FlowStat {
+	if collector.objs == nil {
+		return nil
+	}
+	var flows []FlowStat
+	collect := func(trafficDirection string, packetStats *ebpf.Map) {
+		if packetStats == nil {
+			return
+		}
+		iter := packetStats.Iterate()
+		var key ebpfCollectorPacketStatsKey
+		var value ebpfCollectorPacketStatsValue
+		for iter.Next(&key, &value) {
+			srcIP := ""
+			dstIP := ""
+			if layers.EthernetType(key.EthProto) == layers.EthernetTypeIPv6 {
+				srcIP = "ipv6"
+				dstIP = "ipv6"
+			} else {
+				srcIP = int2ip4(key.Srcip).String()
+				dstIP = int2ip4(key.Dstip).String()
+			}
+			if key.Srcip == 0 {
+				srcIP = "internet"
+			}
+			if key.Dstip == 0 {
+				dstIP = "internet"
+			}
+			ethProto := layers.EthernetType(key.EthProto).String()
+			ipProto := layers.IPProtocol(key.IpProto).String()
+
+			flows = append(flows, FlowStat{
+				Direction: trafficDirection,
+				EthProto:  ethProto,
+				IPProto:   ipProto,
+				SrcIP:     srcIP,
+				DstIP:     dstIP,
+				Packets:   value.Packets,
+				Bytes:     value.Bytes,
+			})
+		}
+	}
+	collect("ingress", collector.objs.PacketStatsIngress)
+	collect("egress", collector.objs.PacketStatsEgress)
+	return flows
+}
+
+func (collector *EbpfCollector) Load() error {
 	// Load the compiled eBPF ELF and load it into the kernel.
 	spec, err := loadEbpfCollector()
 	if err != nil {
@@ -132,14 +189,14 @@ func (collector *ebpfCollectorCollector) Load() error {
 	return nil
 }
 
-func (collector *ebpfCollectorCollector) Close() {
+func (collector *EbpfCollector) Close() {
 	for _, link := range collector.links {
 		link.Close()
 	}
 	collector.objs.Close()
 }
 
-func (collector *ebpfCollectorCollector) Attach(iface *net.Interface) error {
+func (collector *EbpfCollector) Attach(iface *net.Interface) error {
 	err := features.HaveProgramType(ebpf.SchedACT)
 	if errors.Is(err, ebpf.ErrNotSupported) {
 		return fmt.Errorf("SchedACT not supported on this kernel")

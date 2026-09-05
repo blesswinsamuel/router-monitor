@@ -9,8 +9,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newTestArpCollector(filename string) *arpCollector {
-	return &arpCollector{
+func newTestArpCollector(filename string) *ArpCollector {
+	return &ArpCollector{
 		filename:          filename,
 		stripDomainSuffix: "",
 		hostCacheTTL:      time.Minute,

@@ -1,14 +1,13 @@
 version: 3
-# task go-generate go-build copy-to-router
 
 tasks:
+  buf-generate:
+    cmds:
+      - buf generate
+
   docker-build-generate:
     cmds:
       - docker build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate
-
-  # docker-build:
-  #   cmds:
-  #     - docker build . -t blesswinsamuel/router-monitor
 
   go-generate:
     cmds:
@@ -21,30 +20,54 @@ tasks:
     deps:
       - docker-build-generate
 
+  web-install:
+    cmds:
+      - cd web && bun install
+
+  web-build:
+    cmds:
+      - cd web && bun run build
+      - mkdir -p internal/web/dist
+      - cp -r web/dist/* internal/web/dist/
+
+  web-dev:
+    cmds:
+      - cd web && bun run dev
+
   go-build:
     cmds:
-      - GOOS=linux GOARCH=amd64 go build -o router-monitor ./cmd/router-monitor
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o router-monitor ./cmd/router-monitor
+
+  build:
+    deps:
+      - web-build
+    cmds:
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o router-monitor-dev ./cmd/router-monitor
+
+  deploy-dev:
+    deps:
+      - build
+    cmds:
+      - ssh root@router "systemctl stop router-monitor-dev 2>/dev/null || true"
+      - scp router-monitor-dev root@router:/root/router-monitor-dev
+      - ssh root@router "systemd-run --unit=router-monitor-dev --setenv=PORT=9156 --setenv=HOST=0.0.0.0 --setenv=DB_PATH=/var/lib/router-monitor/router-monitor-dev.db --property=AmbientCapabilities='CAP_NET_ADMIN CAP_NET_RAW CAP_BPF CAP_PERFMON' /root/router-monitor-dev lan"
+      - sleep 1
+      - ssh root@router "systemctl is-active router-monitor-dev"
+
+  logs-dev:
+    cmds:
+      - ssh root@router "journalctl -u router-monitor-dev -f"
+
+  stop-dev:
+    cmds:
+      - ssh root@router "systemctl stop router-monitor-dev"
+
+  status-dev:
+    cmds:
+      - ssh root@router "systemctl status router-monitor-dev"
 
   copy-to-router:
     cmds:
       - ssh root@router "pkill -f router-monitor" || true
       - scp router-monitor root@router:/root/router-monitor
       - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/router-monitor'"
-
-  # nix-build:
-  #   cmds:
-  #     # - nix run github:nix-community/gomod2nix#gomod2nix -- generate
-  #     # - nix build --eval-store auto -j0 --store 'ssh-ng://root@cloudlab-oracle-arm' --builders "ssh-ng://root@cloudlab-oracle-arm aarch64-linux" '.#packages.aarch64-linux.default'
-  #     - nix build --eval-store auto -j0 --store 'ssh-ng://root@cloudlab-oracle-arm' '.#packages.aarch64-linux.default'
-  #     # - nix build --eval-store auto -j0 --store 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'
-
-  # nix-copy-to-router:
-  #   cmds:
-  #     - nix copy --verbose --no-check-sigs --from 'ssh-ng://root@cloudlab-oracle-arm' --to 'ssh-ng://root@raspberry-pi-4' '.#packages.aarch64-linux.default'
-
-  # rsync-go-generate:
-  #   cmds:
-  #     - rsync -avz --delete ./ root@hp-450-laptop:/root/router-monitor/
-  #     # - ssh root@hp-450-laptop "nix-shell -p go llvm_18 clang_18 libbpf --run 'cd /root/router-monitor && go generate ./...'"
-  #     - ssh root@hp-450-laptop "nix-shell -p podman --run 'cd /root/router-monitor && podman build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate'"
-  #     - rsync -avz --delete root@hp-450-laptop:/root/router-monitor/internal/ ./internal/

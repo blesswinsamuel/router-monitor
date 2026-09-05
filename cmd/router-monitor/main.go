@@ -10,13 +10,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
+	"github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1/routermonitorv1connect"
+	"github.com/blesswinsamuel/router-monitor/internal/api"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
+	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
+	"github.com/blesswinsamuel/router-monitor/internal/web"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/cors"
 )
 
 var defaultPingAddrs = []string{"1.1.1.1:53", "8.8.8.8:53"}
@@ -125,14 +131,49 @@ func main() {
 	log.Printf("Attached program to iface %q (index %d)", iface.Name, iface.Index)
 	log.Printf("Press Ctrl-C to exit and remove the program")
 
-	prometheus.MustRegister(ebpfFirewallCollector)
-	prometheus.MustRegister(routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX"), arpCacheTTL))
+	arpCollector := routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX"), arpCacheTTL)
 	internetChecker := routermonitor.NewInternetChecker(10*time.Second, pingAddrs)
+
+	prometheus.MustRegister(ebpfFirewallCollector)
+	prometheus.MustRegister(arpCollector)
 	internetChecker.Register(prometheus.DefaultRegisterer)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go internetChecker.Start(ctx)
+
+	// Initialize SQLite TSDB
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "/var/lib/router-monitor/router-monitor.db"
+	}
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
+		dbPath = "./router-monitor.db"
+	}
+	tsdbDB, err := tsdb.Open(dbPath)
+	if err != nil {
+		log.Printf("warn: failed to open TSDB at %s, falling back to in-memory: %v", dbPath, err)
+		tsdbDB, err = tsdb.Open(":memory:")
+		if err != nil {
+			log.Fatalf("failed to open in-memory TSDB: %v", err)
+		}
+	}
+	defer tsdbDB.Close()
+	tsdbDB.StartRetentionWorker(ctx, 1*time.Hour, 7*24*time.Hour)
+
+	sampler := tsdb.NewSampler(tsdbDB, ebpfFirewallCollector, arpCollector, internetChecker, 5*time.Second)
+	sampler.Start(ctx)
+
+	routerService := api.NewRouterMonitorService(
+		iface.Name,
+		os.Getenv("LAN_SUBNET_CIDR"),
+		ebpfFirewallCollector,
+		arpCollector,
+		internetChecker,
+		tsdbDB,
+		sampler,
+	)
+	rpcPath, rpcHandler := routermonitorv1connect.NewRouterMonitorServiceHandler(routerService)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -143,11 +184,38 @@ func main() {
 		host = "0.0.0.0"
 	}
 
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{
+			"Accept-Encoding",
+			"Content-Encoding",
+			"Content-Type",
+			"Connect-Protocol-Version",
+			"Connect-Timeout-Ms",
+			"Connect-Accept-Encoding",
+			"Connect-Content-Encoding",
+			"Grpc-Timeout",
+			"X-Grpc-Web",
+			"X-User-Agent",
+		},
+		ExposedHeaders: []string{
+			"Content-Encoding",
+			"Connect-Content-Encoding",
+			"Grpc-Status",
+			"Grpc-Message",
+			"Grpc-Status-Details-Bin",
+		},
+	})
+
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle(rpcPath, rpcHandler)
+	mux.Handle("/", web.Handler())
+
 	server := &http.Server{
 		Addr:              net.JoinHostPort(host, port),
-		Handler:           mux,
+		Handler:           corsHandler.Handler(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
