@@ -26,13 +26,6 @@ services:
       working_dir: ./web
     restart: always
 
-  dashboard:
-    command: bun run dev
-    working_dir: ./dashboard
-    build:
-      command: bun install
-      working_dir: ./dashboard
-    restart: always
 
 actions:
   deploy-dev: task deploy-dev
