@@ -54,7 +54,7 @@ export function App() {
   // Initial load and periodic snapshot refresh
   useEffect(() => {
     fetchAllData()
-    const interval = setInterval(fetchAllData, 10000)
+    const interval = setInterval(fetchAllData, 5000)
     return () => clearInterval(interval)
   }, [fetchAllData])
 
@@ -83,6 +83,10 @@ export function App() {
               currentUploadBytesPerSec: res.uploadBytesPerSec,
               currentDownloadPacketsPerSec: res.downloadPacketsPerSec,
               currentUploadPacketsPerSec: res.uploadPacketsPerSec,
+              currentWanDownloadBytesPerSec: res.wanDownloadBytesPerSec,
+              currentWanUploadBytesPerSec: res.wanUploadBytesPerSec,
+              currentLanDownloadBytesPerSec: res.lanDownloadBytesPerSec,
+              currentLanUploadBytesPerSec: res.lanUploadBytesPerSec,
               internetIsUp: res.internetIsUp,
               internetLatencySeconds: res.internetLatencySeconds,
               connectedDevicesCount: res.connectedDevicesCount,

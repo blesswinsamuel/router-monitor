@@ -194,14 +194,15 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   <TableHead>MAC Address</TableHead>
                   <TableHead>Interface</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Live Bandwidth</TableHead>
                   <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1">
-                      <ArrowDown className="w-3.5 h-3.5 text-emerald-500" /> Download
+                      <ArrowDown className="w-3.5 h-3.5 text-emerald-500" /> Total Download
                     </span>
                   </TableHead>
                   <TableHead className="text-right">
                     <span className="inline-flex items-center gap-1">
-                      <ArrowUp className="w-3.5 h-3.5 text-sky-500" /> Upload
+                      <ArrowUp className="w-3.5 h-3.5 text-sky-500" /> Total Upload
                     </span>
                   </TableHead>
                   <TableHead className="w-8"></TableHead>
@@ -210,7 +211,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                       {devices.length === 0
                         ? "No devices detected or stored yet."
                         : currentInterface !== 'all' && !search
@@ -226,6 +227,11 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     const isOnline = status === 'active' || status === 'static'
                     const dlRate = Number(device.currentDownloadBytesPerSec || 0)
                     const ulRate = Number(device.currentUploadBytesPerSec || 0)
+                    const wanDlRate = Number(device.currentWanDownloadBytesPerSec || 0)
+                    const wanUlRate = Number(device.currentWanUploadBytesPerSec || 0)
+                    const lanDlRate = Number(device.currentLanDownloadBytesPerSec || 0)
+                    const lanUlRate = Number(device.currentLanUploadBytesPerSec || 0)
+                    const hasTraffic = wanDlRate > 0 || wanUlRate > 0 || lanDlRate > 0 || lanUlRate > 0 || dlRate > 0 || ulRate > 0
 
                     const internetDl = Number(device.internetDownloadBytes || 0)
                     const lanDl = Number(device.lanDownloadBytes || 0)
@@ -298,13 +304,31 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                 {formatRelativeTime(device.lastSeenUnix)}
                               </span>
                             )}
-                            {isOnline && (dlRate > 0 || ulRate > 0) && (
+                            {isOnline && hasTraffic && (
                               <span className="text-[10px] font-mono text-primary font-medium flex items-center gap-1 mt-0.5">
-                                <Activity className="w-2.5 h-2.5 animate-pulse" />
-                                {formatRate(dlRate + ulRate)}
+                                <Activity className="w-2.5 h-2.5 animate-pulse text-emerald-500" />
+                                {formatRate(wanDlRate + wanUlRate + lanDlRate + lanUlRate || dlRate + ulRate)}
                               </span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {isOnline && hasTraffic ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <span className="text-[10px] text-muted-foreground uppercase font-sans font-semibold">WAN</span>
+                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">↓{formatRate(wanDlRate)}</span>
+                                <span className="text-sky-600 dark:text-sky-400 font-medium">↑{formatRate(wanUlRate)}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs">
+                                <span className="text-[10px] text-muted-foreground uppercase font-sans font-semibold">LAN</span>
+                                <span className="text-blue-600 dark:text-blue-400 font-medium">↓{formatRate(lanDlRate)}</span>
+                                <span className="text-indigo-600 dark:text-indigo-400 font-medium">↑{formatRate(lanUlRate)}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground/50 text-xs">Idle</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-right font-mono">
                           <div className="flex flex-col items-end">
@@ -312,12 +336,8 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             {(internetDl > 0 || lanDl > 0) ? (
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                 <span>WAN {formatBytes(internetDl)}</span>
-                                {lanDl > 0 && (
-                                  <>
-                                    <span>•</span>
-                                    <span>LAN {formatBytes(lanDl)}</span>
-                                  </>
-                                )}
+                                <span>•</span>
+                                <span>LAN {formatBytes(lanDl)}</span>
                               </span>
                             ) : (
                               <span className="text-[10px] text-muted-foreground">
@@ -332,12 +352,8 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             {(internetUl > 0 || lanUl > 0) ? (
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                 <span>WAN {formatBytes(internetUl)}</span>
-                                {lanUl > 0 && (
-                                  <>
-                                    <span>•</span>
-                                    <span>LAN {formatBytes(lanUl)}</span>
-                                  </>
-                                )}
+                                <span>•</span>
+                                <span>LAN {formatBytes(lanUl)}</span>
                               </span>
                             ) : (
                               <span className="text-[10px] text-muted-foreground">

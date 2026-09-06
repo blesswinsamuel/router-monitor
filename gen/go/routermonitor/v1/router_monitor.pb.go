@@ -58,23 +58,31 @@ func (*GetOverviewRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetOverviewResponse struct {
-	state                        protoimpl.MessageState `protogen:"open.v1"`
-	InterfaceName                string                 `protobuf:"bytes,1,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
-	LanSubnetCidr                string                 `protobuf:"bytes,2,opt,name=lan_subnet_cidr,json=lanSubnetCidr,proto3" json:"lan_subnet_cidr,omitempty"`
-	InternetIsUp                 bool                   `protobuf:"varint,3,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
-	InternetLatencySeconds       float64                `protobuf:"fixed64,4,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
-	ConnectedDevicesCount        int32                  `protobuf:"varint,5,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
-	TotalDownloadBytes           uint64                 `protobuf:"varint,6,opt,name=total_download_bytes,json=totalDownloadBytes,proto3" json:"total_download_bytes,omitempty"`
-	TotalUploadBytes             uint64                 `protobuf:"varint,7,opt,name=total_upload_bytes,json=totalUploadBytes,proto3" json:"total_upload_bytes,omitempty"`
-	TotalDownloadPackets         uint64                 `protobuf:"varint,8,opt,name=total_download_packets,json=totalDownloadPackets,proto3" json:"total_download_packets,omitempty"`
-	TotalUploadPackets           uint64                 `protobuf:"varint,9,opt,name=total_upload_packets,json=totalUploadPackets,proto3" json:"total_upload_packets,omitempty"`
-	CurrentDownloadBytesPerSec   float64                `protobuf:"fixed64,10,opt,name=current_download_bytes_per_sec,json=currentDownloadBytesPerSec,proto3" json:"current_download_bytes_per_sec,omitempty"`
-	CurrentUploadBytesPerSec     float64                `protobuf:"fixed64,11,opt,name=current_upload_bytes_per_sec,json=currentUploadBytesPerSec,proto3" json:"current_upload_bytes_per_sec,omitempty"`
-	CurrentDownloadPacketsPerSec float64                `protobuf:"fixed64,12,opt,name=current_download_packets_per_sec,json=currentDownloadPacketsPerSec,proto3" json:"current_download_packets_per_sec,omitempty"`
-	CurrentUploadPacketsPerSec   float64                `protobuf:"fixed64,13,opt,name=current_upload_packets_per_sec,json=currentUploadPacketsPerSec,proto3" json:"current_upload_packets_per_sec,omitempty"`
-	ServerTimeUnix               int64                  `protobuf:"varint,14,opt,name=server_time_unix,json=serverTimeUnix,proto3" json:"server_time_unix,omitempty"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"open.v1"`
+	InterfaceName                 string                 `protobuf:"bytes,1,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
+	LanSubnetCidr                 string                 `protobuf:"bytes,2,opt,name=lan_subnet_cidr,json=lanSubnetCidr,proto3" json:"lan_subnet_cidr,omitempty"`
+	InternetIsUp                  bool                   `protobuf:"varint,3,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
+	InternetLatencySeconds        float64                `protobuf:"fixed64,4,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
+	ConnectedDevicesCount         int32                  `protobuf:"varint,5,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
+	TotalDownloadBytes            uint64                 `protobuf:"varint,6,opt,name=total_download_bytes,json=totalDownloadBytes,proto3" json:"total_download_bytes,omitempty"`
+	TotalUploadBytes              uint64                 `protobuf:"varint,7,opt,name=total_upload_bytes,json=totalUploadBytes,proto3" json:"total_upload_bytes,omitempty"`
+	TotalDownloadPackets          uint64                 `protobuf:"varint,8,opt,name=total_download_packets,json=totalDownloadPackets,proto3" json:"total_download_packets,omitempty"`
+	TotalUploadPackets            uint64                 `protobuf:"varint,9,opt,name=total_upload_packets,json=totalUploadPackets,proto3" json:"total_upload_packets,omitempty"`
+	CurrentDownloadBytesPerSec    float64                `protobuf:"fixed64,10,opt,name=current_download_bytes_per_sec,json=currentDownloadBytesPerSec,proto3" json:"current_download_bytes_per_sec,omitempty"`
+	CurrentUploadBytesPerSec      float64                `protobuf:"fixed64,11,opt,name=current_upload_bytes_per_sec,json=currentUploadBytesPerSec,proto3" json:"current_upload_bytes_per_sec,omitempty"`
+	CurrentDownloadPacketsPerSec  float64                `protobuf:"fixed64,12,opt,name=current_download_packets_per_sec,json=currentDownloadPacketsPerSec,proto3" json:"current_download_packets_per_sec,omitempty"`
+	CurrentUploadPacketsPerSec    float64                `protobuf:"fixed64,13,opt,name=current_upload_packets_per_sec,json=currentUploadPacketsPerSec,proto3" json:"current_upload_packets_per_sec,omitempty"`
+	ServerTimeUnix                int64                  `protobuf:"varint,14,opt,name=server_time_unix,json=serverTimeUnix,proto3" json:"server_time_unix,omitempty"`
+	TotalWanDownloadBytes         uint64                 `protobuf:"varint,15,opt,name=total_wan_download_bytes,json=totalWanDownloadBytes,proto3" json:"total_wan_download_bytes,omitempty"`
+	TotalWanUploadBytes           uint64                 `protobuf:"varint,16,opt,name=total_wan_upload_bytes,json=totalWanUploadBytes,proto3" json:"total_wan_upload_bytes,omitempty"`
+	TotalLanDownloadBytes         uint64                 `protobuf:"varint,17,opt,name=total_lan_download_bytes,json=totalLanDownloadBytes,proto3" json:"total_lan_download_bytes,omitempty"`
+	TotalLanUploadBytes           uint64                 `protobuf:"varint,18,opt,name=total_lan_upload_bytes,json=totalLanUploadBytes,proto3" json:"total_lan_upload_bytes,omitempty"`
+	CurrentWanDownloadBytesPerSec float64                `protobuf:"fixed64,19,opt,name=current_wan_download_bytes_per_sec,json=currentWanDownloadBytesPerSec,proto3" json:"current_wan_download_bytes_per_sec,omitempty"`
+	CurrentWanUploadBytesPerSec   float64                `protobuf:"fixed64,20,opt,name=current_wan_upload_bytes_per_sec,json=currentWanUploadBytesPerSec,proto3" json:"current_wan_upload_bytes_per_sec,omitempty"`
+	CurrentLanDownloadBytesPerSec float64                `protobuf:"fixed64,21,opt,name=current_lan_download_bytes_per_sec,json=currentLanDownloadBytesPerSec,proto3" json:"current_lan_download_bytes_per_sec,omitempty"`
+	CurrentLanUploadBytesPerSec   float64                `protobuf:"fixed64,22,opt,name=current_lan_upload_bytes_per_sec,json=currentLanUploadBytesPerSec,proto3" json:"current_lan_upload_bytes_per_sec,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *GetOverviewResponse) Reset() {
@@ -205,6 +213,62 @@ func (x *GetOverviewResponse) GetServerTimeUnix() int64 {
 	return 0
 }
 
+func (x *GetOverviewResponse) GetTotalWanDownloadBytes() uint64 {
+	if x != nil {
+		return x.TotalWanDownloadBytes
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetTotalWanUploadBytes() uint64 {
+	if x != nil {
+		return x.TotalWanUploadBytes
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetTotalLanDownloadBytes() uint64 {
+	if x != nil {
+		return x.TotalLanDownloadBytes
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetTotalLanUploadBytes() uint64 {
+	if x != nil {
+		return x.TotalLanUploadBytes
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetCurrentWanDownloadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentWanDownloadBytesPerSec
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetCurrentWanUploadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentWanUploadBytesPerSec
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetCurrentLanDownloadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentLanDownloadBytesPerSec
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetCurrentLanUploadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentLanUploadBytesPerSec
+	}
+	return 0
+}
+
 type ListDevicesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -242,29 +306,33 @@ func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
 }
 
 type ArpDevice struct {
-	state                      protoimpl.MessageState `protogen:"open.v1"`
-	IpAddr                     string                 `protobuf:"bytes,1,opt,name=ip_addr,json=ipAddr,proto3" json:"ip_addr,omitempty"`
-	HwAddr                     string                 `protobuf:"bytes,2,opt,name=hw_addr,json=hwAddr,proto3" json:"hw_addr,omitempty"`
-	Hostname                   string                 `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Device                     string                 `protobuf:"bytes,4,opt,name=device,proto3" json:"device,omitempty"`
-	Flags                      int64                  `protobuf:"varint,5,opt,name=flags,proto3" json:"flags,omitempty"` // e.g. 2 for valid ARP
-	IsValid                    bool                   `protobuf:"varint,6,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
-	DownloadBytes              uint64                 `protobuf:"varint,7,opt,name=download_bytes,json=downloadBytes,proto3" json:"download_bytes,omitempty"`
-	UploadBytes                uint64                 `protobuf:"varint,8,opt,name=upload_bytes,json=uploadBytes,proto3" json:"upload_bytes,omitempty"`
-	DownloadPackets            uint64                 `protobuf:"varint,9,opt,name=download_packets,json=downloadPackets,proto3" json:"download_packets,omitempty"`
-	UploadPackets              uint64                 `protobuf:"varint,10,opt,name=upload_packets,json=uploadPackets,proto3" json:"upload_packets,omitempty"`
-	CurrentRateBytesPerSec     float64                `protobuf:"fixed64,11,opt,name=current_rate_bytes_per_sec,json=currentRateBytesPerSec,proto3" json:"current_rate_bytes_per_sec,omitempty"`
-	InternetDownloadBytes      uint64                 `protobuf:"varint,12,opt,name=internet_download_bytes,json=internetDownloadBytes,proto3" json:"internet_download_bytes,omitempty"`
-	InternetUploadBytes        uint64                 `protobuf:"varint,13,opt,name=internet_upload_bytes,json=internetUploadBytes,proto3" json:"internet_upload_bytes,omitempty"`
-	LanDownloadBytes           uint64                 `protobuf:"varint,14,opt,name=lan_download_bytes,json=lanDownloadBytes,proto3" json:"lan_download_bytes,omitempty"`
-	LanUploadBytes             uint64                 `protobuf:"varint,15,opt,name=lan_upload_bytes,json=lanUploadBytes,proto3" json:"lan_upload_bytes,omitempty"`
-	FirstSeenUnix              int64                  `protobuf:"varint,16,opt,name=first_seen_unix,json=firstSeenUnix,proto3" json:"first_seen_unix,omitempty"`
-	LastSeenUnix               int64                  `protobuf:"varint,17,opt,name=last_seen_unix,json=lastSeenUnix,proto3" json:"last_seen_unix,omitempty"`
-	Status                     string                 `protobuf:"bytes,18,opt,name=status,proto3" json:"status,omitempty"` // "active", "static", "unreachable", "offline"
-	CurrentDownloadBytesPerSec float64                `protobuf:"fixed64,19,opt,name=current_download_bytes_per_sec,json=currentDownloadBytesPerSec,proto3" json:"current_download_bytes_per_sec,omitempty"`
-	CurrentUploadBytesPerSec   float64                `protobuf:"fixed64,20,opt,name=current_upload_bytes_per_sec,json=currentUploadBytesPerSec,proto3" json:"current_upload_bytes_per_sec,omitempty"`
-	unknownFields              protoimpl.UnknownFields
-	sizeCache                  protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"open.v1"`
+	IpAddr                        string                 `protobuf:"bytes,1,opt,name=ip_addr,json=ipAddr,proto3" json:"ip_addr,omitempty"`
+	HwAddr                        string                 `protobuf:"bytes,2,opt,name=hw_addr,json=hwAddr,proto3" json:"hw_addr,omitempty"`
+	Hostname                      string                 `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Device                        string                 `protobuf:"bytes,4,opt,name=device,proto3" json:"device,omitempty"`
+	Flags                         int64                  `protobuf:"varint,5,opt,name=flags,proto3" json:"flags,omitempty"` // e.g. 2 for valid ARP
+	IsValid                       bool                   `protobuf:"varint,6,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
+	DownloadBytes                 uint64                 `protobuf:"varint,7,opt,name=download_bytes,json=downloadBytes,proto3" json:"download_bytes,omitempty"`
+	UploadBytes                   uint64                 `protobuf:"varint,8,opt,name=upload_bytes,json=uploadBytes,proto3" json:"upload_bytes,omitempty"`
+	DownloadPackets               uint64                 `protobuf:"varint,9,opt,name=download_packets,json=downloadPackets,proto3" json:"download_packets,omitempty"`
+	UploadPackets                 uint64                 `protobuf:"varint,10,opt,name=upload_packets,json=uploadPackets,proto3" json:"upload_packets,omitempty"`
+	CurrentRateBytesPerSec        float64                `protobuf:"fixed64,11,opt,name=current_rate_bytes_per_sec,json=currentRateBytesPerSec,proto3" json:"current_rate_bytes_per_sec,omitempty"`
+	InternetDownloadBytes         uint64                 `protobuf:"varint,12,opt,name=internet_download_bytes,json=internetDownloadBytes,proto3" json:"internet_download_bytes,omitempty"`
+	InternetUploadBytes           uint64                 `protobuf:"varint,13,opt,name=internet_upload_bytes,json=internetUploadBytes,proto3" json:"internet_upload_bytes,omitempty"`
+	LanDownloadBytes              uint64                 `protobuf:"varint,14,opt,name=lan_download_bytes,json=lanDownloadBytes,proto3" json:"lan_download_bytes,omitempty"`
+	LanUploadBytes                uint64                 `protobuf:"varint,15,opt,name=lan_upload_bytes,json=lanUploadBytes,proto3" json:"lan_upload_bytes,omitempty"`
+	FirstSeenUnix                 int64                  `protobuf:"varint,16,opt,name=first_seen_unix,json=firstSeenUnix,proto3" json:"first_seen_unix,omitempty"`
+	LastSeenUnix                  int64                  `protobuf:"varint,17,opt,name=last_seen_unix,json=lastSeenUnix,proto3" json:"last_seen_unix,omitempty"`
+	Status                        string                 `protobuf:"bytes,18,opt,name=status,proto3" json:"status,omitempty"` // "active", "static", "unreachable", "offline"
+	CurrentDownloadBytesPerSec    float64                `protobuf:"fixed64,19,opt,name=current_download_bytes_per_sec,json=currentDownloadBytesPerSec,proto3" json:"current_download_bytes_per_sec,omitempty"`
+	CurrentUploadBytesPerSec      float64                `protobuf:"fixed64,20,opt,name=current_upload_bytes_per_sec,json=currentUploadBytesPerSec,proto3" json:"current_upload_bytes_per_sec,omitempty"`
+	CurrentWanDownloadBytesPerSec float64                `protobuf:"fixed64,21,opt,name=current_wan_download_bytes_per_sec,json=currentWanDownloadBytesPerSec,proto3" json:"current_wan_download_bytes_per_sec,omitempty"`
+	CurrentWanUploadBytesPerSec   float64                `protobuf:"fixed64,22,opt,name=current_wan_upload_bytes_per_sec,json=currentWanUploadBytesPerSec,proto3" json:"current_wan_upload_bytes_per_sec,omitempty"`
+	CurrentLanDownloadBytesPerSec float64                `protobuf:"fixed64,23,opt,name=current_lan_download_bytes_per_sec,json=currentLanDownloadBytesPerSec,proto3" json:"current_lan_download_bytes_per_sec,omitempty"`
+	CurrentLanUploadBytesPerSec   float64                `protobuf:"fixed64,24,opt,name=current_lan_upload_bytes_per_sec,json=currentLanUploadBytesPerSec,proto3" json:"current_lan_upload_bytes_per_sec,omitempty"`
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *ArpDevice) Reset() {
@@ -433,6 +501,34 @@ func (x *ArpDevice) GetCurrentDownloadBytesPerSec() float64 {
 func (x *ArpDevice) GetCurrentUploadBytesPerSec() float64 {
 	if x != nil {
 		return x.CurrentUploadBytesPerSec
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetCurrentWanDownloadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentWanDownloadBytesPerSec
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetCurrentWanUploadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentWanUploadBytesPerSec
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetCurrentLanDownloadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentLanDownloadBytesPerSec
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetCurrentLanUploadBytesPerSec() float64 {
+	if x != nil {
+		return x.CurrentLanUploadBytesPerSec
 	}
 	return 0
 }
@@ -963,6 +1059,10 @@ type LiveStatsResponse struct {
 	InternetIsUp           bool                   `protobuf:"varint,6,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
 	InternetLatencySeconds float64                `protobuf:"fixed64,7,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
 	ConnectedDevicesCount  int32                  `protobuf:"varint,8,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
+	WanDownloadBytesPerSec float64                `protobuf:"fixed64,9,opt,name=wan_download_bytes_per_sec,json=wanDownloadBytesPerSec,proto3" json:"wan_download_bytes_per_sec,omitempty"`
+	WanUploadBytesPerSec   float64                `protobuf:"fixed64,10,opt,name=wan_upload_bytes_per_sec,json=wanUploadBytesPerSec,proto3" json:"wan_upload_bytes_per_sec,omitempty"`
+	LanDownloadBytesPerSec float64                `protobuf:"fixed64,11,opt,name=lan_download_bytes_per_sec,json=lanDownloadBytesPerSec,proto3" json:"lan_download_bytes_per_sec,omitempty"`
+	LanUploadBytesPerSec   float64                `protobuf:"fixed64,12,opt,name=lan_upload_bytes_per_sec,json=lanUploadBytesPerSec,proto3" json:"lan_upload_bytes_per_sec,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -1049,6 +1149,34 @@ func (x *LiveStatsResponse) GetInternetLatencySeconds() float64 {
 func (x *LiveStatsResponse) GetConnectedDevicesCount() int32 {
 	if x != nil {
 		return x.ConnectedDevicesCount
+	}
+	return 0
+}
+
+func (x *LiveStatsResponse) GetWanDownloadBytesPerSec() float64 {
+	if x != nil {
+		return x.WanDownloadBytesPerSec
+	}
+	return 0
+}
+
+func (x *LiveStatsResponse) GetWanUploadBytesPerSec() float64 {
+	if x != nil {
+		return x.WanUploadBytesPerSec
+	}
+	return 0
+}
+
+func (x *LiveStatsResponse) GetLanDownloadBytesPerSec() float64 {
+	if x != nil {
+		return x.LanDownloadBytesPerSec
+	}
+	return 0
+}
+
+func (x *LiveStatsResponse) GetLanUploadBytesPerSec() float64 {
+	if x != nil {
+		return x.LanUploadBytesPerSec
 	}
 	return 0
 }
@@ -1306,7 +1434,7 @@ var File_routermonitor_v1_router_monitor_proto protoreflect.FileDescriptor
 const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\n" +
 	"%routermonitor/v1/router_monitor.proto\x12\x10routermonitor.v1\"\x14\n" +
-	"\x12GetOverviewRequest\"\xfe\x05\n" +
+	"\x12GetOverviewRequest\"\xfe\t\n" +
 	"\x13GetOverviewResponse\x12%\n" +
 	"\x0einterface_name\x18\x01 \x01(\tR\rinterfaceName\x12&\n" +
 	"\x0flan_subnet_cidr\x18\x02 \x01(\tR\rlanSubnetCidr\x12$\n" +
@@ -1322,8 +1450,16 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x1ccurrent_upload_bytes_per_sec\x18\v \x01(\x01R\x18currentUploadBytesPerSec\x12F\n" +
 	" current_download_packets_per_sec\x18\f \x01(\x01R\x1ccurrentDownloadPacketsPerSec\x12B\n" +
 	"\x1ecurrent_upload_packets_per_sec\x18\r \x01(\x01R\x1acurrentUploadPacketsPerSec\x12(\n" +
-	"\x10server_time_unix\x18\x0e \x01(\x03R\x0eserverTimeUnix\"\x14\n" +
-	"\x12ListDevicesRequest\"\xa8\x06\n" +
+	"\x10server_time_unix\x18\x0e \x01(\x03R\x0eserverTimeUnix\x127\n" +
+	"\x18total_wan_download_bytes\x18\x0f \x01(\x04R\x15totalWanDownloadBytes\x123\n" +
+	"\x16total_wan_upload_bytes\x18\x10 \x01(\x04R\x13totalWanUploadBytes\x127\n" +
+	"\x18total_lan_download_bytes\x18\x11 \x01(\x04R\x15totalLanDownloadBytes\x123\n" +
+	"\x16total_lan_upload_bytes\x18\x12 \x01(\x04R\x13totalLanUploadBytes\x12I\n" +
+	"\"current_wan_download_bytes_per_sec\x18\x13 \x01(\x01R\x1dcurrentWanDownloadBytesPerSec\x12E\n" +
+	" current_wan_upload_bytes_per_sec\x18\x14 \x01(\x01R\x1bcurrentWanUploadBytesPerSec\x12I\n" +
+	"\"current_lan_download_bytes_per_sec\x18\x15 \x01(\x01R\x1dcurrentLanDownloadBytesPerSec\x12E\n" +
+	" current_lan_upload_bytes_per_sec\x18\x16 \x01(\x01R\x1bcurrentLanUploadBytesPerSec\"\x14\n" +
+	"\x12ListDevicesRequest\"\xcc\b\n" +
 	"\tArpDevice\x12\x17\n" +
 	"\aip_addr\x18\x01 \x01(\tR\x06ipAddr\x12\x17\n" +
 	"\ahw_addr\x18\x02 \x01(\tR\x06hwAddr\x12\x1a\n" +
@@ -1345,7 +1481,11 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x0elast_seen_unix\x18\x11 \x01(\x03R\flastSeenUnix\x12\x16\n" +
 	"\x06status\x18\x12 \x01(\tR\x06status\x12B\n" +
 	"\x1ecurrent_download_bytes_per_sec\x18\x13 \x01(\x01R\x1acurrentDownloadBytesPerSec\x12>\n" +
-	"\x1ccurrent_upload_bytes_per_sec\x18\x14 \x01(\x01R\x18currentUploadBytesPerSec\"L\n" +
+	"\x1ccurrent_upload_bytes_per_sec\x18\x14 \x01(\x01R\x18currentUploadBytesPerSec\x12I\n" +
+	"\"current_wan_download_bytes_per_sec\x18\x15 \x01(\x01R\x1dcurrentWanDownloadBytesPerSec\x12E\n" +
+	" current_wan_upload_bytes_per_sec\x18\x16 \x01(\x01R\x1bcurrentWanUploadBytesPerSec\x12I\n" +
+	"\"current_lan_download_bytes_per_sec\x18\x17 \x01(\x01R\x1dcurrentLanDownloadBytesPerSec\x12E\n" +
+	" current_lan_upload_bytes_per_sec\x18\x18 \x01(\x01R\x1bcurrentLanUploadBytesPerSec\"L\n" +
 	"\x13ListDevicesResponse\x125\n" +
 	"\adevices\x18\x01 \x03(\v2\x1b.routermonitor.v1.ArpDeviceR\adevices\".\n" +
 	"\x16GetTrafficFlowsRequest\x12\x14\n" +
@@ -1379,7 +1519,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\roverall_is_up\x18\x01 \x01(\bR\voverallIsUp\x12<\n" +
 	"\atargets\x18\x02 \x03(\v2\".routermonitor.v1.PingTargetStatusR\atargets\"C\n" +
 	"\x16StreamLiveStatsRequest\x12)\n" +
-	"\x10interval_seconds\x18\x01 \x01(\x05R\x0fintervalSeconds\"\xa6\x03\n" +
+	"\x10interval_seconds\x18\x01 \x01(\x05R\x0fintervalSeconds\"\x8e\x05\n" +
 	"\x11LiveStatsResponse\x12%\n" +
 	"\x0etimestamp_unix\x18\x01 \x01(\x03R\rtimestampUnix\x123\n" +
 	"\x16download_bytes_per_sec\x18\x02 \x01(\x01R\x13downloadBytesPerSec\x12/\n" +
@@ -1388,7 +1528,12 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x16upload_packets_per_sec\x18\x05 \x01(\x01R\x13uploadPacketsPerSec\x12$\n" +
 	"\x0einternet_is_up\x18\x06 \x01(\bR\finternetIsUp\x128\n" +
 	"\x18internet_latency_seconds\x18\a \x01(\x01R\x16internetLatencySeconds\x126\n" +
-	"\x17connected_devices_count\x18\b \x01(\x05R\x15connectedDevicesCount\"\xb0\x02\n" +
+	"\x17connected_devices_count\x18\b \x01(\x05R\x15connectedDevicesCount\x12:\n" +
+	"\x1awan_download_bytes_per_sec\x18\t \x01(\x01R\x16wanDownloadBytesPerSec\x126\n" +
+	"\x18wan_upload_bytes_per_sec\x18\n" +
+	" \x01(\x01R\x14wanUploadBytesPerSec\x12:\n" +
+	"\x1alan_download_bytes_per_sec\x18\v \x01(\x01R\x16lanDownloadBytesPerSec\x126\n" +
+	"\x18lan_upload_bytes_per_sec\x18\f \x01(\x01R\x14lanUploadBytesPerSec\"\xb0\x02\n" +
 	"\x16QueryTimeSeriesRequest\x12\x1f\n" +
 	"\vmetric_name\x18\x01 \x01(\tR\n" +
 	"metricName\x12\\\n" +
