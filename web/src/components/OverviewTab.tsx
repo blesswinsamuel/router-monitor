@@ -12,8 +12,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  LineChart,
-  Line,
 } from 'recharts'
 import {
   ChartContainer,
@@ -33,18 +31,11 @@ const trafficChartConfig = {
   },
 } satisfies ChartConfig
 
-export interface LivePoint {
-  time: string
-  download: number
-  upload: number
-}
-
 interface OverviewTabProps {
   overview: any
-  liveHistory: LivePoint[]
 }
 
-export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
+export function OverviewTab({ overview }: OverviewTabProps) {
   const [timeRange, setTimeRange] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyData, setHistoryData] = useState<any[]>([])
@@ -350,136 +341,66 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                Real-Time Bandwidth
-                <Badge variant="outline" className="text-xs text-muted-foreground font-normal">
-                  Rolling <span className="font-mono">60s</span>
-                </Badge>
-              </CardTitle>
-              <CardDescription>Live streaming network throughput across the router</CardDescription>
-            </div>
-            <div className="flex items-center space-x-4 text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                <span>Download (<span className="font-mono font-medium">{formatRate(overview?.total?.downloadBytesPerSec)}</span>)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-sky-500 inline-block"></span>
-                <span>Upload (<span className="font-mono font-medium">{formatRate(overview?.total?.uploadBytesPerSec)}</span>)</span>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={trafficChartConfig} className="h-[260px] w-full aspect-auto">
-            <AreaChart data={liveHistory}>
-              <defs>
-                <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-download)" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="var(--color-download)" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="ulGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--color-upload)" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="var(--color-upload)" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} className="font-mono" />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                tickFormatter={(val) => formatBytes(val)}
-                width={75}
-                className="font-mono"
-              />
-              <ChartTooltip
-                cursor={false}
-                content={
-                  <ChartTooltipContent
-                    indicator="dot"
-                    formatter={(value, name, item) => (
-                      <>
-                        <div
-                          className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <div className="flex flex-1 justify-between items-center leading-none gap-2">
-                          <span className="text-muted-foreground">
-                            {trafficChartConfig[name as keyof typeof trafficChartConfig]?.label ?? name}
-                          </span>
-                          <span className="font-mono font-medium text-foreground tabular-nums">
-                            {formatRate(Number(value))}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  />
-                }
-              />
-              <Area
-                type="monotone"
-                dataKey="download"
-                stroke="var(--color-download)"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#dlGrad)"
-                isAnimationActive={false}
-              />
-              <Area
-                type="monotone"
-                dataKey="upload"
-                stroke="var(--color-upload)"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#ulGrad)"
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-primary" />
-                Historical Traffic (SQLite TSDB)
+                Network Bandwidth
               </CardTitle>
-              <CardDescription>Persisted metrics stored and downsampled in embedded database</CardDescription>
+              <CardDescription>Persisted metrics sampled and downsampled in embedded SQLite TSDB</CardDescription>
             </div>
-            <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-              {(['15m', '1h', '6h', '24h'] as const).map((r) => (
-                <Button
-                  key={r}
-                  variant={timeRange === r ? "default" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs px-2.5 font-mono"
-                  onClick={() => setTimeRange(r)}
-                >
-                  {r}
-                </Button>
-              ))}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center space-x-3 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                  <span className="text-muted-foreground">Down:</span>
+                  <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">{formatRate(overview?.total?.downloadBytesPerSec)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                  <span className="text-muted-foreground">Up:</span>
+                  <span className="font-mono font-medium text-sky-600 dark:text-sky-400">{formatRate(overview?.total?.uploadBytesPerSec)}</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
+                {(['15m', '1h', '6h', '24h'] as const).map((r) => (
+                  <Button
+                    key={r}
+                    variant={timeRange === r ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 text-xs px-2.5 font-mono"
+                    onClick={() => setTimeRange(r)}
+                  >
+                    {r}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-[260px] w-full">
+          <div className="h-[280px] w-full">
             {historyLoading && historyData.length === 0 ? (
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
                 Loading historical time series...
               </div>
             ) : historyData.length === 0 ? (
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                No historical records in TSDB for this window yet. Data is gathered every 5 seconds.
+                No historical records in TSDB for this window yet. Data is gathered every 15 seconds.
               </div>
             ) : (
-              <ChartContainer config={trafficChartConfig} className="h-[260px] w-full aspect-auto">
-                <LineChart data={historyData}>
+              <ChartContainer config={trafficChartConfig} className="h-[280px] w-full aspect-auto">
+                <AreaChart data={historyData}>
+                  <defs>
+                    <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-download)" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="var(--color-download)" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="ulGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-upload)" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="var(--color-upload)" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} className="font-mono" />
                   <YAxis
@@ -514,21 +435,23 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                       />
                     }
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="download"
                     stroke="var(--color-download)"
                     strokeWidth={2}
-                    dot={false}
+                    fillOpacity={1}
+                    fill="url(#dlGrad)"
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="upload"
                     stroke="var(--color-upload)"
                     strokeWidth={2}
-                    dot={false}
+                    fillOpacity={1}
+                    fill="url(#ulGrad)"
                   />
-                </LineChart>
+                </AreaChart>
               </ChartContainer>
             )}
           </div>

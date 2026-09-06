@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Outlet, NavLink, useOutletContext } from 'react-router-dom'
 import { Header } from './Header'
-import { type LivePoint } from './OverviewTab'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, Laptop, ArrowLeftRight, Activity } from 'lucide-react'
@@ -16,7 +15,6 @@ export interface RootOutletContext {
     totalPackets: bigint | number
   }
   health: any
-  liveHistory: LivePoint[]
   isLive: boolean
   isRefreshing: boolean
   error: string | null
@@ -42,8 +40,6 @@ export function RootLayout() {
     totalPackets: 0,
   })
   const [health, setHealth] = useState<any>(null)
-  const [liveHistory, setLiveHistory] = useState<LivePoint[]>([])
-  const [isLive, setIsLive] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -75,83 +71,21 @@ export function RootLayout() {
     }
   }, [])
 
-  // Initial load and periodic snapshot refresh
+  // Initial load and periodic snapshot refresh every 15s (matching TSDB sample interval)
   useEffect(() => {
     fetchAllData()
     const interval = setInterval(fetchAllData, 15000)
     return () => clearInterval(interval)
   }, [fetchAllData])
 
-  // Server-streaming gRPC-Web connection for 1-second live stats
-  useEffect(() => {
-    let active = true
-    const abortCtrl = new AbortController()
-
-    async function runStream() {
-      while (active) {
-        try {
-          const stream = rpcClient.streamLiveStats(
-            { intervalSeconds: 1 },
-            { signal: abortCtrl.signal }
-          )
-          setIsLive(true)
-
-          for await (const res of stream) {
-            if (!active) break
-            setIsLive(true)
-
-            // Update live rates on overview
-            setOverview((prev: any) => ({
-              ...prev,
-              total: res.total,
-              wan: res.wan,
-              lan: res.lan,
-              internetIsUp: res.internetIsUp,
-              internetLatencySeconds: res.internetLatencySeconds,
-              connectedDevicesCount: res.connectedDevicesCount,
-            }))
-
-            // Append to rolling 60-second live chart
-            const d = new Date(Number(res.timestampUnix) * 1000)
-            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
-            setLiveHistory((prev) => {
-              const next = [
-                ...prev,
-                {
-                  time: timeStr,
-                  download: Number(res.total?.downloadBytesPerSec || 0),
-                  upload: Number(res.total?.uploadBytesPerSec || 0),
-                },
-              ]
-              if (next.length > 60) return next.slice(next.length - 60)
-              return next
-            })
-          }
-        } catch (err: any) {
-          if (!active) break
-          setIsLive(false)
-          // Wait 3 seconds before reconnecting stream
-          await new Promise((r) => setTimeout(r, 3000))
-        }
-      }
-    }
-
-    runStream()
-
-    return () => {
-      active = false
-      abortCtrl.abort()
-    }
-  }, [])
+  const isConnected = !error && !!overview
 
   const outletContext: RootOutletContext = {
     overview,
     devices,
     trafficData,
     health,
-    liveHistory,
-    isLive,
+    isLive: isConnected,
     isRefreshing,
     error,
     fetchAllData,
@@ -162,7 +96,7 @@ export function RootLayout() {
       <Header
         interfaceName={overview?.interfaceName || 'lan'}
         lanSubnet={overview?.lanSubnetCidr || '10.100.0.0/16'}
-        isLive={isLive}
+        isLive={isConnected}
         internetIsUp={overview ? overview.internetIsUp : true}
         onRefresh={fetchAllData}
         isRefreshing={isRefreshing}
