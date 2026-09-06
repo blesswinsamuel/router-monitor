@@ -283,7 +283,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   Internet Traffic ({timeRange})
                 </span>
                 {(wanDlRate > 0 || wanUlRate > 0) && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-mono">
                     Live: {formatRate(wanDlRate + wanUlRate)}
                   </Badge>
                 )}
@@ -306,7 +306,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex justify-between">
                 <span>Total WAN ({timeRange}):</span>
-                <strong className="text-foreground">{formatBytes(internetDl + internetUl)}</strong>
+                <strong className="text-foreground font-mono">{formatBytes(internetDl + internetUl)}</strong>
               </div>
             </CardContent>
           </Card>
@@ -320,7 +320,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   Local Traffic ({timeRange})
                 </span>
                 {(lanDlRate > 0 || lanUlRate > 0) && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-sky-500/30 text-sky-500">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-sky-500/30 text-sky-500 font-mono">
                     Live: {formatRate(lanDlRate + lanUlRate)}
                   </Badge>
                 )}
@@ -343,7 +343,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex justify-between">
                 <span>Total LAN ({timeRange}):</span>
-                <strong className="text-foreground">{formatBytes(lanDl + lanUl)}</strong>
+                <strong className="text-foreground font-mono">{formatBytes(lanDl + lanUl)}</strong>
               </div>
             </CardContent>
           </Card>
@@ -357,7 +357,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   Total Traffic ({timeRange})
                 </span>
                 {(dlRate > 0 || ulRate > 0) && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono">
                     Live: {formatRate(dlRate + ulRate)}
                   </Badge>
                 )}
@@ -380,7 +380,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex items-center justify-between">
                 <span>Last seen:</span>
-                <strong className="text-foreground">{formatRelativeTime(Number(device.lastSeenUnix))}</strong>
+                <strong className="text-foreground font-mono">{formatRelativeTime(Number(device.lastSeenUnix))}</strong>
               </div>
             </CardContent>
           </Card>
@@ -400,7 +400,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   key={r}
                   variant={timeRange === r ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="h-7 text-xs px-2.5"
+                  className="h-7 text-xs px-2.5 font-mono"
                   onClick={() => setTimeRange(r)}
                 >
                   {r}
@@ -430,9 +430,9 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} className="text-[10px]" />
-                  <YAxis tickLine={false} axisLine={false} tickFormatter={(val) => formatRate(val)} className="text-[10px]" />
-                  <ChartTooltip content={<ChartTooltipContent formatter={(val) => formatRate(Number(val))} />} />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} className="text-[10px] font-mono" />
+                  <YAxis tickLine={false} axisLine={false} tickFormatter={(val) => formatRate(val)} className="text-[10px] font-mono" />
+                  <ChartTooltip content={<ChartTooltipContent formatter={(val) => <span className="font-mono">{formatRate(Number(val))}</span>} />} />
                   <Area
                     type="monotone"
                     dataKey="download"

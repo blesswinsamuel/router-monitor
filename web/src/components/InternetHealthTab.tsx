@@ -155,13 +155,14 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
               <ChartContainer config={chartConfig} className="h-[280px] w-full aspect-auto">
                 <LineChart data={latencyHistory}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} className="font-mono" />
                   <YAxis
                     tickLine={false}
                     axisLine={false}
                     fontSize={11}
                     unit="ms"
                     width={50}
+                    className="font-mono"
                   />
                   <ChartTooltip
                     cursor={false}
