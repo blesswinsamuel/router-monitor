@@ -145,10 +145,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     })
   }, [activeDeviceList, currentInterface, statusFilter, search])
 
-  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodUsage?.downloadBytes || 0), 0)
-  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodUsage?.uploadBytes || 0), 0)
-  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.periodUsage?.downloadBytes || 0), 0)
-  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.periodUsage?.uploadBytes || 0), 0)
+  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.downloadBytes || 0), 0)
+  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
+  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.total?.downloadBytes || 0), 0)
+  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
 
   return (
     <>
@@ -360,54 +360,29 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     const status = device.status || (device.arp?.isValid ? 'active' : 'unreachable')
                     const isOnline = status === 'active' || status === 'static'
 
-                    // Rate metrics
-                    const totalDlRate = Number(device.currentRates?.downloadBytesPerSec || 0)
-                    const totalUlRate = Number(device.currentRates?.uploadBytesPerSec || 0)
-                    const totalDlPktsRate = Number(device.currentRates?.downloadPacketsPerSec || 0)
-                    const totalUlPktsRate = Number(device.currentRates?.uploadPacketsPerSec || 0)
+                    const activeTraffic = trafficScope === 'wan' ? device.wan : trafficScope === 'lan' ? device.lan : device.total
+                    const activeDlRate = Number(activeTraffic?.downloadBytesPerSec || 0)
+                    const activeUlRate = Number(activeTraffic?.uploadBytesPerSec || 0)
+                    const activeDlPktsRate = Number(activeTraffic?.downloadPacketsPerSec || 0)
+                    const activeUlPktsRate = Number(activeTraffic?.uploadPacketsPerSec || 0)
+                    const activeDlBytes = Number(activeTraffic?.downloadBytes || 0)
+                    const activeUlBytes = Number(activeTraffic?.uploadBytes || 0)
 
-                    const wanDlRate = Number(device.currentRates?.wanDownloadBytesPerSec || 0)
-                    const wanUlRate = Number(device.currentRates?.wanUploadBytesPerSec || 0)
-                    const wanDlPktsRate = Number(device.currentRates?.wanDownloadPacketsPerSec || 0)
-                    const wanUlPktsRate = Number(device.currentRates?.wanUploadPacketsPerSec || 0)
+                    // Individual scope metrics
+                    const totalDlBytes = Number(device.total?.downloadBytes || 0)
+                    const totalUlBytes = Number(device.total?.uploadBytes || 0)
+                    const totalDlRate = Number(device.total?.downloadBytesPerSec || 0)
+                    const totalUlRate = Number(device.total?.uploadBytesPerSec || 0)
 
-                    const lanDlRate = Number(device.currentRates?.lanDownloadBytesPerSec || 0)
-                    const lanUlRate = Number(device.currentRates?.lanUploadBytesPerSec || 0)
-                    const lanDlPktsRate = Number(device.currentRates?.lanDownloadPacketsPerSec || 0)
-                    const lanUlPktsRate = Number(device.currentRates?.lanUploadPacketsPerSec || 0)
+                    const wanDlBytes = Number(device.wan?.downloadBytes || 0)
+                    const wanUlBytes = Number(device.wan?.uploadBytes || 0)
+                    const wanDlRate = Number(device.wan?.downloadBytesPerSec || 0)
+                    const wanUlRate = Number(device.wan?.uploadBytesPerSec || 0)
 
-                    // Period volume metrics (queried from TSDB samples for the selected period)
-                    const periodDlBytes = Number(device.periodUsage?.downloadBytes || 0)
-                    const periodUlBytes = Number(device.periodUsage?.uploadBytes || 0)
-                    const periodWanDlBytes = Number(device.periodUsage?.wanDownloadBytes || 0)
-                    const periodWanUlBytes = Number(device.periodUsage?.wanUploadBytes || 0)
-                    const periodLanDlBytes = Number(device.periodUsage?.lanDownloadBytes || 0)
-                    const periodLanUlBytes = Number(device.periodUsage?.lanUploadBytes || 0)
-
-                    // Active metrics for scoped view
-                    let activeDlRate = totalDlRate
-                    let activeUlRate = totalUlRate
-                    let activeDlPktsRate = totalDlPktsRate
-                    let activeUlPktsRate = totalUlPktsRate
-
-                    let activeDlBytes = periodDlBytes
-                    let activeUlBytes = periodUlBytes
-
-                    if (trafficScope === 'wan') {
-                      activeDlRate = wanDlRate
-                      activeUlRate = wanUlRate
-                      activeDlPktsRate = wanDlPktsRate
-                      activeUlPktsRate = wanUlPktsRate
-                      activeDlBytes = periodWanDlBytes
-                      activeUlBytes = periodWanUlBytes
-                    } else if (trafficScope === 'lan') {
-                      activeDlRate = lanDlRate
-                      activeUlRate = lanUlRate
-                      activeDlPktsRate = lanDlPktsRate
-                      activeUlPktsRate = lanUlPktsRate
-                      activeDlBytes = periodLanDlBytes
-                      activeUlBytes = periodLanUlBytes
-                    }
+                    const lanDlBytes = Number(device.lan?.downloadBytes || 0)
+                    const lanUlBytes = Number(device.lan?.uploadBytes || 0)
+                    const lanDlRate = Number(device.lan?.downloadBytesPerSec || 0)
+                    const lanUlRate = Number(device.lan?.uploadBytesPerSec || 0)
 
                     return (
                       <TableRow
@@ -517,11 +492,11 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                   <span className="text-sky-500 font-bold">↑</span>
                                   {formatBytes(activeUlBytes)}
                                 </span>
-                                {trafficScope === 'total' && (periodWanDlBytes + periodWanUlBytes > 0 || periodLanDlBytes + periodLanUlBytes > 0) && (
+                                {trafficScope === 'total' && (wanDlBytes + wanUlBytes > 0 || lanDlBytes + lanUlBytes > 0) && (
                                   <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 mt-0.5 font-sans">
-                                    <span className="text-emerald-600 dark:text-emerald-400">WAN {formatBytes(periodWanDlBytes + periodWanUlBytes)}</span>
+                                    <span className="text-emerald-600 dark:text-emerald-400">WAN {formatBytes(wanDlBytes + wanUlBytes)}</span>
                                     <span>•</span>
-                                    <span className="text-blue-600 dark:text-blue-400">LAN {formatBytes(periodLanDlBytes + periodLanUlBytes)}</span>
+                                    <span className="text-blue-600 dark:text-blue-400">LAN {formatBytes(lanDlBytes + lanUlBytes)}</span>
                                   </span>
                                 )}
                               </div>
@@ -533,7 +508,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             <TableCell className="text-right font-mono">
                               <div className="flex flex-col items-end gap-0.5">
                                 <div className="text-xs font-semibold text-foreground">
-                                  ↓ {formatBytes(periodWanDlBytes)} ↑ {formatBytes(periodWanUlBytes)}
+                                  ↓ {formatBytes(wanDlBytes)} ↑ {formatBytes(wanUlBytes)}
                                 </div>
                                 {(wanDlRate > 0 || wanUlRate > 0) ? (
                                   <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -551,7 +526,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             <TableCell className="text-right font-mono">
                               <div className="flex flex-col items-end gap-0.5">
                                 <div className="text-xs font-semibold text-foreground">
-                                  ↓ {formatBytes(periodLanDlBytes)} ↑ {formatBytes(periodLanUlBytes)}
+                                  ↓ {formatBytes(lanDlBytes)} ↑ {formatBytes(lanUlBytes)}
                                 </div>
                                 {(lanDlRate > 0 || lanUlRate > 0) ? (
                                   <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
@@ -569,7 +544,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             <TableCell className="text-right font-mono">
                               <div className="flex flex-col items-end gap-0.5">
                                 <div className="text-xs font-semibold text-foreground">
-                                  ↓ {formatBytes(periodDlBytes)} ↑ {formatBytes(periodUlBytes)}
+                                  ↓ {formatBytes(totalDlBytes)} ↑ {formatBytes(totalUlBytes)}
                                 </div>
                                 {(totalDlRate > 0 || totalUlRate > 0) ? (
                                   <div className="text-[10px] text-primary font-medium">

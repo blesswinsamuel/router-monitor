@@ -34,7 +34,7 @@ import {
   type ChartConfig,
 } from './ui/chart'
 
-import type { Device, NetworkUsage } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device, DirectionalTraffic } from '@/gen/routermonitor/v1/router_monitor_pb'
 
 const deviceChartConfig = {
   download: {
@@ -57,10 +57,22 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
   const [timeRange, setTimeRange] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
   const [loading, setLoading] = useState(false)
   const [historyData, setHistoryData] = useState<{ time: string; download: number; upload: number }[]>([])
-  const [periodUsage, setPeriodUsage] = useState<NetworkUsage | undefined>(device?.periodUsage)
+  const [updatedTraffic, setUpdatedTraffic] = useState<{
+    total?: DirectionalTraffic
+    wan?: DirectionalTraffic
+    lan?: DirectionalTraffic
+  } | null>(null)
 
   useEffect(() => {
-    setPeriodUsage(device?.periodUsage)
+    setUpdatedTraffic(
+      device
+        ? {
+            total: device.total,
+            wan: device.wan,
+            lan: device.lan,
+          }
+        : null
+    )
   }, [device])
 
   useEffect(() => {
@@ -113,8 +125,12 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
         if (!active) return
 
         const updated = devRes.devices.find((d) => d.ipAddr === deviceIp)
-        if (updated?.periodUsage) {
-          setPeriodUsage(updated.periodUsage)
+        if (updated) {
+          setUpdatedTraffic({
+            total: updated.total,
+            wan: updated.wan,
+            lan: updated.lan,
+          })
         }
 
         const dlPoints = dlRes.series[0]?.points || []
@@ -165,30 +181,32 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
   const status = device.status || (device.arp?.isValid ? 'active' : 'unreachable')
   const isOnline = status === 'active' || status === 'static'
 
-  const dlRate = Number(device.currentRates?.downloadBytesPerSec || 0)
-  const ulRate = Number(device.currentRates?.uploadBytesPerSec || 0)
-  const dlPktsRate = Number(device.currentRates?.downloadPacketsPerSec || 0)
-  const ulPktsRate = Number(device.currentRates?.uploadPacketsPerSec || 0)
+  const totalTraffic = updatedTraffic?.total || device.total
+  const wanTraffic = updatedTraffic?.wan || device.wan
+  const lanTraffic = updatedTraffic?.lan || device.lan
 
-  const wanDlRate = Number(device.currentRates?.wanDownloadBytesPerSec || 0)
-  const wanUlRate = Number(device.currentRates?.wanUploadBytesPerSec || 0)
-  const wanDlPktsRate = Number(device.currentRates?.wanDownloadPacketsPerSec || 0)
-  const wanUlPktsRate = Number(device.currentRates?.wanUploadPacketsPerSec || 0)
+  const dlRate = Number(totalTraffic?.downloadBytesPerSec || 0)
+  const ulRate = Number(totalTraffic?.uploadBytesPerSec || 0)
+  const dlPktsRate = Number(totalTraffic?.downloadPacketsPerSec || 0)
+  const ulPktsRate = Number(totalTraffic?.uploadPacketsPerSec || 0)
 
-  const lanDlRate = Number(device.currentRates?.lanDownloadBytesPerSec || 0)
-  const lanUlRate = Number(device.currentRates?.lanUploadBytesPerSec || 0)
-  const lanDlPktsRate = Number(device.currentRates?.lanDownloadPacketsPerSec || 0)
-  const lanUlPktsRate = Number(device.currentRates?.lanUploadPacketsPerSec || 0)
+  const wanDlRate = Number(wanTraffic?.downloadBytesPerSec || 0)
+  const wanUlRate = Number(wanTraffic?.uploadBytesPerSec || 0)
+  const wanDlPktsRate = Number(wanTraffic?.downloadPacketsPerSec || 0)
+  const wanUlPktsRate = Number(wanTraffic?.uploadPacketsPerSec || 0)
 
-  const usage = periodUsage || device.periodUsage
+  const lanDlRate = Number(lanTraffic?.downloadBytesPerSec || 0)
+  const lanUlRate = Number(lanTraffic?.uploadBytesPerSec || 0)
+  const lanDlPktsRate = Number(lanTraffic?.downloadPacketsPerSec || 0)
+  const lanUlPktsRate = Number(lanTraffic?.uploadPacketsPerSec || 0)
 
-  const internetDl = Number(usage?.wanDownloadBytes || 0)
-  const internetUl = Number(usage?.wanUploadBytes || 0)
-  const lanDl = Number(usage?.lanDownloadBytes || 0)
-  const lanUl = Number(usage?.lanUploadBytes || 0)
+  const internetDl = Number(wanTraffic?.downloadBytes || 0)
+  const internetUl = Number(wanTraffic?.uploadBytes || 0)
+  const lanDl = Number(lanTraffic?.downloadBytes || 0)
+  const lanUl = Number(lanTraffic?.uploadBytes || 0)
 
-  const totalDl = Number(usage?.downloadBytes || (internetDl + lanDl))
-  const totalUl = Number(usage?.uploadBytes || (internetUl + lanUl))
+  const totalDl = Number(totalTraffic?.downloadBytes || (internetDl + lanDl))
+  const totalUl = Number(totalTraffic?.uploadBytes || (internetUl + lanUl))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
