@@ -17,7 +17,7 @@ import {
   Network,
   Activity,
 } from 'lucide-react'
-import { formatBytes, formatRate, formatRelativeTime } from '@/lib/format'
+import { formatBytes, formatPackets, formatRate, formatPacketsRate, formatRelativeTime } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import {
@@ -242,12 +242,22 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Download</span>
                   <span className="font-semibold text-emerald-500 text-sm">{formatBytes(internetDl)}</span>
-                  <span className="text-[10px] text-muted-foreground block">{formatRate(wanDlRate)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    {formatRate(wanDlRate)} ({formatPacketsRate(device.currentWanDownloadPacketsPerSec)})
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/80 block">
+                    {formatPackets(device.internetDownloadPackets)} pkts
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Upload</span>
                   <span className="font-semibold text-sky-500 text-sm">{formatBytes(internetUl)}</span>
-                  <span className="text-[10px] text-muted-foreground block">{formatRate(wanUlRate)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    {formatRate(wanUlRate)} ({formatPacketsRate(device.currentWanUploadPacketsPerSec)})
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/80 block">
+                    {formatPackets(device.internetUploadPackets)} pkts
+                  </span>
                 </div>
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex justify-between">
@@ -275,12 +285,22 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Download</span>
                   <span className="font-semibold text-emerald-500 text-sm">{formatBytes(lanDl)}</span>
-                  <span className="text-[10px] text-muted-foreground block">{formatRate(lanDlRate)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    {formatRate(lanDlRate)} ({formatPacketsRate(device.currentLanDownloadPacketsPerSec)})
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/80 block">
+                    {formatPackets(device.lanDownloadPackets)} pkts
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Upload</span>
                   <span className="font-semibold text-sky-500 text-sm">{formatBytes(lanUl)}</span>
-                  <span className="text-[10px] text-muted-foreground block">{formatRate(lanUlRate)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    {formatRate(lanUlRate)} ({formatPacketsRate(device.currentLanUploadPacketsPerSec)})
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/80 block">
+                    {formatPackets(device.lanUploadPackets)} pkts
+                  </span>
                 </div>
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex justify-between">
@@ -308,12 +328,22 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Total In</span>
                   <span className="font-semibold text-emerald-500 text-sm">{formatBytes(totalDl)}</span>
-                  <span className="text-[10px] text-muted-foreground block">{formatRate(dlRate)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    {formatRate(dlRate)} ({formatPacketsRate(device.currentDownloadPacketsPerSec)})
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/80 block">
+                    {formatPackets(device.downloadPackets)} pkts
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Total Out</span>
                   <span className="font-semibold text-sky-500 text-sm">{formatBytes(totalUl)}</span>
-                  <span className="text-[10px] text-muted-foreground block">{formatRate(ulRate)}</span>
+                  <span className="text-[10px] text-muted-foreground block">
+                    {formatRate(ulRate)} ({formatPacketsRate(device.currentUploadPacketsPerSec)})
+                  </span>
+                  <span className="text-[10px] text-muted-foreground/80 block">
+                    {formatPackets(device.uploadPackets)} pkts
+                  </span>
                 </div>
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex items-center justify-between">

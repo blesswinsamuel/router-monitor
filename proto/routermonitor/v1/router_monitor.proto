@@ -56,7 +56,10 @@ message GetOverviewResponse {
   double current_lan_upload_bytes_per_sec = 22;
 }
 
-message ListDevicesRequest {}
+message ListDevicesRequest {
+  int64 from_unix = 1;
+  int64 to_unix = 2;
+}
 
 message ArpDevice {
   string ip_addr = 1;
@@ -86,6 +89,21 @@ message ArpDevice {
   double current_wan_upload_bytes_per_sec = 22;
   double current_lan_download_bytes_per_sec = 23;
   double current_lan_upload_bytes_per_sec = 24;
+
+  uint64 internet_download_packets = 25;
+  uint64 internet_upload_packets = 26;
+  uint64 lan_download_packets = 27;
+  uint64 lan_upload_packets = 28;
+
+  double current_download_packets_per_sec = 29;
+  double current_upload_packets_per_sec = 30;
+  double current_wan_download_packets_per_sec = 31;
+  double current_wan_upload_packets_per_sec = 32;
+  double current_lan_download_packets_per_sec = 33;
+  double current_lan_upload_packets_per_sec = 34;
+
+  uint64 period_download_bytes = 35;
+  uint64 period_upload_bytes = 36;
 }
 
 message ListDevicesResponse {

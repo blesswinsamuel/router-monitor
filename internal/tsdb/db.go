@@ -322,6 +322,57 @@ func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to t
 	return results, nil
 }
 
+type DevicePeriodUsage struct {
+	DownloadBytes uint64
+	UploadBytes   uint64
+}
+
+// GetDeviceUsageByPeriod aggregates device_traffic_bytes_rate samples over [fromUnix, toUnix]
+func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DevicePeriodUsage, error) {
+	q := `
+	SELECT s.labels_json, COALESCE(SUM(sp.value * 5), 0)
+	FROM samples sp
+	JOIN series s ON sp.series_id = s.id
+	WHERE s.name = 'device_traffic_bytes_rate'
+	  AND sp.timestamp >= ? AND sp.timestamp <= ?
+	GROUP BY s.id
+	`
+	rows, err := d.db.Query(q, fromUnix, toUnix)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	usage := make(map[string]*DevicePeriodUsage)
+	for rows.Next() {
+		var labelsJSON string
+		var totalBytes float64
+		if err := rows.Scan(&labelsJSON, &totalBytes); err != nil {
+			continue
+		}
+		var parsed map[string]string
+		if err := json.Unmarshal([]byte(labelsJSON), &parsed); err != nil {
+			continue
+		}
+		ip := parsed["ip"]
+		direction := parsed["direction"]
+		if ip == "" {
+			continue
+		}
+		u, ok := usage[ip]
+		if !ok {
+			u = &DevicePeriodUsage{}
+			usage[ip] = u
+		}
+		if direction == "ingress" {
+			u.DownloadBytes = uint64(totalBytes)
+		} else if direction == "egress" {
+			u.UploadBytes = uint64(totalBytes)
+		}
+	}
+	return usage, nil
+}
+
 func (d *DB) PurgeOlderThan(retention time.Duration) (int64, error) {
 	d.writeMu.Lock()
 	defer d.writeMu.Unlock()

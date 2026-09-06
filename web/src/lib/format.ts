@@ -21,6 +21,11 @@ export function formatPackets(pkts: number | bigint | undefined | null): string 
   return n.toLocaleString()
 }
 
+export function formatPacketsRate(pktsPerSec: number | undefined | null): string {
+  if (!pktsPerSec || pktsPerSec <= 0) return "0 pps"
+  return `${formatPackets(pktsPerSec)} pps`
+}
+
 export function formatLatency(sec: number | undefined | null): string {
   if (sec === undefined || sec === null || sec <= 0) return "--"
   const ms = sec * 1000

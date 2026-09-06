@@ -1,12 +1,30 @@
-import { useState, useMemo } from 'react'
-import { Search, Laptop, ArrowDown, ArrowUp, Network, Activity, ChevronRight, HelpCircle } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import {
+  Search,
+  Laptop,
+  ArrowDown,
+  ArrowUp,
+  Network,
+  ChevronRight,
+  HelpCircle,
+  Globe,
+  HardDrive,
+  Clock,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { cn } from '@/lib/utils'
-import { formatBytes, formatPackets, formatRate, formatRelativeTime } from '@/lib/format'
+import {
+  formatBytes,
+  formatPackets,
+  formatRate,
+  formatPacketsRate,
+  formatRelativeTime,
+} from '@/lib/format'
+import { rpcClient } from '@/lib/client'
 import { DeviceDetailModal } from './DeviceDetailModal'
 
 interface DevicesTabProps {
@@ -17,32 +35,78 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [search, setSearch] = useState('')
   const [selectedInterface, setSelectedInterface] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
+  const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
+  const [period, setPeriod] = useState<'all' | '15m' | '1h' | '6h' | '24h'>('all')
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null)
+
+  const [periodDevices, setPeriodDevices] = useState<any[] | null>(null)
+  const [periodLoading, setPeriodLoading] = useState(false)
+
+  // Fetch period-aggregated device usage from TSDB when period !== 'all'
+  useEffect(() => {
+    if (period === 'all') {
+      setPeriodDevices(null)
+      return
+    }
+
+    let active = true
+    async function fetchPeriodData() {
+      setPeriodLoading(true)
+      try {
+        const now = Math.floor(Date.now() / 1000)
+        let from = now - 3600
+        if (period === '15m') from = now - 900
+        else if (period === '6h') from = now - 21600
+        else if (period === '24h') from = now - 86400
+
+        const res = await rpcClient.listDevices({
+          fromUnix: BigInt(from),
+          toUnix: BigInt(now),
+        })
+        if (active) {
+          setPeriodDevices(res.devices || [])
+        }
+      } catch (err) {
+        console.error('Failed to fetch period devices:', err)
+      } finally {
+        if (active) setPeriodLoading(false)
+      }
+    }
+
+    fetchPeriodData()
+    const interval = setInterval(fetchPeriodData, 10000)
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [period])
+
+  const activeDeviceList = periodDevices !== null ? periodDevices : devices
 
   // Extract unique interface names
   const interfaces = useMemo(() => {
     const set = new Set<string>()
-    for (const d of devices) {
+    for (const d of activeDeviceList) {
       set.add(d.device || 'lan')
     }
     return Array.from(set).sort()
-  }, [devices])
+  }, [activeDeviceList])
 
   // Count devices per interface
   const interfaceCounts = useMemo(() => {
     const counts: Record<string, number> = {}
-    for (const d of devices) {
+    for (const d of activeDeviceList) {
       const iface = d.device || 'lan'
       counts[iface] = (counts[iface] || 0) + 1
     }
     return counts
-  }, [devices])
+  }, [activeDeviceList])
 
   // Count devices by status
   const statusCounts = useMemo(() => {
     let active = 0
     let offline = 0
-    for (const d of devices) {
+    for (const d of activeDeviceList) {
       const s = d.status || (d.isValid ? 'active' : 'unreachable')
       if (s === 'active' || s === 'static') {
         active++
@@ -50,8 +114,8 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         offline++
       }
     }
-    return { active, offline, all: devices.length }
-  }, [devices])
+    return { active, offline, all: activeDeviceList.length }
+  }, [activeDeviceList])
 
   // Fallback to 'all' if selected interface is no longer present
   const currentInterface =
@@ -60,7 +124,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
       : 'all'
 
   const filtered = useMemo(() => {
-    return devices.filter((d) => {
+    return activeDeviceList.filter((d) => {
       const iface = d.device || 'lan'
       if (currentInterface !== 'all' && iface !== currentInterface) {
         return false
@@ -83,11 +147,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         d.device?.toLowerCase().includes(q)
       )
     })
-  }, [devices, currentInterface, statusFilter, search])
+  }, [activeDeviceList, currentInterface, statusFilter, search])
 
-  const totalDl = devices.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
-  const totalUl = devices.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
-
+  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
+  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
   const filteredDl = filtered.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
   const filteredUl = filtered.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
 
@@ -102,7 +165,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 Connected & Discovered Devices
               </CardTitle>
               <CardDescription>
-                Real-time and persisted devices with separate WAN vs LAN traffic accounting. Click any row for history.
+                Inspect real-time rates (bytes/s & pps) and bandwidth used across WAN (Internet) and LAN (Local) traffic. Click any row for details.
               </CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
@@ -117,24 +180,80 @@ export function DevicesTab({ devices }: DevicesTabProps) {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t">
-            {/* Status Tabs */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground shrink-0">Status:</span>
-              <Tabs value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)} className="shrink-0">
-                <TabsList className="h-8">
-                  <TabsTrigger value="all" className="text-xs px-2.5 py-1">
-                    All ({statusCounts.all})
-                  </TabsTrigger>
-                  <TabsTrigger value="active" className="text-xs px-2.5 py-1">
-                    Active ({statusCounts.active})
-                  </TabsTrigger>
-                  {statusCounts.offline > 0 && (
-                    <TabsTrigger value="offline" className="text-xs px-2.5 py-1">
-                      Offline ({statusCounts.offline})
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Status:</span>
+                <Tabs value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)} className="shrink-0">
+                  <TabsList className="h-8">
+                    <TabsTrigger value="all" className="text-xs px-2.5 py-1">
+                      All ({statusCounts.all})
                     </TabsTrigger>
-                  )}
-                </TabsList>
-              </Tabs>
+                    <TabsTrigger value="active" className="text-xs px-2.5 py-1">
+                      Active ({statusCounts.active})
+                    </TabsTrigger>
+                    {statusCounts.offline > 0 && (
+                      <TabsTrigger value="offline" className="text-xs px-2.5 py-1">
+                        Offline ({statusCounts.offline})
+                      </TabsTrigger>
+                    )}
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {/* Traffic Scope Toggle */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground shrink-0">Traffic Scope:</span>
+                <Tabs value={trafficScope} onValueChange={(v: any) => setTrafficScope(v)} className="shrink-0">
+                  <TabsList className="h-8">
+                    <TabsTrigger value="total" className="text-xs px-2.5 py-1 flex items-center gap-1.5">
+                      <HardDrive className="w-3 h-3" />
+                      <span>Total</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="wan" className="text-xs px-2.5 py-1 flex items-center gap-1.5">
+                      <Globe className="w-3 h-3 text-emerald-500" />
+                      <span>WAN (Internet)</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="lan" className="text-xs px-2.5 py-1 flex items-center gap-1.5">
+                      <Network className="w-3 h-3 text-blue-500" />
+                      <span>LAN (Local)</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="split" className="text-xs px-2.5 py-1">
+                      All (Split)
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {/* Period Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground shrink-0 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Period:
+                </span>
+                <Tabs value={period} onValueChange={(v: any) => setPeriod(v)} className="shrink-0">
+                  <TabsList className="h-8">
+                    <TabsTrigger value="all" className="text-xs px-2 py-1">
+                      All Time
+                    </TabsTrigger>
+                    <TabsTrigger value="15m" className="text-xs px-2 py-1">
+                      15m
+                    </TabsTrigger>
+                    <TabsTrigger value="1h" className="text-xs px-2 py-1">
+                      1h
+                    </TabsTrigger>
+                    <TabsTrigger value="6h" className="text-xs px-2 py-1">
+                      6h
+                    </TabsTrigger>
+                    <TabsTrigger value="24h" className="text-xs px-2 py-1">
+                      24h
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                {periodLoading && (
+                  <span className="text-[11px] text-muted-foreground animate-pulse">Loading...</span>
+                )}
+              </div>
             </div>
 
             {/* Interface Tabs */}
@@ -156,7 +275,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             : "bg-muted-foreground/15 text-muted-foreground"
                         )}
                       >
-                        {devices.length}
+                        {activeDeviceList.length}
                       </span>
                     </TabsTrigger>
                     {interfaces.map((iface) => (
@@ -185,34 +304,58 @@ export function DevicesTab({ devices }: DevicesTabProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Hostname / Name</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>MAC Address</TableHead>
-                  <TableHead>Interface</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Live Bandwidth</TableHead>
-                  <TableHead className="text-right">
-                    <span className="inline-flex items-center gap-1">
-                      <ArrowDown className="w-3.5 h-3.5 text-emerald-500" /> Total Download
-                    </span>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <span className="inline-flex items-center gap-1">
-                      <ArrowUp className="w-3.5 h-3.5 text-sky-500" /> Total Upload
-                    </span>
-                  </TableHead>
-                  <TableHead className="w-8"></TableHead>
-                </TableRow>
+                {trafficScope !== 'split' ? (
+                  <TableRow>
+                    <TableHead>Hostname / Name</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>MAC Address</TableHead>
+                    <TableHead>Interface</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">
+                      <span className="inline-flex items-center gap-1">
+                        Current Rate {trafficScope === 'wan' ? '(WAN)' : trafficScope === 'lan' ? '(LAN)' : '(Total)'}
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <span className="inline-flex items-center gap-1">
+                        Bandwidth Used {period !== 'all' ? `(${period})` : '(Lifetime)'}
+                      </span>
+                    </TableHead>
+                    <TableHead className="w-8"></TableHead>
+                  </TableRow>
+                ) : (
+                  <TableRow>
+                    <TableHead>Hostname / Name</TableHead>
+                    <TableHead>IP Address</TableHead>
+                    <TableHead>MAC Address</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">
+                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <Globe className="w-3.5 h-3.5" /> WAN (Internet)
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                        <Network className="w-3.5 h-3.5" /> LAN (Local)
+                      </span>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <span className="inline-flex items-center gap-1">
+                        <HardDrive className="w-3.5 h-3.5" /> Total Traffic
+                      </span>
+                    </TableHead>
+                    <TableHead className="w-8"></TableHead>
+                  </TableRow>
+                )}
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                      {devices.length === 0
+                    <TableCell colSpan={trafficScope === 'split' ? 8 : 8} className="h-24 text-center text-muted-foreground">
+                      {activeDeviceList.length === 0
                         ? "No devices detected or stored yet."
                         : currentInterface !== 'all' && !search
                           ? `No devices detected on interface "${currentInterface}".`
@@ -221,22 +364,75 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   </TableRow>
                 ) : (
                   filtered.map((device, idx) => {
-                    const dl = Number(device.downloadBytes || 0)
-                    const dlPct = totalDl > 0 ? (dl / totalDl) * 100 : 0
                     const status = device.status || (device.isValid ? 'active' : 'unreachable')
                     const isOnline = status === 'active' || status === 'static'
-                    const dlRate = Number(device.currentDownloadBytesPerSec || 0)
-                    const ulRate = Number(device.currentUploadBytesPerSec || 0)
+
+                    // Rate metrics
+                    const totalDlRate = Number(device.currentDownloadBytesPerSec || 0)
+                    const totalUlRate = Number(device.currentUploadBytesPerSec || 0)
+                    const totalDlPktsRate = Number(device.currentDownloadPacketsPerSec || 0)
+                    const totalUlPktsRate = Number(device.currentUploadPacketsPerSec || 0)
+
                     const wanDlRate = Number(device.currentWanDownloadBytesPerSec || 0)
                     const wanUlRate = Number(device.currentWanUploadBytesPerSec || 0)
+                    const wanDlPktsRate = Number(device.currentWanDownloadPacketsPerSec || 0)
+                    const wanUlPktsRate = Number(device.currentWanUploadPacketsPerSec || 0)
+
                     const lanDlRate = Number(device.currentLanDownloadBytesPerSec || 0)
                     const lanUlRate = Number(device.currentLanUploadBytesPerSec || 0)
-                    const hasTraffic = wanDlRate > 0 || wanUlRate > 0 || lanDlRate > 0 || lanUlRate > 0 || dlRate > 0 || ulRate > 0
+                    const lanDlPktsRate = Number(device.currentLanDownloadPacketsPerSec || 0)
+                    const lanUlPktsRate = Number(device.currentLanUploadPacketsPerSec || 0)
 
-                    const internetDl = Number(device.internetDownloadBytes || 0)
-                    const lanDl = Number(device.lanDownloadBytes || 0)
-                    const internetUl = Number(device.internetUploadBytes || 0)
-                    const lanUl = Number(device.lanUploadBytes || 0)
+                    // Lifetime volume metrics
+                    const totalDlBytes = Number(device.downloadBytes || 0)
+                    const totalUlBytes = Number(device.uploadBytes || 0)
+                    const totalDlPkts = Number(device.downloadPackets || 0)
+                    const totalUlPkts = Number(device.uploadPackets || 0)
+
+                    const wanDlBytes = Number(device.internetDownloadBytes || 0)
+                    const wanUlBytes = Number(device.internetUploadBytes || 0)
+                    const wanDlPkts = Number(device.internetDownloadPackets || 0)
+                    const wanUlPkts = Number(device.internetUploadPackets || 0)
+
+                    const lanDlBytes = Number(device.lanDownloadBytes || 0)
+                    const lanUlBytes = Number(device.lanUploadBytes || 0)
+                    const lanDlPkts = Number(device.lanDownloadPackets || 0)
+                    const lanUlPkts = Number(device.lanUploadPackets || 0)
+
+                    // Period volume (when period !== 'all')
+                    const periodDlBytes = Number(device.periodDownloadBytes || 0)
+                    const periodUlBytes = Number(device.periodUploadBytes || 0)
+
+                    // Active metrics for scoped view
+                    let activeDlRate = totalDlRate
+                    let activeUlRate = totalUlRate
+                    let activeDlPktsRate = totalDlPktsRate
+                    let activeUlPktsRate = totalUlPktsRate
+
+                    let activeDlBytes = period === 'all' ? totalDlBytes : periodDlBytes
+                    let activeUlBytes = period === 'all' ? totalUlBytes : periodUlBytes
+                    let activeDlPkts = totalDlPkts
+                    let activeUlPkts = totalUlPkts
+
+                    if (trafficScope === 'wan') {
+                      activeDlRate = wanDlRate
+                      activeUlRate = wanUlRate
+                      activeDlPktsRate = wanDlPktsRate
+                      activeUlPktsRate = wanUlPktsRate
+                      activeDlBytes = wanDlBytes
+                      activeUlBytes = wanUlBytes
+                      activeDlPkts = wanDlPkts
+                      activeUlPkts = wanUlPkts
+                    } else if (trafficScope === 'lan') {
+                      activeDlRate = lanDlRate
+                      activeUlRate = lanUlRate
+                      activeDlPktsRate = lanDlPktsRate
+                      activeUlPktsRate = lanUlPktsRate
+                      activeDlBytes = lanDlBytes
+                      activeUlBytes = lanUlBytes
+                      activeDlPkts = lanDlPkts
+                      activeUlPkts = lanUlPkts
+                    }
 
                     return (
                       <TableRow
@@ -258,11 +454,13 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                         </TableCell>
                         <TableCell className="font-mono text-xs">{device.ipAddr}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">{device.hwAddr}</TableCell>
-                        <TableCell className="font-mono text-xs">
-                          <Badge variant="outline">{device.device || 'lan'}</Badge>
-                        </TableCell>
+                        {trafficScope !== 'split' && (
+                          <TableCell className="font-mono text-xs">
+                            <Badge variant="outline">{device.device || 'lan'}</Badge>
+                          </TableCell>
+                        )}
                         <TableCell>
-                          <div className="flex flex-col items-start gap-0.5">
+                          <div className="flex flex-col items-start gap-1">
                             {status === 'active' && (
                               <Badge
                                 variant="outline"
@@ -304,64 +502,124 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                 {formatRelativeTime(device.lastSeenUnix)}
                               </span>
                             )}
-                            {isOnline && hasTraffic && (
-                              <span className="text-[10px] font-mono text-primary font-medium flex items-center gap-1 mt-0.5">
-                                <Activity className="w-2.5 h-2.5 animate-pulse text-emerald-500" />
-                                {formatRate(wanDlRate + wanUlRate + lanDlRate + lanUlRate || dlRate + ulRate)}
-                              </span>
-                            )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {isOnline && hasTraffic ? (
-                            <div className="flex flex-col items-end gap-0.5">
-                              <div className="flex items-center gap-1.5 text-xs">
-                                <span className="text-[10px] text-muted-foreground uppercase font-sans font-semibold">WAN</span>
-                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">↓{formatRate(wanDlRate)}</span>
-                                <span className="text-sky-600 dark:text-sky-400 font-medium">↑{formatRate(wanUlRate)}</span>
+
+                        {trafficScope !== 'split' ? (
+                          <>
+                            {/* Current Rate Column */}
+                            <TableCell className="text-right font-mono">
+                              {isOnline && (activeDlRate > 0 || activeUlRate > 0) ? (
+                                <div className="flex flex-col items-end gap-0.5">
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs flex items-center gap-1">
+                                    <ArrowDown className="w-3 h-3 text-emerald-500" />
+                                    {formatRate(activeDlRate)}
+                                    <span className="text-[10px] text-muted-foreground font-sans">
+                                      ({formatPacketsRate(activeDlPktsRate)})
+                                    </span>
+                                  </span>
+                                  <span className="text-sky-600 dark:text-sky-400 font-medium text-xs flex items-center gap-1">
+                                    <ArrowUp className="w-3 h-3 text-sky-500" />
+                                    {formatRate(activeUlRate)}
+                                    <span className="text-[10px] text-muted-foreground font-sans">
+                                      ({formatPacketsRate(activeUlPktsRate)})
+                                    </span>
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground/50 text-xs">Idle</span>
+                              )}
+                            </TableCell>
+
+                            {/* Bandwidth Used Column */}
+                            <TableCell className="text-right font-mono">
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="text-foreground font-semibold text-xs flex items-center gap-1">
+                                  <span className="text-emerald-500 font-bold">↓</span>
+                                  {formatBytes(activeDlBytes)}
+                                  {period === 'all' && (
+                                    <span className="text-[10px] text-muted-foreground font-sans font-normal">
+                                      ({formatPackets(activeDlPkts)} pkts)
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="text-foreground font-semibold text-xs flex items-center gap-1">
+                                  <span className="text-sky-500 font-bold">↑</span>
+                                  {formatBytes(activeUlBytes)}
+                                  {period === 'all' && (
+                                    <span className="text-[10px] text-muted-foreground font-sans font-normal">
+                                      ({formatPackets(activeUlPkts)} pkts)
+                                    </span>
+                                  )}
+                                </span>
+                                {trafficScope === 'total' && period === 'all' && (wanDlBytes + wanUlBytes > 0 || lanDlBytes + lanUlBytes > 0) && (
+                                  <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 mt-0.5 font-sans">
+                                    <span className="text-emerald-600 dark:text-emerald-400">WAN {formatBytes(wanDlBytes + wanUlBytes)}</span>
+                                    <span>•</span>
+                                    <span className="text-blue-600 dark:text-blue-400">LAN {formatBytes(lanDlBytes + lanUlBytes)}</span>
+                                  </span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-1.5 text-xs">
-                                <span className="text-[10px] text-muted-foreground uppercase font-sans font-semibold">LAN</span>
-                                <span className="text-blue-600 dark:text-blue-400 font-medium">↓{formatRate(lanDlRate)}</span>
-                                <span className="text-indigo-600 dark:text-indigo-400 font-medium">↑{formatRate(lanUlRate)}</span>
+                            </TableCell>
+                          </>
+                        ) : (
+                          <>
+                            {/* WAN Column */}
+                            <TableCell className="text-right font-mono">
+                              <div className="flex flex-col items-end gap-0.5">
+                                <div className="text-xs font-semibold text-foreground">
+                                  ↓ {formatBytes(wanDlBytes)} ↑ {formatBytes(wanUlBytes)}
+                                </div>
+                                {(wanDlRate > 0 || wanUlRate > 0) ? (
+                                  <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                    Rate: ↓{formatRate(wanDlRate)} ↑{formatRate(wanUlRate)}
+                                  </div>
+                                ) : (
+                                  <div className="text-[10px] text-muted-foreground">
+                                    {formatPackets(wanDlPkts + wanUlPkts)} pkts
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground/50 text-xs">Idle</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          <div className="flex flex-col items-end">
-                            <span className="text-emerald-500 font-semibold">{formatBytes(device.downloadBytes)}</span>
-                            {(internetDl > 0 || lanDl > 0) ? (
-                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                <span>WAN {formatBytes(internetDl)}</span>
-                                <span>•</span>
-                                <span>LAN {formatBytes(lanDl)}</span>
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">
-                                {formatPackets(device.downloadPackets)} pkts ({dlPct.toFixed(1)}%)
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          <div className="flex flex-col items-end">
-                            <span className="text-sky-500 font-semibold">{formatBytes(device.uploadBytes)}</span>
-                            {(internetUl > 0 || lanUl > 0) ? (
-                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                <span>WAN {formatBytes(internetUl)}</span>
-                                <span>•</span>
-                                <span>LAN {formatBytes(lanUl)}</span>
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">
-                                {formatPackets(device.uploadPackets)} pkts
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
+                            </TableCell>
+
+                            {/* LAN Column */}
+                            <TableCell className="text-right font-mono">
+                              <div className="flex flex-col items-end gap-0.5">
+                                <div className="text-xs font-semibold text-foreground">
+                                  ↓ {formatBytes(lanDlBytes)} ↑ {formatBytes(lanUlBytes)}
+                                </div>
+                                {(lanDlRate > 0 || lanUlRate > 0) ? (
+                                  <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                                    Rate: ↓{formatRate(lanDlRate)} ↑{formatRate(lanUlRate)}
+                                  </div>
+                                ) : (
+                                  <div className="text-[10px] text-muted-foreground">
+                                    {formatPackets(lanDlPkts + lanUlPkts)} pkts
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+
+                            {/* Total Column */}
+                            <TableCell className="text-right font-mono">
+                              <div className="flex flex-col items-end gap-0.5">
+                                <div className="text-xs font-semibold text-foreground">
+                                  {formatBytes(totalDlBytes + totalUlBytes)}
+                                </div>
+                                {(totalDlRate > 0 || totalUlRate > 0) ? (
+                                  <div className="text-[10px] text-primary font-medium">
+                                    Live: {formatRate(totalDlRate + totalUlRate)}
+                                  </div>
+                                ) : (
+                                  <div className="text-[10px] text-muted-foreground">
+                                    {formatPackets(totalDlPkts + totalUlPkts)} pkts
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          </>
+                        )}
+
                         <TableCell className="text-center p-0 pr-2">
                           <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                         </TableCell>
@@ -374,20 +632,18 @@ export function DevicesTab({ devices }: DevicesTabProps) {
           </div>
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground px-1">
             <span>
-              Showing {filtered.length} of {devices.length} {devices.length === 1 ? 'device' : 'devices'}
+              Showing {filtered.length} of {activeDeviceList.length} {activeDeviceList.length === 1 ? 'device' : 'devices'}
               {currentInterface !== 'all' && ` (interface: ${currentInterface})`}
               {statusFilter !== 'all' && ` (${statusFilter})`}
+              {trafficScope !== 'total' && ` [Scope: ${trafficScope.toUpperCase()}]`}
+              {period !== 'all' && ` [Period: ${period}]`}
             </span>
             <span>
-              {currentInterface !== 'all' ? (
-                <>
-                  {currentInterface} Volume: <span className="font-semibold text-foreground">{formatBytes(filteredDl + filteredUl)}</span>
-                  <span className="ml-1">({formatBytes(totalDl + totalUl)} total)</span>
-                </>
-              ) : (
-                <>
-                  Total Volume: <span className="font-semibold text-foreground">{formatBytes(totalDl + totalUl)}</span>
-                </>
+              Total Volume: <span className="font-semibold text-foreground">{formatBytes(totalDl + totalUl)}</span>
+              {filtered.length < activeDeviceList.length && (
+                <span className="ml-1.5 text-muted-foreground">
+                  (Filtered: <strong className="text-foreground">{formatBytes(filteredDl + filteredUl)}</strong>)
+                </span>
               )}
             </span>
           </div>
@@ -405,4 +661,3 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     </>
   )
 }
-
