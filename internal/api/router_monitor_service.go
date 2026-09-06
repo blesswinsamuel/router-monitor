@@ -59,16 +59,24 @@ func liveRatesToTraffic(rates tsdb.LiveRates) (total, wan, lan *routermonitorv1.
 		UploadPacketsPerSec:   rates.UploadPacketsPerSec,
 	}
 	wan = &routermonitorv1.DirectionalTraffic{
-		DownloadBytes:       rates.TotalWanDownloadBytes,
-		UploadBytes:         rates.TotalWanUploadBytes,
-		DownloadBytesPerSec: rates.WanDownloadBytesPerSec,
-		UploadBytesPerSec:   rates.WanUploadBytesPerSec,
+		DownloadBytes:         rates.TotalWanDownloadBytes,
+		UploadBytes:           rates.TotalWanUploadBytes,
+		DownloadPackets:       rates.TotalWanDownloadPackets,
+		UploadPackets:         rates.TotalWanUploadPackets,
+		DownloadBytesPerSec:   rates.WanDownloadBytesPerSec,
+		UploadBytesPerSec:     rates.WanUploadBytesPerSec,
+		DownloadPacketsPerSec: rates.WanDownloadPacketsPerSec,
+		UploadPacketsPerSec:   rates.WanUploadPacketsPerSec,
 	}
 	lan = &routermonitorv1.DirectionalTraffic{
-		DownloadBytes:       rates.TotalLanDownloadBytes,
-		UploadBytes:         rates.TotalLanUploadBytes,
-		DownloadBytesPerSec: rates.LanDownloadBytesPerSec,
-		UploadBytesPerSec:   rates.LanUploadBytesPerSec,
+		DownloadBytes:         rates.TotalLanDownloadBytes,
+		UploadBytes:           rates.TotalLanUploadBytes,
+		DownloadPackets:       rates.TotalLanDownloadPackets,
+		UploadPackets:         rates.TotalLanUploadPackets,
+		DownloadBytesPerSec:   rates.LanDownloadBytesPerSec,
+		UploadBytesPerSec:     rates.LanUploadBytesPerSec,
+		DownloadPacketsPerSec: rates.LanDownloadPacketsPerSec,
+		UploadPacketsPerSec:   rates.LanUploadPacketsPerSec,
 	}
 	return
 }
