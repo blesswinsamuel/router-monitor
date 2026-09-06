@@ -65,38 +65,18 @@ message ArpInfo {
   string interface = 3;
 }
 
-message NetworkRates {
-  double download_bytes_per_sec = 1;
-  double upload_bytes_per_sec = 2;
-  double download_packets_per_sec = 3;
-  double upload_packets_per_sec = 4;
-
-  double wan_download_bytes_per_sec = 5;
-  double wan_upload_bytes_per_sec = 6;
-  double wan_download_packets_per_sec = 7;
-  double wan_upload_packets_per_sec = 8;
-
-  double lan_download_bytes_per_sec = 9;
-  double lan_upload_bytes_per_sec = 10;
-  double lan_download_packets_per_sec = 11;
-  double lan_upload_packets_per_sec = 12;
-}
-
-message NetworkUsage {
+message DirectionalTraffic {
+  // Volume over selected period
   uint64 download_bytes = 1;
   uint64 upload_bytes = 2;
   uint64 download_packets = 3;
   uint64 upload_packets = 4;
 
-  uint64 wan_download_bytes = 5;
-  uint64 wan_upload_bytes = 6;
-  uint64 wan_download_packets = 7;
-  uint64 wan_upload_packets = 8;
-
-  uint64 lan_download_bytes = 9;
-  uint64 lan_upload_bytes = 10;
-  uint64 lan_download_packets = 11;
-  uint64 lan_upload_packets = 12;
+  // Real-time rates
+  double download_bytes_per_sec = 5;
+  double upload_bytes_per_sec = 6;
+  double download_packets_per_sec = 7;
+  double upload_packets_per_sec = 8;
 }
 
 message Device {
@@ -110,8 +90,9 @@ message Device {
 
   ArpInfo arp = 8;
 
-  NetworkRates current_rates = 9;
-  NetworkUsage period_usage = 10;
+  DirectionalTraffic total = 9;
+  DirectionalTraffic wan = 10;
+  DirectionalTraffic lan = 11;
 }
 
 message ListDevicesResponse {

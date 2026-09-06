@@ -116,14 +116,14 @@ func (s *RouterMonitorService) ListDevices(
 		rate tsdb.DeviceRate,
 		pu *tsdb.DevicePeriodUsage,
 	) *routermonitorv1.Device {
-		usage := &routermonitorv1.NetworkUsage{}
+		var puDl, puUl, puWanDl, puWanUl, puLanDl, puLanUl uint64
 		if pu != nil {
-			usage.DownloadBytes = pu.DownloadBytes
-			usage.UploadBytes = pu.UploadBytes
-			usage.WanDownloadBytes = pu.WanDownloadBytes
-			usage.WanUploadBytes = pu.WanUploadBytes
-			usage.LanDownloadBytes = pu.LanDownloadBytes
-			usage.LanUploadBytes = pu.LanUploadBytes
+			puDl = pu.DownloadBytes
+			puUl = pu.UploadBytes
+			puWanDl = pu.WanDownloadBytes
+			puWanUl = pu.WanUploadBytes
+			puLanDl = pu.LanDownloadBytes
+			puLanUl = pu.LanUploadBytes
 		}
 
 		return &routermonitorv1.Device{
@@ -135,21 +135,30 @@ func (s *RouterMonitorService) ListDevices(
 			FirstSeenUnix: firstSeen,
 			LastSeenUnix:  lastSeen,
 			Arp:           arpInfo,
-			CurrentRates: &routermonitorv1.NetworkRates{
-				DownloadBytesPerSec:     rate.DownloadBytesPerSec,
-				UploadBytesPerSec:       rate.UploadBytesPerSec,
-				DownloadPacketsPerSec:   rate.DownloadPacketsPerSec,
-				UploadPacketsPerSec:     rate.UploadPacketsPerSec,
-				WanDownloadBytesPerSec:   rate.WanDownloadBytesPerSec,
-				WanUploadBytesPerSec:     rate.WanUploadBytesPerSec,
-				WanDownloadPacketsPerSec: rate.WanDownloadPacketsPerSec,
-				WanUploadPacketsPerSec:   rate.WanUploadPacketsPerSec,
-				LanDownloadBytesPerSec:   rate.LanDownloadBytesPerSec,
-				LanUploadBytesPerSec:     rate.LanUploadBytesPerSec,
-				LanDownloadPacketsPerSec: rate.LanDownloadPacketsPerSec,
-				LanUploadPacketsPerSec:   rate.LanUploadPacketsPerSec,
+			Total: &routermonitorv1.DirectionalTraffic{
+				DownloadBytes:         puDl,
+				UploadBytes:           puUl,
+				DownloadBytesPerSec:   rate.DownloadBytesPerSec,
+				UploadBytesPerSec:     rate.UploadBytesPerSec,
+				DownloadPacketsPerSec: rate.DownloadPacketsPerSec,
+				UploadPacketsPerSec:   rate.UploadPacketsPerSec,
 			},
-			PeriodUsage: usage,
+			Wan: &routermonitorv1.DirectionalTraffic{
+				DownloadBytes:         puWanDl,
+				UploadBytes:           puWanUl,
+				DownloadBytesPerSec:   rate.WanDownloadBytesPerSec,
+				UploadBytesPerSec:     rate.WanUploadBytesPerSec,
+				DownloadPacketsPerSec: rate.WanDownloadPacketsPerSec,
+				UploadPacketsPerSec:   rate.WanUploadPacketsPerSec,
+			},
+			Lan: &routermonitorv1.DirectionalTraffic{
+				DownloadBytes:         puLanDl,
+				UploadBytes:           puLanUl,
+				DownloadBytesPerSec:   rate.LanDownloadBytesPerSec,
+				UploadBytesPerSec:     rate.LanUploadBytesPerSec,
+				DownloadPacketsPerSec: rate.LanDownloadPacketsPerSec,
+				UploadPacketsPerSec:   rate.LanUploadPacketsPerSec,
+			},
 		}
 	}
 
@@ -181,15 +190,15 @@ func (s *RouterMonitorService) ListDevices(
 		}
 
 		rate := deviceRates[d.IPAddr]
-		arpInfo := &routermonitorv1.ArpInfo{
-			Flags:     d.Flag,
-			IsValid:   d.IsValid,
-			Interface: d.Device,
-		}
 
 		dev := createDevice(
 			d.IPAddr, d.HWAddr, d.Hostname, d.Device, status,
-			firstSeen, lastSeen, arpInfo,
+			firstSeen, lastSeen,
+			&routermonitorv1.ArpInfo{
+				Flags:     d.Flag,
+				IsValid:   d.IsValid,
+				Interface: d.Device,
+			},
 			rate, periodUsage[d.IPAddr],
 		)
 		devices = append(devices, dev)
@@ -222,11 +231,11 @@ func (s *RouterMonitorService) ListDevices(
 		}
 		if iOnline {
 			var iBytes, jBytes uint64
-			if devices[i].PeriodUsage != nil {
-				iBytes = devices[i].PeriodUsage.DownloadBytes
+			if devices[i].Total != nil {
+				iBytes = devices[i].Total.DownloadBytes
 			}
-			if devices[j].PeriodUsage != nil {
-				jBytes = devices[j].PeriodUsage.DownloadBytes
+			if devices[j].Total != nil {
+				jBytes = devices[j].Total.DownloadBytes
 			}
 			return iBytes > jBytes
 		}
