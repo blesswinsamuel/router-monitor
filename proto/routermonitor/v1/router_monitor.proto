@@ -61,6 +61,16 @@ message ArpDevice {
   uint64 download_packets = 9;
   uint64 upload_packets = 10;
   double current_rate_bytes_per_sec = 11;
+
+  uint64 internet_download_bytes = 12;
+  uint64 internet_upload_bytes = 13;
+  uint64 lan_download_bytes = 14;
+  uint64 lan_upload_bytes = 15;
+  int64 first_seen_unix = 16;
+  int64 last_seen_unix = 17;
+  string status = 18; // "active", "static", "unreachable", "offline"
+  double current_download_bytes_per_sec = 19;
+  double current_upload_bytes_per_sec = 20;
 }
 
 message ListDevicesResponse {

@@ -34,6 +34,15 @@ type TimeSeriesResult struct {
 	Points     []TimeSeriesPoint
 }
 
+type PersistedDevice struct {
+	HWAddr    string    `json:"hw_addr"`
+	IPAddr    string    `json:"ip_addr"`
+	Hostname  string    `json:"hostname"`
+	Device    string    `json:"device"`
+	FirstSeen time.Time `json:"first_seen"`
+	LastSeen  time.Time `json:"last_seen"`
+}
+
 type DB struct {
 	db          *sql.DB
 	seriesCache map[string]int64
@@ -68,6 +77,15 @@ func Open(dbPath string) (*DB, error) {
 		value REAL NOT NULL
 	);
 	CREATE INDEX IF NOT EXISTS idx_samples_series_time ON samples(series_id, timestamp);
+	CREATE TABLE IF NOT EXISTS devices (
+		mac TEXT PRIMARY KEY,
+		ip TEXT NOT NULL,
+		hostname TEXT NOT NULL,
+		interface TEXT NOT NULL,
+		first_seen INTEGER NOT NULL,
+		last_seen INTEGER NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices(last_seen);
 	`
 	if _, err := db.Exec(schema); err != nil {
 		db.Close()
@@ -335,3 +353,46 @@ func (d *DB) StartRetentionWorker(ctx context.Context, interval time.Duration, r
 		}
 	}()
 }
+
+func (d *DB) UpsertDevice(hwAddr, ipAddr, hostname, iface string, seenAt time.Time) error {
+	if hwAddr == "" || hwAddr == "00:00:00:00:00:00" {
+		return nil
+	}
+	d.writeMu.Lock()
+	defer d.writeMu.Unlock()
+
+	ts := seenAt.Unix()
+	q := `
+	INSERT INTO devices (mac, ip, hostname, interface, first_seen, last_seen)
+	VALUES (?, ?, ?, ?, ?, ?)
+	ON CONFLICT(mac) DO UPDATE SET
+		ip = excluded.ip,
+		hostname = CASE WHEN excluded.hostname != '' AND excluded.hostname NOT LIKE 'unknown:%' THEN excluded.hostname ELSE devices.hostname END,
+		interface = excluded.interface,
+		last_seen = excluded.last_seen
+	`
+	_, err := d.db.Exec(q, hwAddr, ipAddr, hostname, iface, ts, ts)
+	return err
+}
+
+func (d *DB) GetPersistedDevices() ([]PersistedDevice, error) {
+	rows, err := d.db.Query("SELECT mac, ip, hostname, interface, first_seen, last_seen FROM devices ORDER BY last_seen DESC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var devices []PersistedDevice
+	for rows.Next() {
+		var dev PersistedDevice
+		var firstUnix, lastUnix int64
+		if err := rows.Scan(&dev.HWAddr, &dev.IPAddr, &dev.Hostname, &dev.Device, &firstUnix, &lastUnix); err != nil {
+			continue
+		}
+		dev.FirstSeen = time.Unix(firstUnix, 0)
+		dev.LastSeen = time.Unix(lastUnix, 0)
+		devices = append(devices, dev)
+	}
+	return devices, nil
+}
+

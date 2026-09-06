@@ -7,8 +7,22 @@
 #include <linux/in.h>
 #include <linux/if_ether.h>
 #include <linux/ip.h>
+#include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/pkt_cls.h>
+
+#ifndef ETH_P_8021Q
+#define ETH_P_8021Q 0x8100
+#endif
+
+#ifndef ETH_P_8021AD
+#define ETH_P_8021AD 0x88A8
+#endif
+
+struct vlan_hdr {
+  __be16 h_vlan_TCI;
+  __be16 h_vlan_encapsulated_proto;
+};
 
 struct packet_stats_key {
   __u16 eth_proto;
@@ -39,68 +53,99 @@ struct {
 const volatile __u32 lan_subnet_mask = 0x0000FFFF;  // 255.255.0.0
 const volatile __u32 lan_subnet_ip = 0x0000640A;    // 10.100.0.0
 
-static inline void update_packet_stats(void *packet_stats, __u16 eth_proto, __u32 srcip, __u32 dstip, __u8 ip_proto, __u64 bytes) {
-  struct packet_stats_key key;
-  __builtin_memset(&key, 0, sizeof(key));
+static __always_inline void update_packet_stats(void *packet_stats, struct packet_stats_key *key, __u64 bytes) {
+  struct packet_stats_value *value = bpf_map_lookup_elem(packet_stats, key);
 
-  key.eth_proto = eth_proto;
-  key.srcip = srcip;
-  key.dstip = dstip;
-  key.ip_proto = ip_proto;
-  struct packet_stats_value *value = bpf_map_lookup_elem(packet_stats, &key);
-
-  // bpf_printk("Packet (0x%04X): 0x%08X -> 0x%08X (0x%04X), %d %d", eth_proto, srcip, dstip, ip_proto, &packet_stats, value);
   if (value) {
     __sync_fetch_and_add(&value->packets, 1);
     __sync_fetch_and_add(&value->bytes, bytes);
   } else {
     struct packet_stats_value newval = {1, bytes};
 
-    bpf_map_update_elem(packet_stats, &key, &newval, BPF_NOEXIST);
+    int ret = bpf_map_update_elem(packet_stats, key, &newval, BPF_NOEXIST);
+    if (ret != 0) {
+      // In case of concurrent insert on another CPU, lookup again and add atomically
+      value = bpf_map_lookup_elem(packet_stats, key);
+      if (value) {
+        __sync_fetch_and_add(&value->packets, 1);
+        __sync_fetch_and_add(&value->bytes, bytes);
+      }
+    }
   }
 }
 
-static inline int is_ip_in_subnet(__u32 ip, __u32 subnet_ip, __u32 subnet_mask) { return (ip & subnet_mask) == subnet_ip; }
+static __always_inline int is_ip_in_subnet(__u32 ip, __u32 subnet_ip, __u32 subnet_mask) { return (ip & subnet_mask) == subnet_ip; }
 
-static inline void process_eth(void *packet_stats, void *data, void *data_end, __u64 pkt_len) {
+static __always_inline void process_eth(void *packet_stats, void *data, void *data_end, __u64 pkt_len) {
   // Define a pointer to the Ethernet header at the start of the packet data
   struct ethhdr *eth = data;
-  // Ensure the packet includes a full Ethernet header; if not, we let it continue up the stack
   if ((void *)eth + sizeof(struct ethhdr) > data_end) {
     return;
   }
   __u16 eth_proto = bpf_ntohs(eth->h_proto);
+  void *l3_data = (void *)eth + sizeof(struct ethhdr);
 
-  // Access the IP header positioned right after the Ethernet header
-  struct iphdr *ip = data + sizeof(struct ethhdr);
-  if ((void *)ip + sizeof(struct iphdr) > data_end) {
-    return;
+  // Unwrap 802.1Q or 802.1ad VLAN tags if present
+  if (eth_proto == ETH_P_8021Q || eth_proto == ETH_P_8021AD) {
+    struct vlan_hdr *vlan = l3_data;
+    if ((void *)vlan + sizeof(struct vlan_hdr) > data_end) {
+      return;
+    }
+    eth_proto = bpf_ntohs(vlan->h_vlan_encapsulated_proto);
+    l3_data = (void *)vlan + sizeof(struct vlan_hdr);
   }
-  __u32 ip_saddr = ip->saddr;
-  __u32 ip_daddr = ip->daddr;
-  __u8 ip_proto = ip->protocol;
 
-  // process only IPv4 and IPv6
+  // Process IPv4 and IPv6
   switch (eth_proto) {
     case ETH_P_IP: {
-      // bpf_printk("IP packet: %x -> %x", ip_saddr, ip_daddr);
-      // bpf_printk("is_ip_in_subnet: %d -> %d", is_ip_in_subnet(ip_saddr, lan_subnet_ip, lan_subnet_mask), is_ip_in_subnet(ip_daddr, lan_subnet_ip, lan_subnet_mask));
+      struct iphdr *ip = l3_data;
+      if ((void *)ip + sizeof(struct iphdr) > data_end) {
+        return;
+      }
+      if (ip->ihl < 5) {
+        return;
+      }
+      __u32 ip_hdr_len = ((__u32)ip->ihl) * 4;
+      if ((void *)ip + ip_hdr_len > data_end) {
+        return;
+      }
+
+      __u32 ip_saddr = ip->saddr;
+      __u32 ip_daddr = ip->daddr;
+      __u8 ip_proto = ip->protocol;
+
       if (!is_ip_in_subnet(ip_saddr, lan_subnet_ip, lan_subnet_mask)) {
         ip_saddr = 0;
       }
       if (!is_ip_in_subnet(ip_daddr, lan_subnet_ip, lan_subnet_mask)) {
         ip_daddr = 0;
       }
-      // if (!(ip_saddr == 0 && ip_daddr == 167880896) && !(ip_saddr == 167880896 && ip_daddr == 0)) {
-      //   // for testing
-      //   return;
-      // }
 
-      update_packet_stats(packet_stats, eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
+      struct packet_stats_key key;
+      __builtin_memset(&key, 0, sizeof(key));
+      key.eth_proto = eth_proto;
+      key.srcip = ip_saddr;
+      key.dstip = ip_daddr;
+      key.ip_proto = ip_proto;
+
+      update_packet_stats(packet_stats, &key, pkt_len);
     } break;
+
     case ETH_P_IPV6: {
-      update_packet_stats(packet_stats, eth_proto, ip_saddr, ip_daddr, ip_proto, pkt_len);
+      struct ipv6hdr *ip6 = l3_data;
+      if ((void *)ip6 + sizeof(struct ipv6hdr) > data_end) {
+        return;
+      }
+      struct packet_stats_key key;
+      __builtin_memset(&key, 0, sizeof(key));
+      key.eth_proto = eth_proto;
+      key.srcip = 0;
+      key.dstip = 0;
+      key.ip_proto = ip6->nexthdr;
+
+      update_packet_stats(packet_stats, &key, pkt_len);
     } break;
+
     default:
       return;
   }

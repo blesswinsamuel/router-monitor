@@ -77,58 +77,171 @@ func (s *RouterMonitorService) ListDevices(
 ) (*connect.Response[routermonitorv1.ListDevicesResponse], error) {
 	rawDevices := s.arpCollector.GetDevices()
 	flows := s.ebpfCollector.GetFlowStats()
+	deviceRates := s.sampler.GetDeviceRates()
 
-	// Aggregate flows by device IP
+	// 1. Separate flows into Internet and Device-to-Device (LAN) traffic
 	type ipTraffic struct {
-		dlBytes uint64
-		ulBytes uint64
-		dlPkts  uint64
-		ulPkts  uint64
+		internetDlBytes uint64
+		internetUlBytes uint64
+		lanDlBytes      uint64
+		lanUlBytes      uint64
+		dlPkts          uint64
+		ulPkts          uint64
 	}
 	trafficByIP := make(map[string]*ipTraffic)
+	getOrCreateTraffic := func(ip string) *ipTraffic {
+		t, ok := trafficByIP[ip]
+		if !ok {
+			t = &ipTraffic{}
+			trafficByIP[ip] = t
+		}
+		return t
+	}
 
 	for _, f := range flows {
-		if f.Direction == "ingress" && f.DstIP != "" && f.DstIP != "internet" {
-			t, ok := trafficByIP[f.DstIP]
-			if !ok {
-				t = &ipTraffic{}
-				trafficByIP[f.DstIP] = t
+		isLanToLan := f.SrcIP != "" && f.SrcIP != "internet" && f.DstIP != "" && f.DstIP != "internet"
+
+		if isLanToLan {
+			// Device-to-device (LAN) traffic
+			srcT := getOrCreateTraffic(f.SrcIP)
+			srcT.lanUlBytes += f.Bytes
+			srcT.ulPkts += f.Packets
+
+			dstT := getOrCreateTraffic(f.DstIP)
+			dstT.lanDlBytes += f.Bytes
+			dstT.dlPkts += f.Packets
+		} else {
+			// Internet traffic
+			if f.Direction == "ingress" && f.DstIP != "" && f.DstIP != "internet" {
+				dstT := getOrCreateTraffic(f.DstIP)
+				dstT.internetDlBytes += f.Bytes
+				dstT.dlPkts += f.Packets
+			} else if f.Direction == "egress" && f.SrcIP != "" && f.SrcIP != "internet" {
+				srcT := getOrCreateTraffic(f.SrcIP)
+				srcT.internetUlBytes += f.Bytes
+				srcT.ulPkts += f.Packets
 			}
-			t.dlBytes += f.Bytes
-			t.dlPkts += f.Packets
-		} else if f.Direction == "egress" && f.SrcIP != "" && f.SrcIP != "internet" {
-			t, ok := trafficByIP[f.SrcIP]
-			if !ok {
-				t = &ipTraffic{}
-				trafficByIP[f.SrcIP] = t
-			}
-			t.ulBytes += f.Bytes
-			t.ulPkts += f.Packets
 		}
 	}
 
-	devices := make([]*routermonitorv1.ArpDevice, 0, len(rawDevices))
+	// 2. Load persisted devices from SQLite TSDB
+	persistedDevices, _ := s.tsdbDB.GetPersistedDevices()
+	persistedByMAC := make(map[string]tsdb.PersistedDevice)
+	for _, pd := range persistedDevices {
+		persistedByMAC[pd.HWAddr] = pd
+	}
+
+	now := time.Now().Unix()
+	seenMACs := make(map[string]bool)
+	seenIPs := make(map[string]bool)
+	devices := make([]*routermonitorv1.ArpDevice, 0, len(rawDevices)+len(persistedDevices))
+
+	// 3. Process current ARP devices
 	for _, d := range rawDevices {
-		dev := &routermonitorv1.ArpDevice{
-			IpAddr:   d.IPAddr,
-			HwAddr:   d.HWAddr,
-			Hostname: d.Hostname,
-			Device:   d.Device,
-			Flags:    d.Flag,
-			IsValid:  d.IsValid,
+		if d.HWAddr != "" && d.HWAddr != "00:00:00:00:00:00" {
+			seenMACs[d.HWAddr] = true
 		}
+		seenIPs[d.IPAddr] = true
+
+		// Determine human-friendly status:
+		// Flag 0: Incomplete / probe sent but no ARP response received
+		// Flag 2: Completed / active dynamic entry
+		// Flag 4 or Flag 6: Permanent / static ARP entry
+		status := "active"
+		if d.Flag == 0 {
+			status = "unreachable"
+		} else if d.Flag&4 != 0 {
+			status = "static"
+		} else if !d.IsValid {
+			status = "unreachable"
+		}
+
+		firstSeen := now
+		lastSeen := now
+		if pd, ok := persistedByMAC[d.HWAddr]; ok {
+			firstSeen = pd.FirstSeen.Unix()
+			lastSeen = pd.LastSeen.Unix()
+		}
+
+		rate := deviceRates[d.IPAddr]
+
+		dev := &routermonitorv1.ArpDevice{
+			IpAddr:                         d.IPAddr,
+			HwAddr:                         d.HWAddr,
+			Hostname:                       d.Hostname,
+			Device:                         d.Device,
+			Flags:                          d.Flag,
+			IsValid:                        d.IsValid,
+			Status:                         status,
+			FirstSeenUnix:                  firstSeen,
+			LastSeenUnix:                   lastSeen,
+			CurrentDownloadBytesPerSec:     rate.DownloadBytesPerSec,
+			CurrentUploadBytesPerSec:       rate.UploadBytesPerSec,
+			CurrentRateBytesPerSec:         rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
+		}
+
 		if t, ok := trafficByIP[d.IPAddr]; ok {
-			dev.DownloadBytes = t.dlBytes
-			dev.UploadBytes = t.ulBytes
+			dev.InternetDownloadBytes = t.internetDlBytes
+			dev.InternetUploadBytes = t.internetUlBytes
+			dev.LanDownloadBytes = t.lanDlBytes
+			dev.LanUploadBytes = t.lanUlBytes
+			dev.DownloadBytes = t.internetDlBytes + t.lanDlBytes
+			dev.UploadBytes = t.internetUlBytes + t.lanUlBytes
 			dev.DownloadPackets = t.dlPkts
 			dev.UploadPackets = t.ulPkts
 		}
+
 		devices = append(devices, dev)
 	}
 
-	// Sort devices by total download bytes descending
+	// 4. Add offline devices that are saved in SQLite but currently missing from ARP table
+	for _, pd := range persistedDevices {
+		if seenMACs[pd.HWAddr] || seenIPs[pd.IPAddr] {
+			continue
+		}
+		seenMACs[pd.HWAddr] = true
+		seenIPs[pd.IPAddr] = true
+
+		dev := &routermonitorv1.ArpDevice{
+			IpAddr:                         pd.IPAddr,
+			HwAddr:                         pd.HWAddr,
+			Hostname:                       pd.Hostname,
+			Device:                         pd.Device,
+			Flags:                          0,
+			IsValid:                        false,
+			Status:                         "offline",
+			FirstSeenUnix:                  pd.FirstSeen.Unix(),
+			LastSeenUnix:                   pd.LastSeen.Unix(),
+			CurrentDownloadBytesPerSec:     0,
+			CurrentUploadBytesPerSec:       0,
+			CurrentRateBytesPerSec:         0,
+		}
+
+		if t, ok := trafficByIP[pd.IPAddr]; ok {
+			dev.InternetDownloadBytes = t.internetDlBytes
+			dev.InternetUploadBytes = t.internetUlBytes
+			dev.LanDownloadBytes = t.lanDlBytes
+			dev.LanUploadBytes = t.lanUlBytes
+			dev.DownloadBytes = t.internetDlBytes + t.lanDlBytes
+			dev.UploadBytes = t.internetUlBytes + t.lanUlBytes
+			dev.DownloadPackets = t.dlPkts
+			dev.UploadPackets = t.ulPkts
+		}
+
+		devices = append(devices, dev)
+	}
+
+	// 5. Sort devices: active/static first (by download volume descending), then offline by last seen
 	sort.Slice(devices, func(i, j int) bool {
-		return devices[i].DownloadBytes > devices[j].DownloadBytes
+		iOnline := devices[i].Status == "active" || devices[i].Status == "static"
+		jOnline := devices[j].Status == "active" || devices[j].Status == "static"
+		if iOnline != jOnline {
+			return iOnline
+		}
+		if iOnline {
+			return devices[i].DownloadBytes > devices[j].DownloadBytes
+		}
+		return devices[i].LastSeenUnix > devices[j].LastSeenUnix
 	})
 
 	return connect.NewResponse(&routermonitorv1.ListDevicesResponse{Devices: devices}), nil
