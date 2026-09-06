@@ -31,6 +31,7 @@ import {
   formatRate,
   formatPacketsRate,
   formatRelativeTime,
+  formatDateTime,
 } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { useRootOutletContext } from '@/components/RootLayout'
@@ -467,13 +468,19 @@ export function DeviceDetailPage() {
 
                   {/* Timeline */}
                   {Number(device?.lastSeenUnix) > 0 && (
-                    <div className="inline-flex items-center gap-1.5 text-muted-foreground pl-1">
+                    <div
+                      className="inline-flex items-center gap-1.5 text-muted-foreground pl-1 cursor-help"
+                      title={formatDateTime(Number(device.lastSeenUnix))}
+                    >
                       <Clock className="w-3.5 h-3.5" />
                       <span>Last seen: <span className="text-foreground font-medium">{formatRelativeTime(Number(device.lastSeenUnix))}</span></span>
                     </div>
                   )}
                   {Number(device?.firstSeenUnix) > 0 && (
-                    <div className="inline-flex items-center gap-1.5 text-muted-foreground pl-1">
+                    <div
+                      className="inline-flex items-center gap-1.5 text-muted-foreground pl-1 cursor-help"
+                      title={formatDateTime(Number(device.firstSeenUnix))}
+                    >
                       <Calendar className="w-3.5 h-3.5" />
                       <span>First seen: <span className="text-foreground font-medium">{formatRelativeTime(Number(device.firstSeenUnix))}</span></span>
                     </div>
