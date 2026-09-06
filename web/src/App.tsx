@@ -153,7 +153,7 @@ export function App() {
             </TabsTrigger>
             <TabsTrigger value="devices" className="flex items-center gap-2 px-3.5">
               <Laptop className="w-4 h-4" />
-              <span>Devices ({devices.length})</span>
+              <span>Devices (<span className="font-mono">{devices.length}</span>)</span>
             </TabsTrigger>
             <TabsTrigger value="traffic" className="flex items-center gap-2 px-3.5">
               <ArrowLeftRight className="w-4 h-4" />
@@ -189,7 +189,7 @@ export function App() {
       </main>
 
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        Router Monitor &copy; {new Date().getFullYear()} • Connect-RPC over gRPC-Web • Pure-Go SQLite TSDB
+        Router Monitor &copy; <span className="font-mono">{new Date().getFullYear()}</span> • Connect-RPC over gRPC-Web • Pure-Go SQLite TSDB
       </footer>
     </div>
   )

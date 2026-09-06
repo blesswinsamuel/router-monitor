@@ -32,9 +32,9 @@ export function TrafficTab({ flows, protocols, totalBytes, totalPackets }: Traff
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-xl font-bold">{formatBytes(proto.bytes)}</div>
+                <div className="text-xl font-bold font-mono">{formatBytes(proto.bytes)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formatPackets(proto.packets)} packets
+                  <span className="font-mono">{formatPackets(proto.packets)}</span> packets
                 </p>
               </CardContent>
             </Card>
@@ -55,7 +55,7 @@ export function TrafficTab({ flows, protocols, totalBytes, totalPackets }: Traff
               </CardDescription>
             </div>
             <div className="text-xs text-muted-foreground">
-              Total Volume: <span className="font-semibold text-foreground">{formatBytes(totalBytes)}</span> ({formatPackets(totalPackets)} pkts)
+              Total Volume: <span className="font-semibold text-foreground font-mono">{formatBytes(totalBytes)}</span> (<span className="font-mono">{formatPackets(totalPackets)}</span> pkts)
             </div>
           </div>
         </CardHeader>

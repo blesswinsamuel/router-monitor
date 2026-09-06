@@ -183,14 +183,14 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 <Tabs value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)} className="shrink-0">
                   <TabsList className="h-8">
                     <TabsTrigger value="all" className="text-xs px-2.5 py-1">
-                      All ({statusCounts.all})
+                      All (<span className="font-mono">{statusCounts.all}</span>)
                     </TabsTrigger>
                     <TabsTrigger value="active" className="text-xs px-2.5 py-1">
-                      Active ({statusCounts.active})
+                      Active (<span className="font-mono">{statusCounts.active}</span>)
                     </TabsTrigger>
                     {statusCounts.offline > 0 && (
                       <TabsTrigger value="offline" className="text-xs px-2.5 py-1">
-                        Offline ({statusCounts.offline})
+                        Offline (<span className="font-mono">{statusCounts.offline}</span>)
                       </TabsTrigger>
                     )}
                   </TabsList>
@@ -229,16 +229,16 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 </span>
                 <Tabs value={period} onValueChange={(v: any) => setPeriod(v)} className="shrink-0">
                   <TabsList className="h-8">
-                    <TabsTrigger value="15m" className="text-xs px-2.5 py-1">
+                    <TabsTrigger value="15m" className="text-xs px-2.5 py-1 font-mono">
                       15m
                     </TabsTrigger>
-                    <TabsTrigger value="1h" className="text-xs px-2.5 py-1">
+                    <TabsTrigger value="1h" className="text-xs px-2.5 py-1 font-mono">
                       1h
                     </TabsTrigger>
-                    <TabsTrigger value="6h" className="text-xs px-2.5 py-1">
+                    <TabsTrigger value="6h" className="text-xs px-2.5 py-1 font-mono">
                       6h
                     </TabsTrigger>
-                    <TabsTrigger value="24h" className="text-xs px-2.5 py-1">
+                    <TabsTrigger value="24h" className="text-xs px-2.5 py-1 font-mono">
                       24h
                     </TabsTrigger>
                   </TabsList>
@@ -314,7 +314,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     </TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1">
-                        Bandwidth Used ({period})
+                        Bandwidth Used (<span className="font-mono">{period}</span>)
                       </span>
                     </TableHead>
                     <TableHead className="w-8"></TableHead>
@@ -327,17 +327,17 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                        <Globe className="w-3.5 h-3.5" /> WAN ({period})
+                        <Globe className="w-3.5 h-3.5" /> WAN (<span className="font-mono">{period}</span>)
                       </span>
                     </TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                        <Network className="w-3.5 h-3.5" /> LAN ({period})
+                        <Network className="w-3.5 h-3.5" /> LAN (<span className="font-mono">{period}</span>)
                       </span>
                     </TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1">
-                        <HardDrive className="w-3.5 h-3.5" /> Total ({period})
+                        <HardDrive className="w-3.5 h-3.5" /> Total (<span className="font-mono">{period}</span>)
                       </span>
                     </TableHead>
                     <TableHead className="w-8"></TableHead>
@@ -448,7 +448,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                               </Badge>
                             )}
                             {status === 'offline' && Number(device.lastSeenUnix) > 0 && (
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground font-mono">
                                 {formatRelativeTime(Number(device.lastSeenUnix))}
                               </span>
                             )}
@@ -464,14 +464,14 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                   <span className="text-emerald-600 dark:text-emerald-400 font-medium text-xs flex items-center gap-1">
                                     <ArrowDown className="w-3 h-3 text-emerald-500" />
                                     {formatRate(activeDlRate)}
-                                    <span className="text-[10px] text-muted-foreground font-sans">
+                                    <span className="text-[10px] text-muted-foreground font-mono">
                                       ({formatPacketsRate(activeDlPktsRate)})
                                     </span>
                                   </span>
                                   <span className="text-sky-600 dark:text-sky-400 font-medium text-xs flex items-center gap-1">
                                     <ArrowUp className="w-3 h-3 text-sky-500" />
                                     {formatRate(activeUlRate)}
-                                    <span className="text-[10px] text-muted-foreground font-sans">
+                                    <span className="text-[10px] text-muted-foreground font-mono">
                                       ({formatPacketsRate(activeUlPktsRate)})
                                     </span>
                                   </span>
@@ -493,7 +493,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                   {formatBytes(activeUlBytes)}
                                 </span>
                                 {trafficScope === 'total' && (wanDlBytes + wanUlBytes > 0 || lanDlBytes + lanUlBytes > 0) && (
-                                  <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 mt-0.5 font-sans">
+                                  <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 mt-0.5 font-mono">
                                     <span className="text-emerald-600 dark:text-emerald-400">WAN {formatBytes(wanDlBytes + wanUlBytes)}</span>
                                     <span>•</span>
                                     <span className="text-blue-600 dark:text-blue-400">LAN {formatBytes(lanDlBytes + lanUlBytes)}</span>

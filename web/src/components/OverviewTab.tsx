@@ -139,7 +139,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
             <ArrowDownCircle className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight">
+            <div className="text-2xl font-bold font-mono tracking-tight">
               {formatRate(overview?.total?.downloadBytesPerSec)}
             </div>
             <div className="mt-2.5 pt-2 border-t space-y-1 text-xs">
@@ -175,7 +175,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
             <ArrowUpCircle className="h-4 w-4 text-sky-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight">
+            <div className="text-2xl font-bold font-mono tracking-tight">
               {formatRate(overview?.total?.uploadBytesPerSec)}
             </div>
             <div className="mt-2.5 pt-2 border-t space-y-1 text-xs">
@@ -212,7 +212,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold tracking-tight">
+              <span className="text-2xl font-bold font-mono tracking-tight">
                 {formatLatency(overview?.internetLatencySeconds)}
               </span>
               <Badge
@@ -232,7 +232,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
             <Laptop className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tracking-tight">
+            <div className="text-2xl font-bold font-mono tracking-tight">
               {overview?.connectedDevicesCount || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Active ARP table entries</p>
@@ -268,7 +268,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   {formatRate(overview?.wan?.downloadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.wan?.downloadBytes)}
+                  Vol: <span className="font-mono">{formatBytes(overview?.wan?.downloadBytes)}</span>
                 </div>
               </div>
               <div>
@@ -279,7 +279,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   {formatRate(overview?.wan?.uploadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.wan?.uploadBytes)}
+                  Vol: <span className="font-mono">{formatBytes(overview?.wan?.uploadBytes)}</span>
                 </div>
               </div>
             </div>
@@ -300,7 +300,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                 <Laptop className="h-4 w-4 text-blue-500" />
                 <CardTitle className="text-sm font-semibold">LAN Traffic (Device ↔ Device)</CardTitle>
               </div>
-              <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[11px]">
+              <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px]">
                 Internal
               </Badge>
             </div>
@@ -318,7 +318,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   {formatRate(overview?.lan?.downloadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.lan?.downloadBytes)}
+                  Vol: <span className="font-mono">{formatBytes(overview?.lan?.downloadBytes)}</span>
                 </div>
               </div>
               <div>
@@ -329,7 +329,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   {formatRate(overview?.lan?.uploadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.lan?.uploadBytes)}
+                  Vol: <span className="font-mono">{formatBytes(overview?.lan?.uploadBytes)}</span>
                 </div>
               </div>
             </div>
@@ -350,7 +350,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
               <CardTitle className="flex items-center gap-2">
                 Real-Time Bandwidth
                 <Badge variant="outline" className="text-xs text-muted-foreground font-normal">
-                  Rolling 60s
+                  Rolling <span className="font-mono">60s</span>
                 </Badge>
               </CardTitle>
               <CardDescription>Live streaming network throughput across the router</CardDescription>
@@ -358,11 +358,11 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
             <div className="flex items-center space-x-4 text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                <span>Download ({formatRate(overview?.total?.downloadBytesPerSec)})</span>
+                <span>Download (<span className="font-mono font-medium">{formatRate(overview?.total?.downloadBytesPerSec)}</span>)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-sky-500 inline-block"></span>
-                <span>Upload ({formatRate(overview?.total?.uploadBytesPerSec)})</span>
+                <span>Upload (<span className="font-mono font-medium">{formatRate(overview?.total?.uploadBytesPerSec)}</span>)</span>
               </div>
             </div>
           </div>
@@ -381,13 +381,14 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
+              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} className="font-mono" />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 fontSize={11}
                 tickFormatter={(val) => formatBytes(val)}
                 width={75}
+                className="font-mono"
               />
               <ChartTooltip
                 cursor={false}
@@ -452,7 +453,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   key={r}
                   variant={timeRange === r ? "default" : "ghost"}
                   size="sm"
-                  className="h-7 text-xs px-2.5"
+                  className="h-7 text-xs px-2.5 font-mono"
                   onClick={() => setTimeRange(r)}
                 >
                   {r}
@@ -475,13 +476,14 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
               <ChartContainer config={trafficChartConfig} className="h-[260px] w-full aspect-auto">
                 <LineChart data={historyData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} className="font-mono" />
                   <YAxis
                     tickLine={false}
                     axisLine={false}
                     fontSize={11}
                     tickFormatter={(val) => formatBytes(val)}
                     width={75}
+                    className="font-mono"
                   />
                   <ChartTooltip
                     cursor={false}
