@@ -66,6 +66,15 @@ func (s *RouterMonitorService) GetOverview(
 		CurrentDownloadPacketsPerSec:  rates.DownloadPacketsPerSec,
 		CurrentUploadPacketsPerSec:    rates.UploadPacketsPerSec,
 		ServerTimeUnix:                time.Now().Unix(),
+
+		TotalWanDownloadBytes:         rates.TotalWanDownloadBytes,
+		TotalWanUploadBytes:           rates.TotalWanUploadBytes,
+		TotalLanDownloadBytes:         rates.TotalLanDownloadBytes,
+		TotalLanUploadBytes:           rates.TotalLanUploadBytes,
+		CurrentWanDownloadBytesPerSec: rates.WanDownloadBytesPerSec,
+		CurrentWanUploadBytesPerSec:   rates.WanUploadBytesPerSec,
+		CurrentLanDownloadBytesPerSec: rates.LanDownloadBytesPerSec,
+		CurrentLanUploadBytesPerSec:   rates.LanUploadBytesPerSec,
 	}
 
 	return connect.NewResponse(res), nil
@@ -110,17 +119,16 @@ func (s *RouterMonitorService) ListDevices(
 			dstT := getOrCreateTraffic(f.DstIP)
 			dstT.lanDlBytes += f.Bytes
 			dstT.dlPkts += f.Packets
-		} else {
-			// Internet traffic
-			if f.Direction == "ingress" && f.DstIP != "" && f.DstIP != "internet" {
-				dstT := getOrCreateTraffic(f.DstIP)
-				dstT.internetDlBytes += f.Bytes
-				dstT.dlPkts += f.Packets
-			} else if f.Direction == "egress" && f.SrcIP != "" && f.SrcIP != "internet" {
-				srcT := getOrCreateTraffic(f.SrcIP)
-				srcT.internetUlBytes += f.Bytes
-				srcT.ulPkts += f.Packets
-			}
+		} else if f.SrcIP != "" && f.SrcIP != "internet" && (f.DstIP == "internet" || f.DstIP == "") {
+			// Device uploading to Internet (WAN Upload)
+			srcT := getOrCreateTraffic(f.SrcIP)
+			srcT.internetUlBytes += f.Bytes
+			srcT.ulPkts += f.Packets
+		} else if f.DstIP != "" && f.DstIP != "internet" && (f.SrcIP == "internet" || f.SrcIP == "") {
+			// Device downloading from Internet (WAN Download)
+			dstT := getOrCreateTraffic(f.DstIP)
+			dstT.internetDlBytes += f.Bytes
+			dstT.dlPkts += f.Packets
 		}
 	}
 
@@ -178,6 +186,10 @@ func (s *RouterMonitorService) ListDevices(
 			CurrentDownloadBytesPerSec:     rate.DownloadBytesPerSec,
 			CurrentUploadBytesPerSec:       rate.UploadBytesPerSec,
 			CurrentRateBytesPerSec:         rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
+			CurrentWanDownloadBytesPerSec: rate.WanDownloadBytesPerSec,
+			CurrentWanUploadBytesPerSec:   rate.WanUploadBytesPerSec,
+			CurrentLanDownloadBytesPerSec: rate.LanDownloadBytesPerSec,
+			CurrentLanUploadBytesPerSec:   rate.LanUploadBytesPerSec,
 		}
 
 		if t, ok := trafficByIP[d.IPAddr]; ok {
@@ -202,6 +214,8 @@ func (s *RouterMonitorService) ListDevices(
 		seenMACs[pd.HWAddr] = true
 		seenIPs[pd.IPAddr] = true
 
+		rate := deviceRates[pd.IPAddr]
+
 		dev := &routermonitorv1.ArpDevice{
 			IpAddr:                         pd.IPAddr,
 			HwAddr:                         pd.HWAddr,
@@ -212,9 +226,13 @@ func (s *RouterMonitorService) ListDevices(
 			Status:                         "offline",
 			FirstSeenUnix:                  pd.FirstSeen.Unix(),
 			LastSeenUnix:                   pd.LastSeen.Unix(),
-			CurrentDownloadBytesPerSec:     0,
-			CurrentUploadBytesPerSec:       0,
-			CurrentRateBytesPerSec:         0,
+			CurrentDownloadBytesPerSec:     rate.DownloadBytesPerSec,
+			CurrentUploadBytesPerSec:       rate.UploadBytesPerSec,
+			CurrentRateBytesPerSec:         rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
+			CurrentWanDownloadBytesPerSec: rate.WanDownloadBytesPerSec,
+			CurrentWanUploadBytesPerSec:   rate.WanUploadBytesPerSec,
+			CurrentLanDownloadBytesPerSec: rate.LanDownloadBytesPerSec,
+			CurrentLanUploadBytesPerSec:   rate.LanUploadBytesPerSec,
 		}
 
 		if t, ok := trafficByIP[pd.IPAddr]; ok {
@@ -367,6 +385,10 @@ func (s *RouterMonitorService) StreamLiveStats(
 			InternetIsUp:            rates.InternetIsUp,
 			InternetLatencySeconds:  rates.InternetLatencySeconds,
 			ConnectedDevicesCount:   rates.ConnectedDevicesCount,
+			WanDownloadBytesPerSec: rates.WanDownloadBytesPerSec,
+			WanUploadBytesPerSec:   rates.WanUploadBytesPerSec,
+			LanDownloadBytesPerSec: rates.LanDownloadBytesPerSec,
+			LanUploadBytesPerSec:   rates.LanUploadBytesPerSec,
 		})
 	}
 

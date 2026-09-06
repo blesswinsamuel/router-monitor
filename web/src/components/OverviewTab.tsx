@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowDownCircle, ArrowUpCircle, Globe, Laptop, Clock } from 'lucide-react'
+import { ArrowDownCircle, ArrowUpCircle, Globe, Laptop, Clock, ArrowDown, ArrowUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -136,30 +136,72 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Download Rate</CardTitle>
-            <ArrowDownCircle className="h-4 w-4 text-muted-foreground" />
+            <ArrowDownCircle className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tracking-tight">
               {formatRate(overview?.currentDownloadBytesPerSec)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total: <span className="font-mono text-foreground font-medium">{formatBytes(overview?.totalDownloadBytes)}</span>
-            </p>
+            <div className="mt-2.5 pt-2 border-t space-y-1 text-xs">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                  WAN (Internet):
+                </span>
+                <span className="font-mono font-medium text-foreground">
+                  {formatRate(overview?.currentWanDownloadBytesPerSec)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
+                  LAN (Local):
+                </span>
+                <span className="font-mono font-medium text-foreground">
+                  {formatRate(overview?.currentLanDownloadBytesPerSec)}
+                </span>
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Total:</span>
+                <span className="font-mono text-foreground">
+                  {formatBytes(overview?.totalDownloadBytes)}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
             <CardTitle className="text-sm font-medium">Upload Rate</CardTitle>
-            <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
+            <ArrowUpCircle className="h-4 w-4 text-sky-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tracking-tight">
               {formatRate(overview?.currentUploadBytesPerSec)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total: <span className="font-mono text-foreground font-medium">{formatBytes(overview?.totalUploadBytes)}</span>
-            </p>
+            <div className="mt-2.5 pt-2 border-t space-y-1 text-xs">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium text-sky-600 dark:text-sky-400">
+                  WAN (Internet):
+                </span>
+                <span className="font-mono font-medium text-foreground">
+                  {formatRate(overview?.currentWanUploadBytesPerSec)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
+                  LAN (Local):
+                </span>
+                <span className="font-mono font-medium text-foreground">
+                  {formatRate(overview?.currentLanUploadBytesPerSec)}
+                </span>
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>Total:</span>
+                <span className="font-mono text-foreground">
+                  {formatBytes(overview?.totalUploadBytes)}
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -194,6 +236,109 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
               {overview?.connectedDevicesCount || 0}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Active ARP table entries</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* WAN & LAN Traffic Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* WAN Traffic Card */}
+        <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-emerald-500" />
+                <CardTitle className="text-sm font-semibold">WAN Traffic (Internet)</CardTitle>
+              </div>
+              <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
+                External
+              </Badge>
+            </div>
+            <CardDescription className="text-xs">
+              Direct traffic exchanged between your local network devices and the public Internet
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+              <div>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <ArrowDown className="w-3 h-3 text-emerald-500" /> Download Rate
+                </span>
+                <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                  {formatRate(overview?.currentWanDownloadBytesPerSec)}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Vol: {formatBytes(overview?.totalWanDownloadBytes)}
+                </div>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <ArrowUp className="w-3 h-3 text-sky-500" /> Upload Rate
+                </span>
+                <div className="text-lg font-bold font-mono text-sky-600 dark:text-sky-400">
+                  {formatRate(overview?.currentWanUploadBytesPerSec)}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Vol: {formatBytes(overview?.totalWanUploadBytes)}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs pt-1 border-t">
+              <span className="text-muted-foreground">Total WAN Volume:</span>
+              <span className="font-mono font-semibold text-foreground">
+                {formatBytes(Number(overview?.totalWanDownloadBytes || 0) + Number(overview?.totalWanUploadBytes || 0))}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* LAN Traffic Card */}
+        <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Laptop className="h-4 w-4 text-blue-500" />
+                <CardTitle className="text-sm font-semibold">LAN Traffic (Device ↔ Device)</CardTitle>
+              </div>
+              <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[11px]">
+                Internal
+              </Badge>
+            </div>
+            <CardDescription className="text-xs">
+              Subnet traffic passing between local devices within your LAN
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-muted/40 border border-border/50">
+              <div>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <ArrowDown className="w-3 h-3 text-blue-500" /> Ingress Rate
+                </span>
+                <div className="text-lg font-bold font-mono text-blue-600 dark:text-blue-400">
+                  {formatRate(overview?.currentLanDownloadBytesPerSec)}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Vol: {formatBytes(overview?.totalLanDownloadBytes)}
+                </div>
+              </div>
+              <div>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <ArrowUp className="w-3 h-3 text-indigo-500" /> Egress Rate
+                </span>
+                <div className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                  {formatRate(overview?.currentLanUploadBytesPerSec)}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Vol: {formatBytes(overview?.totalLanUploadBytes)}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs pt-1 border-t">
+              <span className="text-muted-foreground">Total LAN Volume:</span>
+              <span className="font-mono font-semibold text-foreground">
+                {formatBytes(Number(overview?.totalLanDownloadBytes || 0) + Number(overview?.totalLanUploadBytes || 0))}
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -44,6 +44,16 @@ message GetOverviewResponse {
   double current_upload_packets_per_sec = 13;
 
   int64 server_time_unix = 14;
+
+  uint64 total_wan_download_bytes = 15;
+  uint64 total_wan_upload_bytes = 16;
+  uint64 total_lan_download_bytes = 17;
+  uint64 total_lan_upload_bytes = 18;
+
+  double current_wan_download_bytes_per_sec = 19;
+  double current_wan_upload_bytes_per_sec = 20;
+  double current_lan_download_bytes_per_sec = 21;
+  double current_lan_upload_bytes_per_sec = 22;
 }
 
 message ListDevicesRequest {}
@@ -71,6 +81,11 @@ message ArpDevice {
   string status = 18; // "active", "static", "unreachable", "offline"
   double current_download_bytes_per_sec = 19;
   double current_upload_bytes_per_sec = 20;
+
+  double current_wan_download_bytes_per_sec = 21;
+  double current_wan_upload_bytes_per_sec = 22;
+  double current_lan_download_bytes_per_sec = 23;
+  double current_lan_upload_bytes_per_sec = 24;
 }
 
 message ListDevicesResponse {
@@ -132,6 +147,11 @@ message LiveStatsResponse {
   bool internet_is_up = 6;
   double internet_latency_seconds = 7;
   int32 connected_devices_count = 8;
+
+  double wan_download_bytes_per_sec = 9;
+  double wan_upload_bytes_per_sec = 10;
+  double lan_download_bytes_per_sec = 11;
+  double lan_upload_bytes_per_sec = 12;
 }
 
 message QueryTimeSeriesRequest {

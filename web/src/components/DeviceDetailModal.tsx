@@ -149,6 +149,10 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
   const isOnline = status === 'active' || status === 'static'
   const dlRate = Number(device.currentDownloadBytesPerSec || 0)
   const ulRate = Number(device.currentUploadBytesPerSec || 0)
+  const wanDlRate = Number(device.currentWanDownloadBytesPerSec || 0)
+  const wanUlRate = Number(device.currentWanUploadBytesPerSec || 0)
+  const lanDlRate = Number(device.currentLanDownloadBytesPerSec || 0)
+  const lanUlRate = Number(device.currentLanUploadBytesPerSec || 0)
 
   const internetDl = Number(device.internetDownloadBytes || 0)
   const internetUl = Number(device.internetUploadBytes || 0)
@@ -159,7 +163,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl md:max-w-5xl lg:max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-2 border-b pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-3">
@@ -196,13 +200,23 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
 
             {/* Live Throughput if online */}
             {isOnline && (dlRate > 0 || ulRate > 0) && (
-              <div className="flex items-center gap-2 self-start sm:self-center">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 text-xs font-mono">
-                  <Activity className="w-3.5 h-3.5 text-primary animate-pulse" />
-                  <span className="text-emerald-500 font-semibold">↓ {formatRate(dlRate)}</span>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-sky-500 font-semibold">↑ {formatRate(ulRate)}</span>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                {(wanDlRate > 0 || wanUlRate > 0) && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/60 text-xs font-mono">
+                    <Globe className="w-3 h-3 text-primary" />
+                    <span className="text-muted-foreground text-[10px]">WAN:</span>
+                    <span className="text-emerald-500 font-semibold">↓ {formatRate(wanDlRate)}</span>
+                    <span className="text-sky-500 font-semibold">↑ {formatRate(wanUlRate)}</span>
+                  </div>
+                )}
+                {(lanDlRate > 0 || lanUlRate > 0) && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/60 text-xs font-mono">
+                    <Network className="w-3 h-3 text-sky-500" />
+                    <span className="text-muted-foreground text-[10px]">LAN:</span>
+                    <span className="text-emerald-500 font-semibold">↓ {formatRate(lanDlRate)}</span>
+                    <span className="text-sky-500 font-semibold">↑ {formatRate(lanUlRate)}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -212,75 +226,99 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-2">
           {/* Internet Traffic */}
           <Card className="bg-muted/30 border-muted">
-            <CardContent className="p-3.5 space-y-1.5">
+            <CardContent className="p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5 text-primary" />
                   Internet Traffic (WAN)
                 </span>
+                {(wanDlRate > 0 || wanUlRate > 0) && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary">
+                    Live: {formatRate(wanDlRate + wanUlRate)}
+                  </Badge>
+                )}
               </div>
-              <div className="flex items-baseline justify-between pt-1">
-                <div className="text-xs">
-                  <span className="text-muted-foreground">↓ In: </span>
-                  <span className="font-semibold text-emerald-500">{formatBytes(internetDl)}</span>
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-1">
+                <div>
+                  <span className="text-muted-foreground text-[11px] block">Download</span>
+                  <span className="font-semibold text-emerald-500 text-sm">{formatBytes(internetDl)}</span>
+                  <span className="text-[10px] text-muted-foreground block">{formatRate(wanDlRate)}</span>
                 </div>
-                <div className="text-xs">
-                  <span className="text-muted-foreground">↑ Out: </span>
-                  <span className="font-semibold text-sky-500">{formatBytes(internetUl)}</span>
+                <div>
+                  <span className="text-muted-foreground text-[11px] block">Upload</span>
+                  <span className="font-semibold text-sky-500 text-sm">{formatBytes(internetUl)}</span>
+                  <span className="text-[10px] text-muted-foreground block">{formatRate(wanUlRate)}</span>
                 </div>
               </div>
-              <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/50">
-                Total WAN: <strong className="text-foreground">{formatBytes(internetDl + internetUl)}</strong>
+              <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex justify-between">
+                <span>Total WAN:</span>
+                <strong className="text-foreground">{formatBytes(internetDl + internetUl)}</strong>
               </div>
             </CardContent>
           </Card>
 
           {/* Local LAN Traffic */}
           <Card className="bg-muted/30 border-muted">
-            <CardContent className="p-3.5 space-y-1.5">
+            <CardContent className="p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Network className="w-3.5 h-3.5 text-sky-500" />
-                  Local Traffic (Device $\leftrightarrow$ Device)
+                  Local Traffic (Device ↔ Device)
                 </span>
+                {(lanDlRate > 0 || lanUlRate > 0) && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-sky-500/30 text-sky-500">
+                    Live: {formatRate(lanDlRate + lanUlRate)}
+                  </Badge>
+                )}
               </div>
-              <div className="flex items-baseline justify-between pt-1">
-                <div className="text-xs">
-                  <span className="text-muted-foreground">↓ In: </span>
-                  <span className="font-semibold text-emerald-500">{formatBytes(lanDl)}</span>
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-1">
+                <div>
+                  <span className="text-muted-foreground text-[11px] block">Download</span>
+                  <span className="font-semibold text-emerald-500 text-sm">{formatBytes(lanDl)}</span>
+                  <span className="text-[10px] text-muted-foreground block">{formatRate(lanDlRate)}</span>
                 </div>
-                <div className="text-xs">
-                  <span className="text-muted-foreground">↑ Out: </span>
-                  <span className="font-semibold text-sky-500">{formatBytes(lanUl)}</span>
+                <div>
+                  <span className="text-muted-foreground text-[11px] block">Upload</span>
+                  <span className="font-semibold text-sky-500 text-sm">{formatBytes(lanUl)}</span>
+                  <span className="text-[10px] text-muted-foreground block">{formatRate(lanUlRate)}</span>
                 </div>
               </div>
-              <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/50">
-                Total LAN: <strong className="text-foreground">{formatBytes(lanDl + lanUl)}</strong>
+              <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex justify-between">
+                <span>Total LAN:</span>
+                <strong className="text-foreground">{formatBytes(lanDl + lanUl)}</strong>
               </div>
             </CardContent>
           </Card>
 
           {/* Total & Timestamps */}
           <Card className="bg-muted/30 border-muted">
-            <CardContent className="p-3.5 space-y-1.5">
+            <CardContent className="p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
                   Lifetime Volume
                 </span>
+                {(dlRate > 0 || ulRate > 0) && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+                    Live: {formatRate(dlRate + ulRate)}
+                  </Badge>
+                )}
               </div>
-              <div className="flex items-baseline justify-between pt-1">
-                <div className="text-xs">
-                  <span className="text-muted-foreground">↓ Total: </span>
-                  <span className="font-semibold text-emerald-500">{formatBytes(totalDl)}</span>
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-1">
+                <div>
+                  <span className="text-muted-foreground text-[11px] block">Total In</span>
+                  <span className="font-semibold text-emerald-500 text-sm">{formatBytes(totalDl)}</span>
+                  <span className="text-[10px] text-muted-foreground block">{formatRate(dlRate)}</span>
                 </div>
-                <div className="text-xs">
-                  <span className="text-muted-foreground">↑ Total: </span>
-                  <span className="font-semibold text-sky-500">{formatBytes(totalUl)}</span>
+                <div>
+                  <span className="text-muted-foreground text-[11px] block">Total Out</span>
+                  <span className="font-semibold text-sky-500 text-sm">{formatBytes(totalUl)}</span>
+                  <span className="text-[10px] text-muted-foreground block">{formatRate(ulRate)}</span>
                 </div>
               </div>
-              <div className="text-[11px] text-muted-foreground pt-1 border-t border-border/50 flex items-center justify-between">
-                <span>Last seen: {formatRelativeTime(device.lastSeenUnix)}</span>
+              <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex items-center justify-between">
+                <span>Last seen:</span>
+                <strong className="text-foreground">{formatRelativeTime(device.lastSeenUnix)}</strong>
               </div>
             </CardContent>
           </Card>

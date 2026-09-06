@@ -10,8 +10,8 @@ import (
 )
 
 type LiveRates struct {
-	DownloadBytesPerSec  float64
-	UploadBytesPerSec    float64
+	DownloadBytesPerSec   float64
+	UploadBytesPerSec     float64
 	DownloadPacketsPerSec float64
 	UploadPacketsPerSec   float64
 
@@ -20,6 +20,16 @@ type LiveRates struct {
 	TotalDownloadPackets uint64
 	TotalUploadPackets   uint64
 
+	WanDownloadBytesPerSec float64
+	WanUploadBytesPerSec   float64
+	LanDownloadBytesPerSec float64
+	LanUploadBytesPerSec   float64
+
+	TotalWanDownloadBytes uint64
+	TotalWanUploadBytes   uint64
+	TotalLanDownloadBytes uint64
+	TotalLanUploadBytes   uint64
+
 	InternetIsUp           bool
 	InternetLatencySeconds float64
 	ConnectedDevicesCount  int32
@@ -27,13 +37,19 @@ type LiveRates struct {
 }
 
 type DeviceRate struct {
-	DownloadBytesPerSec float64
-	UploadBytesPerSec   float64
+	DownloadBytesPerSec    float64
+	UploadBytesPerSec      float64
+	WanDownloadBytesPerSec float64
+	WanUploadBytesPerSec   float64
+	LanDownloadBytesPerSec float64
+	LanUploadBytesPerSec   float64
 }
 
 type devByteCounts struct {
-	dl uint64
-	ul uint64
+	wanDl uint64
+	wanUl uint64
+	lanDl uint64
+	lanUl uint64
 }
 
 type Sampler struct {
@@ -49,6 +65,10 @@ type Sampler struct {
 
 	prevIngressBytes   uint64
 	prevEgressBytes    uint64
+	prevWanDlBytes     uint64
+	prevWanUlBytes     uint64
+	prevLanDlBytes     uint64
+	prevLanUlBytes     uint64
 	prevIngressPackets uint64
 	prevEgressPackets  uint64
 	prevTime           time.Time
@@ -99,41 +119,74 @@ func (s *Sampler) SampleOnce() {
 
 	// 1. Gather Traffic Stats
 	flows := s.ebpfCollector.GetFlowStats()
-	var curIngressBytes, curEgressBytes, curIngressPackets, curEgressPackets uint64
+	var curWanDlBytes, curWanUlBytes uint64
+	var curLanDlBytes, curLanUlBytes uint64
+	var curIngressPackets, curEgressPackets uint64
 	curDeviceBytes := make(map[string]devByteCounts)
 
 	for _, f := range flows {
 		if f.Direction == "ingress" {
-			curIngressBytes += f.Bytes
 			curIngressPackets += f.Packets
-			if f.DstIP != "" && f.DstIP != "internet" {
-				d := curDeviceBytes[f.DstIP]
-				d.dl += f.Bytes
-				curDeviceBytes[f.DstIP] = d
-			}
 		} else if f.Direction == "egress" {
-			curEgressBytes += f.Bytes
 			curEgressPackets += f.Packets
-			if f.SrcIP != "" && f.SrcIP != "internet" {
-				d := curDeviceBytes[f.SrcIP]
-				d.ul += f.Bytes
-				curDeviceBytes[f.SrcIP] = d
-			}
+		}
+
+		isLanToLan := f.SrcIP != "" && f.SrcIP != "internet" && f.DstIP != "" && f.DstIP != "internet"
+
+		if isLanToLan {
+			// Device-to-Device (LAN)
+			curLanDlBytes += f.Bytes
+			curLanUlBytes += f.Bytes
+
+			sDev := curDeviceBytes[f.SrcIP]
+			sDev.lanUl += f.Bytes
+			curDeviceBytes[f.SrcIP] = sDev
+
+			dDev := curDeviceBytes[f.DstIP]
+			dDev.lanDl += f.Bytes
+			curDeviceBytes[f.DstIP] = dDev
+		} else if f.SrcIP != "" && f.SrcIP != "internet" && (f.DstIP == "internet" || f.DstIP == "") {
+			// Device uploading to Internet (WAN Upload)
+			curWanUlBytes += f.Bytes
+
+			sDev := curDeviceBytes[f.SrcIP]
+			sDev.wanUl += f.Bytes
+			curDeviceBytes[f.SrcIP] = sDev
+		} else if f.DstIP != "" && f.DstIP != "internet" && (f.SrcIP == "internet" || f.SrcIP == "") {
+			// Device downloading from Internet (WAN Download)
+			curWanDlBytes += f.Bytes
+
+			dDev := curDeviceBytes[f.DstIP]
+			dDev.wanDl += f.Bytes
+			curDeviceBytes[f.DstIP] = dDev
 		}
 	}
 
+	curIngressBytes := curWanDlBytes + curLanDlBytes
+	curEgressBytes := curWanUlBytes + curLanUlBytes
+
 	var dlBytesRate, ulBytesRate, dlPktsRate, ulPktsRate float64
+	var wanDlRate, wanUlRate, lanDlRate, lanUlRate float64
 	var devSamples []Sample
 	s.mu.Lock()
 	if !s.prevTime.IsZero() {
 		dt := now.Sub(s.prevTime).Seconds()
 		if dt > 0 {
-			if curIngressBytes >= s.prevIngressBytes {
-				dlBytesRate = float64(curIngressBytes-s.prevIngressBytes) / dt
+			if curWanDlBytes >= s.prevWanDlBytes {
+				wanDlRate = float64(curWanDlBytes-s.prevWanDlBytes) / dt
 			}
-			if curEgressBytes >= s.prevEgressBytes {
-				ulBytesRate = float64(curEgressBytes-s.prevEgressBytes) / dt
+			if curWanUlBytes >= s.prevWanUlBytes {
+				wanUlRate = float64(curWanUlBytes-s.prevWanUlBytes) / dt
 			}
+			if curLanDlBytes >= s.prevLanDlBytes {
+				lanDlRate = float64(curLanDlBytes-s.prevLanDlBytes) / dt
+			}
+			if curLanUlBytes >= s.prevLanUlBytes {
+				lanUlRate = float64(curLanUlBytes-s.prevLanUlBytes) / dt
+			}
+			dlBytesRate = wanDlRate + lanDlRate
+			ulBytesRate = wanUlRate + lanUlRate
+
 			if curIngressPackets >= s.prevIngressPackets {
 				dlPktsRate = float64(curIngressPackets-s.prevIngressPackets) / dt
 			}
@@ -154,19 +207,32 @@ func (s *Sampler) SampleOnce() {
 			for ip := range allIPs {
 				cur := curDeviceBytes[ip]
 				prev := s.prevDeviceBytes[ip]
-				var devDlRate, devUlRate float64
-				if cur.dl >= prev.dl {
-					devDlRate = float64(cur.dl-prev.dl) / dt
+				var dWanDl, dWanUl, dLanDl, dLanUl float64
+				if cur.wanDl >= prev.wanDl {
+					dWanDl = float64(cur.wanDl-prev.wanDl) / dt
 				}
-				if cur.ul >= prev.ul {
-					devUlRate = float64(cur.ul-prev.ul) / dt
+				if cur.wanUl >= prev.wanUl {
+					dWanUl = float64(cur.wanUl-prev.wanUl) / dt
 				}
+				if cur.lanDl >= prev.lanDl {
+					dLanDl = float64(cur.lanDl-prev.lanDl) / dt
+				}
+				if cur.lanUl >= prev.lanUl {
+					dLanUl = float64(cur.lanUl-prev.lanUl) / dt
+				}
+
+				devDlRate := dWanDl + dLanDl
+				devUlRate := dWanUl + dLanUl
 
 				prevRate := s.deviceRates[ip]
 				if devDlRate > 0 || devUlRate > 0 || prevRate.DownloadBytesPerSec > 0 || prevRate.UploadBytesPerSec > 0 {
 					curDevRates[ip] = DeviceRate{
-						DownloadBytesPerSec: devDlRate,
-						UploadBytesPerSec:   devUlRate,
+						DownloadBytesPerSec:    devDlRate,
+						UploadBytesPerSec:      devUlRate,
+						WanDownloadBytesPerSec: dWanDl,
+						WanUploadBytesPerSec:   dWanUl,
+						LanDownloadBytesPerSec: dLanDl,
+						LanUploadBytesPerSec:   dLanUl,
 					}
 					if devDlRate > 0 || prevRate.DownloadBytesPerSec > 0 {
 						devSamples = append(devSamples, Sample{
@@ -190,6 +256,10 @@ func (s *Sampler) SampleOnce() {
 		}
 	}
 	s.prevDeviceBytes = curDeviceBytes
+	s.prevWanDlBytes = curWanDlBytes
+	s.prevWanUlBytes = curWanUlBytes
+	s.prevLanDlBytes = curLanDlBytes
+	s.prevLanUlBytes = curLanUlBytes
 	s.prevIngressBytes = curIngressBytes
 	s.prevEgressBytes = curEgressBytes
 	s.prevIngressPackets = curIngressPackets
@@ -257,12 +327,20 @@ func (s *Sampler) SampleOnce() {
 		UploadPacketsPerSec:    ulPktsRate,
 		TotalDownloadBytes:     curIngressBytes,
 		TotalUploadBytes:       curEgressBytes,
-		TotalDownloadPackets:   curIngressPackets,
-		TotalUploadPackets:     curEgressPackets,
 		InternetIsUp:           anyUp,
 		InternetLatencySeconds: avgLatency,
 		ConnectedDevicesCount:  validDevices,
 		LastSampleTime:         now,
+
+		WanDownloadBytesPerSec: wanDlRate,
+		WanUploadBytesPerSec:   wanUlRate,
+		LanDownloadBytesPerSec: lanDlRate,
+		LanUploadBytesPerSec:   lanUlRate,
+
+		TotalWanDownloadBytes: curWanDlBytes,
+		TotalWanUploadBytes:   curWanUlBytes,
+		TotalLanDownloadBytes: curLanDlBytes,
+		TotalLanUploadBytes:   curLanUlBytes,
 	}
 	s.mu.Unlock()
 
