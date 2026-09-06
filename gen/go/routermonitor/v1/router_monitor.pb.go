@@ -649,7 +649,6 @@ type Device struct {
 	Arp           *ArpInfo               `protobuf:"bytes,8,opt,name=arp,proto3" json:"arp,omitempty"`
 	CurrentRates  *NetworkRates          `protobuf:"bytes,9,opt,name=current_rates,json=currentRates,proto3" json:"current_rates,omitempty"`
 	PeriodUsage   *NetworkUsage          `protobuf:"bytes,10,opt,name=period_usage,json=periodUsage,proto3" json:"period_usage,omitempty"`
-	SessionUsage  *NetworkUsage          `protobuf:"bytes,11,opt,name=session_usage,json=sessionUsage,proto3" json:"session_usage,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -750,13 +749,6 @@ func (x *Device) GetCurrentRates() *NetworkRates {
 func (x *Device) GetPeriodUsage() *NetworkUsage {
 	if x != nil {
 		return x.PeriodUsage
-	}
-	return nil
-}
-
-func (x *Device) GetSessionUsage() *NetworkUsage {
-	if x != nil {
-		return x.SessionUsage
 	}
 	return nil
 }
@@ -1712,7 +1704,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x10lan_upload_bytes\x18\n" +
 	" \x01(\x04R\x0elanUploadBytes\x120\n" +
 	"\x14lan_download_packets\x18\v \x01(\x04R\x12lanDownloadPackets\x12,\n" +
-	"\x12lan_upload_packets\x18\f \x01(\x04R\x10lanUploadPackets\"\xd6\x03\n" +
+	"\x12lan_upload_packets\x18\f \x01(\x04R\x10lanUploadPackets\"\x91\x03\n" +
 	"\x06Device\x12\x17\n" +
 	"\aip_addr\x18\x01 \x01(\tR\x06ipAddr\x12\x19\n" +
 	"\bmac_addr\x18\x02 \x01(\tR\amacAddr\x12\x1a\n" +
@@ -1724,8 +1716,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x03arp\x18\b \x01(\v2\x19.routermonitor.v1.ArpInfoR\x03arp\x12C\n" +
 	"\rcurrent_rates\x18\t \x01(\v2\x1e.routermonitor.v1.NetworkRatesR\fcurrentRates\x12A\n" +
 	"\fperiod_usage\x18\n" +
-	" \x01(\v2\x1e.routermonitor.v1.NetworkUsageR\vperiodUsage\x12C\n" +
-	"\rsession_usage\x18\v \x01(\v2\x1e.routermonitor.v1.NetworkUsageR\fsessionUsage\"I\n" +
+	" \x01(\v2\x1e.routermonitor.v1.NetworkUsageR\vperiodUsage\"I\n" +
 	"\x13ListDevicesResponse\x122\n" +
 	"\adevices\x18\x01 \x03(\v2\x18.routermonitor.v1.DeviceR\adevices\".\n" +
 	"\x16GetTrafficFlowsRequest\x12\x14\n" +
@@ -1849,32 +1840,31 @@ var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	3,  // 0: routermonitor.v1.Device.arp:type_name -> routermonitor.v1.ArpInfo
 	4,  // 1: routermonitor.v1.Device.current_rates:type_name -> routermonitor.v1.NetworkRates
 	5,  // 2: routermonitor.v1.Device.period_usage:type_name -> routermonitor.v1.NetworkUsage
-	5,  // 3: routermonitor.v1.Device.session_usage:type_name -> routermonitor.v1.NetworkUsage
-	6,  // 4: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
-	9,  // 5: routermonitor.v1.GetTrafficFlowsResponse.flows:type_name -> routermonitor.v1.TrafficFlow
-	10, // 6: routermonitor.v1.GetTrafficFlowsResponse.protocols:type_name -> routermonitor.v1.ProtocolStats
-	13, // 7: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.PingTargetStatus
-	21, // 8: routermonitor.v1.QueryTimeSeriesRequest.match_labels:type_name -> routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
-	22, // 9: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
-	18, // 10: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
-	19, // 11: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
-	0,  // 12: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
-	2,  // 13: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
-	8,  // 14: routermonitor.v1.RouterMonitorService.GetTrafficFlows:input_type -> routermonitor.v1.GetTrafficFlowsRequest
-	12, // 15: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
-	15, // 16: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
-	17, // 17: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
-	1,  // 18: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
-	7,  // 19: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
-	11, // 20: routermonitor.v1.RouterMonitorService.GetTrafficFlows:output_type -> routermonitor.v1.GetTrafficFlowsResponse
-	14, // 21: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
-	16, // 22: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
-	20, // 23: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
-	18, // [18:24] is the sub-list for method output_type
-	12, // [12:18] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	6,  // 3: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
+	9,  // 4: routermonitor.v1.GetTrafficFlowsResponse.flows:type_name -> routermonitor.v1.TrafficFlow
+	10, // 5: routermonitor.v1.GetTrafficFlowsResponse.protocols:type_name -> routermonitor.v1.ProtocolStats
+	13, // 6: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.PingTargetStatus
+	21, // 7: routermonitor.v1.QueryTimeSeriesRequest.match_labels:type_name -> routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
+	22, // 8: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
+	18, // 9: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
+	19, // 10: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
+	0,  // 11: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
+	2,  // 12: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
+	8,  // 13: routermonitor.v1.RouterMonitorService.GetTrafficFlows:input_type -> routermonitor.v1.GetTrafficFlowsRequest
+	12, // 14: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
+	15, // 15: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
+	17, // 16: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
+	1,  // 17: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
+	7,  // 18: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
+	11, // 19: routermonitor.v1.RouterMonitorService.GetTrafficFlows:output_type -> routermonitor.v1.GetTrafficFlowsResponse
+	14, // 20: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
+	16, // 21: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
+	20, // 22: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
+	17, // [17:23] is the sub-list for method output_type
+	11, // [11:17] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_routermonitor_v1_router_monitor_proto_init() }

@@ -112,7 +112,6 @@ message Device {
 
   NetworkRates current_rates = 9;
   NetworkUsage period_usage = 10;
-  NetworkUsage session_usage = 11;
 }
 
 message ListDevicesResponse {
