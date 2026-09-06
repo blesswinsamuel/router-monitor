@@ -356,7 +356,7 @@ export function DeviceDetailPage() {
       {/* Main Device Identity Card */}
       <Card className="overflow-hidden">
         <CardHeader className="p-4 sm:p-6 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0 border border-primary/15">
                 <DeviceIcon className="w-7 h-7" />
@@ -484,19 +484,19 @@ export function DeviceDetailPage() {
 
             {/* Live Throughput Badge if online */}
             {isOnline && (dlRate > 0 || ulRate > 0) && (
-              <div className="flex flex-wrap lg:flex-col xl:flex-row items-start lg:items-end xl:items-center gap-2 shrink-0 pt-2 lg:pt-0">
+              <div className="flex flex-col items-start sm:items-end gap-1.5 shrink-0">
                 {(wanDlRate > 0 || wanUlRate > 0) && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/20 text-xs font-mono">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 text-xs font-mono">
                     <Globe className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-muted-foreground text-[10px] uppercase font-sans font-semibold">WAN</span>
+                    <span className="text-muted-foreground text-[10px]">WAN:</span>
                     <span className="text-emerald-500 font-semibold">↓ {formatRate(wanDlRate)}</span>
                     <span className="text-sky-500 font-semibold">↑ {formatRate(wanUlRate)}</span>
                   </div>
                 )}
                 {(lanDlRate > 0 || lanUlRate > 0) && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 border border-border/60 text-xs font-mono">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 text-xs font-mono">
                     <Network className="w-3.5 h-3.5 text-sky-500" />
-                    <span className="text-muted-foreground text-[10px] uppercase font-sans font-semibold">LAN</span>
+                    <span className="text-muted-foreground text-[10px]">LAN:</span>
                     <span className="text-emerald-500 font-semibold">↓ {formatRate(lanDlRate)}</span>
                     <span className="text-sky-500 font-semibold">↑ {formatRate(lanUlRate)}</span>
                   </div>
