@@ -19,7 +19,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { cn } from '@/lib/utils'
 import {
   formatBytes,
-  formatPackets,
   formatRate,
   formatPacketsRate,
   formatRelativeTime,
@@ -36,19 +35,14 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [selectedInterface, setSelectedInterface] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
-  const [period, setPeriod] = useState<'all' | '15m' | '1h' | '6h' | '24h'>('all')
+  const [period, setPeriod] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
   const [selectedDevice, setSelectedDevice] = useState<any | null>(null)
 
   const [periodDevices, setPeriodDevices] = useState<any[] | null>(null)
   const [periodLoading, setPeriodLoading] = useState(false)
 
-  // Fetch period-aggregated device usage from TSDB when period !== 'all'
+  // Fetch period-aggregated device usage from TSDB every 5 seconds
   useEffect(() => {
-    if (period === 'all') {
-      setPeriodDevices(null)
-      return
-    }
-
     let active = true
     async function fetchPeriodData() {
       setPeriodLoading(true)
@@ -74,7 +68,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     }
 
     fetchPeriodData()
-    const interval = setInterval(fetchPeriodData, 10000)
+    const interval = setInterval(fetchPeriodData, 5000)
     return () => {
       active = false
       clearInterval(interval)
@@ -149,10 +143,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     })
   }, [activeDeviceList, currentInterface, statusFilter, search])
 
-  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
-  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
-  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
-  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
+  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodDownloadBytes || 0), 0)
+  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodUploadBytes || 0), 0)
+  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.periodDownloadBytes || 0), 0)
+  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.periodUploadBytes || 0), 0)
 
   return (
     <>
@@ -165,7 +159,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 Connected & Discovered Devices
               </CardTitle>
               <CardDescription>
-                Inspect real-time rates (bytes/s & pps) and bandwidth used across WAN (Internet) and LAN (Local) traffic. Click any row for details.
+                Inspect real-time rates (bytes/s & pps) and period-accurate bandwidth from SQLite TSDB. Click any row for details.
               </CardDescription>
             </div>
             <div className="relative w-full sm:w-72">
@@ -233,19 +227,16 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 </span>
                 <Tabs value={period} onValueChange={(v: any) => setPeriod(v)} className="shrink-0">
                   <TabsList className="h-8">
-                    <TabsTrigger value="all" className="text-xs px-2 py-1">
-                      All Time
-                    </TabsTrigger>
-                    <TabsTrigger value="15m" className="text-xs px-2 py-1">
+                    <TabsTrigger value="15m" className="text-xs px-2.5 py-1">
                       15m
                     </TabsTrigger>
-                    <TabsTrigger value="1h" className="text-xs px-2 py-1">
+                    <TabsTrigger value="1h" className="text-xs px-2.5 py-1">
                       1h
                     </TabsTrigger>
-                    <TabsTrigger value="6h" className="text-xs px-2 py-1">
+                    <TabsTrigger value="6h" className="text-xs px-2.5 py-1">
                       6h
                     </TabsTrigger>
-                    <TabsTrigger value="24h" className="text-xs px-2 py-1">
+                    <TabsTrigger value="24h" className="text-xs px-2.5 py-1">
                       24h
                     </TabsTrigger>
                   </TabsList>
@@ -321,7 +312,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     </TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1">
-                        Bandwidth Used {period !== 'all' ? `(${period})` : '(Lifetime)'}
+                        Bandwidth Used ({period})
                       </span>
                     </TableHead>
                     <TableHead className="w-8"></TableHead>
@@ -334,17 +325,17 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                        <Globe className="w-3.5 h-3.5" /> WAN (Internet)
+                        <Globe className="w-3.5 h-3.5" /> WAN ({period})
                       </span>
                     </TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                        <Network className="w-3.5 h-3.5" /> LAN (Local)
+                        <Network className="w-3.5 h-3.5" /> LAN ({period})
                       </span>
                     </TableHead>
                     <TableHead className="text-right">
                       <span className="inline-flex items-center gap-1">
-                        <HardDrive className="w-3.5 h-3.5" /> Total Traffic
+                        <HardDrive className="w-3.5 h-3.5" /> Total ({period})
                       </span>
                     </TableHead>
                     <TableHead className="w-8"></TableHead>
@@ -383,25 +374,13 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     const lanDlPktsRate = Number(device.currentLanDownloadPacketsPerSec || 0)
                     const lanUlPktsRate = Number(device.currentLanUploadPacketsPerSec || 0)
 
-                    // Lifetime volume metrics
-                    const totalDlBytes = Number(device.downloadBytes || 0)
-                    const totalUlBytes = Number(device.uploadBytes || 0)
-                    const totalDlPkts = Number(device.downloadPackets || 0)
-                    const totalUlPkts = Number(device.uploadPackets || 0)
-
-                    const wanDlBytes = Number(device.internetDownloadBytes || 0)
-                    const wanUlBytes = Number(device.internetUploadBytes || 0)
-                    const wanDlPkts = Number(device.internetDownloadPackets || 0)
-                    const wanUlPkts = Number(device.internetUploadPackets || 0)
-
-                    const lanDlBytes = Number(device.lanDownloadBytes || 0)
-                    const lanUlBytes = Number(device.lanUploadBytes || 0)
-                    const lanDlPkts = Number(device.lanDownloadPackets || 0)
-                    const lanUlPkts = Number(device.lanUploadPackets || 0)
-
-                    // Period volume (when period !== 'all')
+                    // Period volume metrics (queried from TSDB samples for the selected period)
                     const periodDlBytes = Number(device.periodDownloadBytes || 0)
                     const periodUlBytes = Number(device.periodUploadBytes || 0)
+                    const periodWanDlBytes = Number(device.periodWanDownloadBytes || 0)
+                    const periodWanUlBytes = Number(device.periodWanUploadBytes || 0)
+                    const periodLanDlBytes = Number(device.periodLanDownloadBytes || 0)
+                    const periodLanUlBytes = Number(device.periodLanUploadBytes || 0)
 
                     // Active metrics for scoped view
                     let activeDlRate = totalDlRate
@@ -409,29 +388,23 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     let activeDlPktsRate = totalDlPktsRate
                     let activeUlPktsRate = totalUlPktsRate
 
-                    let activeDlBytes = period === 'all' ? totalDlBytes : periodDlBytes
-                    let activeUlBytes = period === 'all' ? totalUlBytes : periodUlBytes
-                    let activeDlPkts = totalDlPkts
-                    let activeUlPkts = totalUlPkts
+                    let activeDlBytes = periodDlBytes
+                    let activeUlBytes = periodUlBytes
 
                     if (trafficScope === 'wan') {
                       activeDlRate = wanDlRate
                       activeUlRate = wanUlRate
                       activeDlPktsRate = wanDlPktsRate
                       activeUlPktsRate = wanUlPktsRate
-                      activeDlBytes = wanDlBytes
-                      activeUlBytes = wanUlBytes
-                      activeDlPkts = wanDlPkts
-                      activeUlPkts = wanUlPkts
+                      activeDlBytes = periodWanDlBytes
+                      activeUlBytes = periodWanUlBytes
                     } else if (trafficScope === 'lan') {
                       activeDlRate = lanDlRate
                       activeUlRate = lanUlRate
                       activeDlPktsRate = lanDlPktsRate
                       activeUlPktsRate = lanUlPktsRate
-                      activeDlBytes = lanDlBytes
-                      activeUlBytes = lanUlBytes
-                      activeDlPkts = lanDlPkts
-                      activeUlPkts = lanUlPkts
+                      activeDlBytes = periodLanDlBytes
+                      activeUlBytes = periodLanUlBytes
                     }
 
                     return (
@@ -537,26 +510,16 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                 <span className="text-foreground font-semibold text-xs flex items-center gap-1">
                                   <span className="text-emerald-500 font-bold">↓</span>
                                   {formatBytes(activeDlBytes)}
-                                  {period === 'all' && (
-                                    <span className="text-[10px] text-muted-foreground font-sans font-normal">
-                                      ({formatPackets(activeDlPkts)} pkts)
-                                    </span>
-                                  )}
                                 </span>
                                 <span className="text-foreground font-semibold text-xs flex items-center gap-1">
                                   <span className="text-sky-500 font-bold">↑</span>
                                   {formatBytes(activeUlBytes)}
-                                  {period === 'all' && (
-                                    <span className="text-[10px] text-muted-foreground font-sans font-normal">
-                                      ({formatPackets(activeUlPkts)} pkts)
-                                    </span>
-                                  )}
                                 </span>
-                                {trafficScope === 'total' && period === 'all' && (wanDlBytes + wanUlBytes > 0 || lanDlBytes + lanUlBytes > 0) && (
+                                {trafficScope === 'total' && (periodWanDlBytes + periodWanUlBytes > 0 || periodLanDlBytes + periodLanUlBytes > 0) && (
                                   <span className="text-[10px] text-muted-foreground/80 flex items-center gap-1 mt-0.5 font-sans">
-                                    <span className="text-emerald-600 dark:text-emerald-400">WAN {formatBytes(wanDlBytes + wanUlBytes)}</span>
+                                    <span className="text-emerald-600 dark:text-emerald-400">WAN {formatBytes(periodWanDlBytes + periodWanUlBytes)}</span>
                                     <span>•</span>
-                                    <span className="text-blue-600 dark:text-blue-400">LAN {formatBytes(lanDlBytes + lanUlBytes)}</span>
+                                    <span className="text-blue-600 dark:text-blue-400">LAN {formatBytes(periodLanDlBytes + periodLanUlBytes)}</span>
                                   </span>
                                 )}
                               </div>
@@ -568,15 +531,15 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             <TableCell className="text-right font-mono">
                               <div className="flex flex-col items-end gap-0.5">
                                 <div className="text-xs font-semibold text-foreground">
-                                  ↓ {formatBytes(wanDlBytes)} ↑ {formatBytes(wanUlBytes)}
+                                  ↓ {formatBytes(periodWanDlBytes)} ↑ {formatBytes(periodWanUlBytes)}
                                 </div>
                                 {(wanDlRate > 0 || wanUlRate > 0) ? (
                                   <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                                     Rate: ↓{formatRate(wanDlRate)} ↑{formatRate(wanUlRate)}
                                   </div>
                                 ) : (
-                                  <div className="text-[10px] text-muted-foreground">
-                                    {formatPackets(wanDlPkts + wanUlPkts)} pkts
+                                  <div className="text-[10px] text-muted-foreground/60">
+                                    Idle
                                   </div>
                                 )}
                               </div>
@@ -586,15 +549,15 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             <TableCell className="text-right font-mono">
                               <div className="flex flex-col items-end gap-0.5">
                                 <div className="text-xs font-semibold text-foreground">
-                                  ↓ {formatBytes(lanDlBytes)} ↑ {formatBytes(lanUlBytes)}
+                                  ↓ {formatBytes(periodLanDlBytes)} ↑ {formatBytes(periodLanUlBytes)}
                                 </div>
                                 {(lanDlRate > 0 || lanUlRate > 0) ? (
                                   <div className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
                                     Rate: ↓{formatRate(lanDlRate)} ↑{formatRate(lanUlRate)}
                                   </div>
                                 ) : (
-                                  <div className="text-[10px] text-muted-foreground">
-                                    {formatPackets(lanDlPkts + lanUlPkts)} pkts
+                                  <div className="text-[10px] text-muted-foreground/60">
+                                    Idle
                                   </div>
                                 )}
                               </div>
@@ -604,15 +567,15 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             <TableCell className="text-right font-mono">
                               <div className="flex flex-col items-end gap-0.5">
                                 <div className="text-xs font-semibold text-foreground">
-                                  {formatBytes(totalDlBytes + totalUlBytes)}
+                                  ↓ {formatBytes(periodDlBytes)} ↑ {formatBytes(periodUlBytes)}
                                 </div>
                                 {(totalDlRate > 0 || totalUlRate > 0) ? (
                                   <div className="text-[10px] text-primary font-medium">
-                                    Live: {formatRate(totalDlRate + totalUlRate)}
+                                    Rate: ↓{formatRate(totalDlRate)} ↑{formatRate(totalUlRate)}
                                   </div>
                                 ) : (
-                                  <div className="text-[10px] text-muted-foreground">
-                                    {formatPackets(totalDlPkts + totalUlPkts)} pkts
+                                  <div className="text-[10px] text-muted-foreground/60">
+                                    Idle
                                   </div>
                                 )}
                               </div>
@@ -636,10 +599,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
               {currentInterface !== 'all' && ` (interface: ${currentInterface})`}
               {statusFilter !== 'all' && ` (${statusFilter})`}
               {trafficScope !== 'total' && ` [Scope: ${trafficScope.toUpperCase()}]`}
-              {period !== 'all' && ` [Period: ${period}]`}
+              {` [Period: ${period}]`}
             </span>
             <span>
-              Total Volume: <span className="font-semibold text-foreground">{formatBytes(totalDl + totalUl)}</span>
+              Total Volume ({period}): <span className="font-semibold text-foreground">{formatBytes(totalDl + totalUl)}</span>
               {filtered.length < activeDeviceList.length && (
                 <span className="ml-1.5 text-muted-foreground">
                   (Filtered: <strong className="text-foreground">{formatBytes(filteredDl + filteredUl)}</strong>)

@@ -306,6 +306,38 @@ func (s *Sampler) SampleOnce() {
 							Value:     devUlRate,
 						})
 					}
+					if dWanDl > 0 || prevRate.WanDownloadBytesPerSec > 0 {
+						devSamples = append(devSamples, Sample{
+							Metric:    "device_wan_bytes_rate",
+							Labels:    map[string]string{"ip": ip, "direction": "ingress"},
+							Timestamp: now,
+							Value:     dWanDl,
+						})
+					}
+					if dWanUl > 0 || prevRate.WanUploadBytesPerSec > 0 {
+						devSamples = append(devSamples, Sample{
+							Metric:    "device_wan_bytes_rate",
+							Labels:    map[string]string{"ip": ip, "direction": "egress"},
+							Timestamp: now,
+							Value:     dWanUl,
+						})
+					}
+					if dLanDl > 0 || prevRate.LanDownloadBytesPerSec > 0 {
+						devSamples = append(devSamples, Sample{
+							Metric:    "device_lan_bytes_rate",
+							Labels:    map[string]string{"ip": ip, "direction": "ingress"},
+							Timestamp: now,
+							Value:     dLanDl,
+						})
+					}
+					if dLanUl > 0 || prevRate.LanUploadBytesPerSec > 0 {
+						devSamples = append(devSamples, Sample{
+							Metric:    "device_lan_bytes_rate",
+							Labels:    map[string]string{"ip": ip, "direction": "egress"},
+							Timestamp: now,
+							Value:     dLanUl,
+						})
+					}
 				}
 			}
 			s.deviceRates = curDevRates
