@@ -84,76 +84,25 @@ func (s *RouterMonitorService) ListDevices(
 	req *connect.Request[routermonitorv1.ListDevicesRequest],
 ) (*connect.Response[routermonitorv1.ListDevicesResponse], error) {
 	rawDevices := s.arpCollector.GetDevices()
-	flows := s.ebpfCollector.GetFlowStats()
 	deviceRates := s.sampler.GetDeviceRates()
 
-	// 1. Separate flows into Internet and Device-to-Device (LAN) traffic
-	type ipTraffic struct {
-		internetDlBytes   uint64
-		internetUlBytes   uint64
-		lanDlBytes        uint64
-		lanUlBytes        uint64
-		internetDlPackets uint64
-		internetUlPackets uint64
-		lanDlPackets      uint64
-		lanUlPackets      uint64
-		dlPkts            uint64
-		ulPkts            uint64
-	}
-	trafficByIP := make(map[string]*ipTraffic)
-	getOrCreateTraffic := func(ip string) *ipTraffic {
-		t, ok := trafficByIP[ip]
-		if !ok {
-			t = &ipTraffic{}
-			trafficByIP[ip] = t
-		}
-		return t
-	}
-
-	for _, f := range flows {
-		isLanToLan := f.SrcIP != "" && f.SrcIP != "internet" && f.DstIP != "" && f.DstIP != "internet"
-
-		if isLanToLan {
-			// Device-to-device (LAN) traffic
-			srcT := getOrCreateTraffic(f.SrcIP)
-			srcT.lanUlBytes += f.Bytes
-			srcT.lanUlPackets += f.Packets
-			srcT.ulPkts += f.Packets
-
-			dstT := getOrCreateTraffic(f.DstIP)
-			dstT.lanDlBytes += f.Bytes
-			dstT.lanDlPackets += f.Packets
-			dstT.dlPkts += f.Packets
-		} else if f.SrcIP != "" && f.SrcIP != "internet" && (f.DstIP == "internet" || f.DstIP == "") {
-			// Device uploading to Internet (WAN Upload)
-			srcT := getOrCreateTraffic(f.SrcIP)
-			srcT.internetUlBytes += f.Bytes
-			srcT.internetUlPackets += f.Packets
-			srcT.ulPkts += f.Packets
-		} else if f.DstIP != "" && f.DstIP != "internet" && (f.SrcIP == "internet" || f.SrcIP == "") {
-			// Device downloading from Internet (WAN Download)
-			dstT := getOrCreateTraffic(f.DstIP)
-			dstT.internetDlBytes += f.Bytes
-			dstT.internetDlPackets += f.Packets
-			dstT.dlPkts += f.Packets
-		}
-	}
-
-	// 2. Load persisted devices from SQLite TSDB
+	// 1. Load persisted devices from SQLite TSDB
 	persistedDevices, _ := s.tsdbDB.GetPersistedDevices()
 	persistedByMAC := make(map[string]tsdb.PersistedDevice)
 	for _, pd := range persistedDevices {
 		persistedByMAC[pd.HWAddr] = pd
 	}
 
-	var periodUsage map[string]*tsdb.DevicePeriodUsage
-	if req.Msg.FromUnix > 0 {
-		to := req.Msg.ToUnix
-		if to <= 0 {
-			to = time.Now().Unix()
-		}
-		periodUsage, _ = s.tsdbDB.GetDeviceUsageByPeriod(req.Msg.FromUnix, to)
+	// 2. Query period usage from SQLite TSDB (default to last 1 hour if not specified)
+	from := req.Msg.FromUnix
+	to := req.Msg.ToUnix
+	if to <= 0 {
+		to = time.Now().Unix()
 	}
+	if from <= 0 {
+		from = to - 3600
+	}
+	periodUsage, _ := s.tsdbDB.GetDeviceUsageByPeriod(from, to)
 
 	now := time.Now().Unix()
 	seenMACs := make(map[string]bool)
@@ -165,53 +114,16 @@ func (s *RouterMonitorService) ListDevices(
 		firstSeen, lastSeen int64,
 		arpInfo *routermonitorv1.ArpInfo,
 		rate tsdb.DeviceRate,
-		traffic *ipTraffic,
 		pu *tsdb.DevicePeriodUsage,
 	) *routermonitorv1.Device {
-		sessionUsage := &routermonitorv1.NetworkUsage{}
-		if traffic != nil {
-			sessionUsage = &routermonitorv1.NetworkUsage{
-				DownloadBytes:      traffic.internetDlBytes + traffic.lanDlBytes,
-				UploadBytes:        traffic.internetUlBytes + traffic.lanUlBytes,
-				DownloadPackets:    traffic.dlPkts,
-				UploadPackets:      traffic.ulPkts,
-				WanDownloadBytes:   traffic.internetDlBytes,
-				WanUploadBytes:     traffic.internetUlBytes,
-				WanDownloadPackets: traffic.internetDlPackets,
-				WanUploadPackets:   traffic.internetUlPackets,
-				LanDownloadBytes:   traffic.lanDlBytes,
-				LanUploadBytes:     traffic.lanUlBytes,
-				LanDownloadPackets: traffic.lanDlPackets,
-				LanUploadPackets:   traffic.lanUlPackets,
-			}
-		}
-
-		var periodUsage *routermonitorv1.NetworkUsage
+		usage := &routermonitorv1.NetworkUsage{}
 		if pu != nil {
-			periodUsage = &routermonitorv1.NetworkUsage{
-				DownloadBytes:    pu.DownloadBytes,
-				UploadBytes:      pu.UploadBytes,
-				WanDownloadBytes: pu.WanDownloadBytes,
-				WanUploadBytes:   pu.WanUploadBytes,
-				LanDownloadBytes: pu.LanDownloadBytes,
-				LanUploadBytes:   pu.LanUploadBytes,
-			}
-		} else {
-			// Default to session usage if period usage is not queried or not present
-			periodUsage = &routermonitorv1.NetworkUsage{
-				DownloadBytes:      sessionUsage.DownloadBytes,
-				UploadBytes:        sessionUsage.UploadBytes,
-				DownloadPackets:    sessionUsage.DownloadPackets,
-				UploadPackets:      sessionUsage.UploadPackets,
-				WanDownloadBytes:   sessionUsage.WanDownloadBytes,
-				WanUploadBytes:     sessionUsage.WanUploadBytes,
-				WanDownloadPackets: sessionUsage.WanDownloadPackets,
-				WanUploadPackets:   sessionUsage.WanUploadPackets,
-				LanDownloadBytes:   sessionUsage.LanDownloadBytes,
-				LanUploadBytes:     sessionUsage.LanUploadBytes,
-				LanDownloadPackets: sessionUsage.LanDownloadPackets,
-				LanUploadPackets:   sessionUsage.LanUploadPackets,
-			}
+			usage.DownloadBytes = pu.DownloadBytes
+			usage.UploadBytes = pu.UploadBytes
+			usage.WanDownloadBytes = pu.WanDownloadBytes
+			usage.WanUploadBytes = pu.WanUploadBytes
+			usage.LanDownloadBytes = pu.LanDownloadBytes
+			usage.LanUploadBytes = pu.LanUploadBytes
 		}
 
 		return &routermonitorv1.Device{
@@ -237,8 +149,7 @@ func (s *RouterMonitorService) ListDevices(
 				LanDownloadPacketsPerSec: rate.LanDownloadPacketsPerSec,
 				LanUploadPacketsPerSec:   rate.LanUploadPacketsPerSec,
 			},
-			PeriodUsage:  periodUsage,
-			SessionUsage: sessionUsage,
+			PeriodUsage: usage,
 		}
 	}
 
@@ -279,7 +190,7 @@ func (s *RouterMonitorService) ListDevices(
 		dev := createDevice(
 			d.IPAddr, d.HWAddr, d.Hostname, d.Device, status,
 			firstSeen, lastSeen, arpInfo,
-			rate, trafficByIP[d.IPAddr], periodUsage[d.IPAddr],
+			rate, periodUsage[d.IPAddr],
 		)
 		devices = append(devices, dev)
 	}
@@ -297,7 +208,7 @@ func (s *RouterMonitorService) ListDevices(
 		dev := createDevice(
 			pd.IPAddr, pd.HWAddr, pd.Hostname, pd.Device, "offline",
 			pd.FirstSeen.Unix(), pd.LastSeen.Unix(), nil,
-			rate, trafficByIP[pd.IPAddr], periodUsage[pd.IPAddr],
+			rate, periodUsage[pd.IPAddr],
 		)
 		devices = append(devices, dev)
 	}
@@ -310,7 +221,14 @@ func (s *RouterMonitorService) ListDevices(
 			return iOnline
 		}
 		if iOnline {
-			return devices[i].SessionUsage.DownloadBytes > devices[j].SessionUsage.DownloadBytes
+			var iBytes, jBytes uint64
+			if devices[i].PeriodUsage != nil {
+				iBytes = devices[i].PeriodUsage.DownloadBytes
+			}
+			if devices[j].PeriodUsage != nil {
+				jBytes = devices[j].PeriodUsage.DownloadBytes
+			}
+			return iBytes > jBytes
 		}
 		return devices[i].LastSeenUnix > devices[j].LastSeenUnix
 	})
