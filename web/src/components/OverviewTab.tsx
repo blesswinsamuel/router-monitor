@@ -6,6 +6,7 @@ import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { formatBytes, formatRate, formatLatency } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
+import { cn } from '@/lib/utils'
 import {
   AreaChart,
   Area,
@@ -209,13 +210,17 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                   {formatLatency(overview?.internetLatencySeconds)}
                 </span>
                 <Badge
-                  variant={overview?.internetIsUp ? "outline" : "destructive"}
-                  className={overview?.internetIsUp ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-normal" : "font-normal"}
+                  variant={overview?.internetStatus === 'down' || !overview?.internetIsUp ? "destructive" : "outline"}
+                  className={cn(
+                    "font-normal capitalize",
+                    overview?.internetStatus === 'degraded' && "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                    (overview?.internetStatus === 'operational' || (!overview?.internetStatus && overview?.internetIsUp)) && "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  )}
                 >
-                  {overview?.internetIsUp ? "Online" : "Offline"}
+                  {overview?.internetStatus || (overview?.internetIsUp ? "Online" : "Offline")}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Average TCP reachability latency</p>
+              <p className="text-xs text-muted-foreground mt-1">Multi-tier active probe latency</p>
             </CardContent>
           </Card>
         </Link>

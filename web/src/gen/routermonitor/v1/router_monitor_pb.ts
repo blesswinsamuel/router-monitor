@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file routermonitor/v1/router_monitor.proto.
  */
 export const file_routermonitor_v1_router_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASIUChJHZXRPdmVydmlld1JlcXVlc3QivAIKE0dldE92ZXJ2aWV3UmVzcG9uc2USFgoOaW50ZXJmYWNlX25hbWUYASABKAkSFwoPbGFuX3N1Ym5ldF9jaWRyGAIgASgJEhYKDmludGVybmV0X2lzX3VwGAMgASgIEiAKGGludGVybmV0X2xhdGVuY3lfc2Vjb25kcxgEIAEoARIfChdjb25uZWN0ZWRfZGV2aWNlc19jb3VudBgFIAEoBRIzCgV0b3RhbBgGIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgHIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgIIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIjgKEkxpc3REZXZpY2VzUmVxdWVzdBIRCglmcm9tX3VuaXgYASABKAMSDwoHdG9fdW5peBgCIAEoAyI9CgdBcnBJbmZvEg0KBWZsYWdzGAEgASgDEhAKCGlzX3ZhbGlkGAIgASgIEhEKCWludGVyZmFjZRgDIAEoCSLUAgoGRGV2aWNlEg8KB2lwX2FkZHIYASABKAkSEAoIbWFjX2FkZHIYAiABKAkSEAoIaG9zdG5hbWUYAyABKAkSEQoJaW50ZXJmYWNlGAQgASgJEg4KBnN0YXR1cxgFIAEoCRIXCg9maXJzdF9zZWVuX3VuaXgYBiABKAMSFgoObGFzdF9zZWVuX3VuaXgYByABKAMSJgoDYXJwGAggASgLMhkucm91dGVybW9uaXRvci52MS5BcnBJbmZvEjMKBXRvdGFsGAkgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAogASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAsgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMiQAoTTGlzdERldmljZXNSZXNwb25zZRIpCgdkZXZpY2VzGAEgAygLMhgucm91dGVybW9uaXRvci52MS5EZXZpY2UiJwoWR2V0VHJhZmZpY0Zsb3dzUmVxdWVzdBINCgVsaW1pdBgBIAEoBSKFAQoLVHJhZmZpY0Zsb3cSEQoJZGlyZWN0aW9uGAEgASgJEhEKCWV0aF9wcm90bxgCIAEoCRIQCghpcF9wcm90bxgDIAEoCRIOCgZzcmNfaXAYBCABKAkSDgoGZHN0X2lwGAUgASgJEg8KB3BhY2tldHMYBiABKAQSDQoFYnl0ZXMYByABKAQiQQoNUHJvdG9jb2xTdGF0cxIQCghwcm90b2NvbBgBIAEoCRINCgVieXRlcxgCIAEoBBIPCgdwYWNrZXRzGAMgASgEIqcBChdHZXRUcmFmZmljRmxvd3NSZXNwb25zZRIsCgVmbG93cxgBIAMoCzIdLnJvdXRlcm1vbml0b3IudjEuVHJhZmZpY0Zsb3cSMgoJcHJvdG9jb2xzGAIgAygLMh8ucm91dGVybW9uaXRvci52MS5Qcm90b2NvbFN0YXRzEhMKC3RvdGFsX2J5dGVzGAMgASgEEhUKDXRvdGFsX3BhY2tldHMYBCABKAQiGgoYR2V0SW50ZXJuZXRIZWFsdGhSZXF1ZXN0ImoKEFBpbmdUYXJnZXRTdGF0dXMSDAoEYWRkchgBIAEoCRINCgVpc191cBgCIAEoCBIcChRsYXN0X2xhdGVuY3lfc2Vjb25kcxgDIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAQgASgBImcKGUdldEludGVybmV0SGVhbHRoUmVzcG9uc2USFQoNb3ZlcmFsbF9pc191cBgBIAEoCBIzCgd0YXJnZXRzGAIgAygLMiIucm91dGVybW9uaXRvci52MS5QaW5nVGFyZ2V0U3RhdHVzIjIKFlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QSGAoQaW50ZXJ2YWxfc2Vjb25kcxgBIAEoBSKhAgoRTGl2ZVN0YXRzUmVzcG9uc2USFgoOdGltZXN0YW1wX3VuaXgYASABKAMSFgoOaW50ZXJuZXRfaXNfdXAYAiABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAMgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAQgASgFEjMKBXRvdGFsGAUgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMi7AEKFlF1ZXJ5VGltZVNlcmllc1JlcXVlc3QSEwoLbWV0cmljX25hbWUYASABKAkSTwoMbWF0Y2hfbGFiZWxzGAIgAygLMjkucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXF1ZXN0Lk1hdGNoTGFiZWxzRW50cnkSEQoJZnJvbV91bml4GAMgASgDEg8KB3RvX3VuaXgYBCABKAMSFAoMc3RlcF9zZWNvbmRzGAUgASgFGjIKEE1hdGNoTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJeCg9UaW1lU2VyaWVzUG9pbnQSFgoOdGltZXN0YW1wX3VuaXgYASABKAMSDQoFdmFsdWUYAiABKAESEQoJbWluX3ZhbHVlGAMgASgBEhEKCW1heF92YWx1ZRgEIAEoASK9AQoKVGltZVNlcmllcxITCgttZXRyaWNfbmFtZRgBIAEoCRI4CgZsYWJlbHMYAiADKAsyKC5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXMuTGFiZWxzRW50cnkSMQoGcG9pbnRzGAMgAygLMiEucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzUG9pbnQaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJHChdRdWVyeVRpbWVTZXJpZXNSZXNwb25zZRIsCgZzZXJpZXMYASADKAsyHC5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXMy8AQKFFJvdXRlck1vbml0b3JTZXJ2aWNlEloKC0dldE92ZXJ2aWV3EiQucm91dGVybW9uaXRvci52MS5HZXRPdmVydmlld1JlcXVlc3QaJS5yb3V0ZXJtb25pdG9yLnYxLkdldE92ZXJ2aWV3UmVzcG9uc2USWgoLTGlzdERldmljZXMSJC5yb3V0ZXJtb25pdG9yLnYxLkxpc3REZXZpY2VzUmVxdWVzdBolLnJvdXRlcm1vbml0b3IudjEuTGlzdERldmljZXNSZXNwb25zZRJmCg9HZXRUcmFmZmljRmxvd3MSKC5yb3V0ZXJtb25pdG9yLnYxLkdldFRyYWZmaWNGbG93c1JlcXVlc3QaKS5yb3V0ZXJtb25pdG9yLnYxLkdldFRyYWZmaWNGbG93c1Jlc3BvbnNlEmwKEUdldEludGVybmV0SGVhbHRoEioucm91dGVybW9uaXRvci52MS5HZXRJbnRlcm5ldEhlYWx0aFJlcXVlc3QaKy5yb3V0ZXJtb25pdG9yLnYxLkdldEludGVybmV0SGVhbHRoUmVzcG9uc2USYgoPU3RyZWFtTGl2ZVN0YXRzEigucm91dGVybW9uaXRvci52MS5TdHJlYW1MaXZlU3RhdHNSZXF1ZXN0GiMucm91dGVybW9uaXRvci52MS5MaXZlU3RhdHNSZXNwb25zZTABEmYKD1F1ZXJ5VGltZVNlcmllcxIoLnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVxdWVzdBopLnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2VCUlpQZ2l0aHViLmNvbS9ibGVzc3dpbnNhbXVlbC9yb3V0ZXItbW9uaXRvci9nZW4vZ28vcm91dGVybW9uaXRvci92MTtyb3V0ZXJtb25pdG9ydjFiBnByb3RvMw");
+  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASIUChJHZXRPdmVydmlld1JlcXVlc3QimgMKE0dldE92ZXJ2aWV3UmVzcG9uc2USFgoOaW50ZXJmYWNlX25hbWUYASABKAkSFwoPbGFuX3N1Ym5ldF9jaWRyGAIgASgJEhYKDmludGVybmV0X2lzX3VwGAMgASgIEiAKGGludGVybmV0X2xhdGVuY3lfc2Vjb25kcxgEIAEoARIfChdjb25uZWN0ZWRfZGV2aWNlc19jb3VudBgFIAEoBRIzCgV0b3RhbBgGIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgHIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgIIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEhcKD2ludGVybmV0X3N0YXR1cxgJIAEoCRIiChppbnRlcm5ldF9wYWNrZXRfbG9zc19yYXRpbxgKIAEoARIfChdpbnRlcm5ldF9qaXR0ZXJfc2Vjb25kcxgLIAEoASI4ChJMaXN0RGV2aWNlc1JlcXVlc3QSEQoJZnJvbV91bml4GAEgASgDEg8KB3RvX3VuaXgYAiABKAMiPQoHQXJwSW5mbxINCgVmbGFncxgBIAEoAxIQCghpc192YWxpZBgCIAEoCBIRCglpbnRlcmZhY2UYAyABKAki1AIKBkRldmljZRIPCgdpcF9hZGRyGAEgASgJEhAKCG1hY19hZGRyGAIgASgJEhAKCGhvc3RuYW1lGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIOCgZzdGF0dXMYBSABKAkSFwoPZmlyc3Rfc2Vlbl91bml4GAYgASgDEhYKDmxhc3Rfc2Vlbl91bml4GAcgASgDEiYKA2FycBgIIAEoCzIZLnJvdXRlcm1vbml0b3IudjEuQXJwSW5mbxIzCgV0b3RhbBgJIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgKIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgLIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIkAKE0xpc3REZXZpY2VzUmVzcG9uc2USKQoHZGV2aWNlcxgBIAMoCzIYLnJvdXRlcm1vbml0b3IudjEuRGV2aWNlIicKFkdldFRyYWZmaWNGbG93c1JlcXVlc3QSDQoFbGltaXQYASABKAUihQEKC1RyYWZmaWNGbG93EhEKCWRpcmVjdGlvbhgBIAEoCRIRCglldGhfcHJvdG8YAiABKAkSEAoIaXBfcHJvdG8YAyABKAkSDgoGc3JjX2lwGAQgASgJEg4KBmRzdF9pcBgFIAEoCRIPCgdwYWNrZXRzGAYgASgEEg0KBWJ5dGVzGAcgASgEIkEKDVByb3RvY29sU3RhdHMSEAoIcHJvdG9jb2wYASABKAkSDQoFYnl0ZXMYAiABKAQSDwoHcGFja2V0cxgDIAEoBCKnAQoXR2V0VHJhZmZpY0Zsb3dzUmVzcG9uc2USLAoFZmxvd3MYASADKAsyHS5yb3V0ZXJtb25pdG9yLnYxLlRyYWZmaWNGbG93EjIKCXByb3RvY29scxgCIAMoCzIfLnJvdXRlcm1vbml0b3IudjEuUHJvdG9jb2xTdGF0cxITCgt0b3RhbF9ieXRlcxgDIAEoBBIVCg10b3RhbF9wYWNrZXRzGAQgASgEIhoKGEdldEludGVybmV0SGVhbHRoUmVxdWVzdCKhAgoMVGFyZ2V0SGVhbHRoEgwKBG5hbWUYASABKAkSDgoGdGFyZ2V0GAIgASgJEhIKCnByb2JlX3R5cGUYAyABKAkSDQoFaXNfdXAYBCABKAgSFwoPbGF0ZW5jeV9zZWNvbmRzGAUgASgBEhsKE21pbl9sYXRlbmN5X3NlY29uZHMYBiABKAESGwoTbWF4X2xhdGVuY3lfc2Vjb25kcxgHIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAggASgBEhYKDmppdHRlcl9zZWNvbmRzGAkgASgBEhkKEXBhY2tldF9sb3NzX3JhdGlvGAogASgBEhIKCmxhc3RfZXJyb3IYCyABKAkSGQoRbGFzdF9jaGVja2VkX3VuaXgYDCABKAMiegoMT3V0YWdlUmVjb3JkEgoKAmlkGAEgASgDEhIKCnN0YXJ0X3VuaXgYAiABKAMSEAoIZW5kX3VuaXgYAyABKAMSGAoQZHVyYXRpb25fc2Vjb25kcxgEIAEoARIOCgZzdGF0dXMYBSABKAkSDgoGcmVhc29uGAYgASgJIpcCChlHZXRJbnRlcm5ldEhlYWx0aFJlc3BvbnNlEhYKDm92ZXJhbGxfc3RhdHVzGAEgASgJEhUKDW92ZXJhbGxfaXNfdXAYAiABKAgSHwoXb3ZlcmFsbF9sYXRlbmN5X3NlY29uZHMYAyABKAESIQoZb3ZlcmFsbF9wYWNrZXRfbG9zc19yYXRpbxgEIAEoARIeChZvdmVyYWxsX2ppdHRlcl9zZWNvbmRzGAUgASgBEi8KB3RhcmdldHMYBiADKAsyHi5yb3V0ZXJtb25pdG9yLnYxLlRhcmdldEhlYWx0aBI2Cg5yZWNlbnRfb3V0YWdlcxgHIAMoCzIeLnJvdXRlcm1vbml0b3IudjEuT3V0YWdlUmVjb3JkIjIKFlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QSGAoQaW50ZXJ2YWxfc2Vjb25kcxgBIAEoBSL/AgoRTGl2ZVN0YXRzUmVzcG9uc2USFgoOdGltZXN0YW1wX3VuaXgYASABKAMSFgoOaW50ZXJuZXRfaXNfdXAYAiABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAMgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAQgASgFEjMKBXRvdGFsGAUgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSFwoPaW50ZXJuZXRfc3RhdHVzGAggASgJEiIKGmludGVybmV0X3BhY2tldF9sb3NzX3JhdGlvGAkgASgBEh8KF2ludGVybmV0X2ppdHRlcl9zZWNvbmRzGAogASgBIuwBChZRdWVyeVRpbWVTZXJpZXNSZXF1ZXN0EhMKC21ldHJpY19uYW1lGAEgASgJEk8KDG1hdGNoX2xhYmVscxgCIAMoCzI5LnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVxdWVzdC5NYXRjaExhYmVsc0VudHJ5EhEKCWZyb21fdW5peBgDIAEoAxIPCgd0b191bml4GAQgASgDEhQKDHN0ZXBfc2Vjb25kcxgFIAEoBRoyChBNYXRjaExhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiXgoPVGltZVNlcmllc1BvaW50EhYKDnRpbWVzdGFtcF91bml4GAEgASgDEg0KBXZhbHVlGAIgASgBEhEKCW1pbl92YWx1ZRgDIAEoARIRCgltYXhfdmFsdWUYBCABKAEivQEKClRpbWVTZXJpZXMSEwoLbWV0cmljX25hbWUYASABKAkSOAoGbGFiZWxzGAIgAygLMigucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzLkxhYmVsc0VudHJ5EjEKBnBvaW50cxgDIAMoCzIhLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllc1BvaW50Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiRwoXUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2USLAoGc2VyaWVzGAEgAygLMhwucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzMvAEChRSb3V0ZXJNb25pdG9yU2VydmljZRJaCgtHZXRPdmVydmlldxIkLnJvdXRlcm1vbml0b3IudjEuR2V0T3ZlcnZpZXdSZXF1ZXN0GiUucm91dGVybW9uaXRvci52MS5HZXRPdmVydmlld1Jlc3BvbnNlEloKC0xpc3REZXZpY2VzEiQucm91dGVybW9uaXRvci52MS5MaXN0RGV2aWNlc1JlcXVlc3QaJS5yb3V0ZXJtb25pdG9yLnYxLkxpc3REZXZpY2VzUmVzcG9uc2USZgoPR2V0VHJhZmZpY0Zsb3dzEigucm91dGVybW9uaXRvci52MS5HZXRUcmFmZmljRmxvd3NSZXF1ZXN0Gikucm91dGVybW9uaXRvci52MS5HZXRUcmFmZmljRmxvd3NSZXNwb25zZRJsChFHZXRJbnRlcm5ldEhlYWx0aBIqLnJvdXRlcm1vbml0b3IudjEuR2V0SW50ZXJuZXRIZWFsdGhSZXF1ZXN0Gisucm91dGVybW9uaXRvci52MS5HZXRJbnRlcm5ldEhlYWx0aFJlc3BvbnNlEmIKD1N0cmVhbUxpdmVTdGF0cxIoLnJvdXRlcm1vbml0b3IudjEuU3RyZWFtTGl2ZVN0YXRzUmVxdWVzdBojLnJvdXRlcm1vbml0b3IudjEuTGl2ZVN0YXRzUmVzcG9uc2UwARJmCg9RdWVyeVRpbWVTZXJpZXMSKC5yb3V0ZXJtb25pdG9yLnYxLlF1ZXJ5VGltZVNlcmllc1JlcXVlc3QaKS5yb3V0ZXJtb25pdG9yLnYxLlF1ZXJ5VGltZVNlcmllc1Jlc3BvbnNlQlJaUGdpdGh1Yi5jb20vYmxlc3N3aW5zYW11ZWwvcm91dGVyLW1vbml0b3IvZ2VuL2dvL3JvdXRlcm1vbml0b3IvdjE7cm91dGVybW9uaXRvcnYxYgZwcm90bzM");
 
 /**
  * @generated from message routermonitor.v1.DirectionalTraffic
@@ -124,6 +124,23 @@ export type GetOverviewResponse = Message<"routermonitor.v1.GetOverviewResponse"
    * @generated from field: routermonitor.v1.DirectionalTraffic lan = 8;
    */
   lan?: DirectionalTraffic | undefined;
+
+  /**
+   * "operational", "degraded", "down"
+   *
+   * @generated from field: string internet_status = 9;
+   */
+  internetStatus: string;
+
+  /**
+   * @generated from field: double internet_packet_loss_ratio = 10;
+   */
+  internetPacketLossRatio: number;
+
+  /**
+   * @generated from field: double internet_jitter_seconds = 11;
+   */
+  internetJitterSeconds: number;
 };
 
 /**
@@ -413,50 +430,163 @@ export const GetInternetHealthRequestSchema: GenMessage<GetInternetHealthRequest
   messageDesc(file_routermonitor_v1_router_monitor, 11);
 
 /**
- * @generated from message routermonitor.v1.PingTargetStatus
+ * @generated from message routermonitor.v1.TargetHealth
  */
-export type PingTargetStatus = Message<"routermonitor.v1.PingTargetStatus"> & {
+export type TargetHealth = Message<"routermonitor.v1.TargetHealth"> & {
   /**
-   * @generated from field: string addr = 1;
+   * @generated from field: string name = 1;
    */
-  addr: string;
+  name: string;
 
   /**
-   * @generated from field: bool is_up = 2;
+   * @generated from field: string target = 2;
+   */
+  target: string;
+
+  /**
+   * "icmp", "dns", "http", "tcp"
+   *
+   * @generated from field: string probe_type = 3;
+   */
+  probeType: string;
+
+  /**
+   * @generated from field: bool is_up = 4;
    */
   isUp: boolean;
 
   /**
-   * @generated from field: double last_latency_seconds = 3;
+   * @generated from field: double latency_seconds = 5;
    */
-  lastLatencySeconds: number;
+  latencySeconds: number;
 
   /**
-   * @generated from field: double avg_latency_seconds = 4;
+   * @generated from field: double min_latency_seconds = 6;
+   */
+  minLatencySeconds: number;
+
+  /**
+   * @generated from field: double max_latency_seconds = 7;
+   */
+  maxLatencySeconds: number;
+
+  /**
+   * @generated from field: double avg_latency_seconds = 8;
    */
   avgLatencySeconds: number;
+
+  /**
+   * @generated from field: double jitter_seconds = 9;
+   */
+  jitterSeconds: number;
+
+  /**
+   * @generated from field: double packet_loss_ratio = 10;
+   */
+  packetLossRatio: number;
+
+  /**
+   * @generated from field: string last_error = 11;
+   */
+  lastError: string;
+
+  /**
+   * @generated from field: int64 last_checked_unix = 12;
+   */
+  lastCheckedUnix: bigint;
 };
 
 /**
- * Describes the message routermonitor.v1.PingTargetStatus.
- * Use `create(PingTargetStatusSchema)` to create a new message.
+ * Describes the message routermonitor.v1.TargetHealth.
+ * Use `create(TargetHealthSchema)` to create a new message.
  */
-export const PingTargetStatusSchema: GenMessage<PingTargetStatus> = /*@__PURE__*/
+export const TargetHealthSchema: GenMessage<TargetHealth> = /*@__PURE__*/
   messageDesc(file_routermonitor_v1_router_monitor, 12);
+
+/**
+ * @generated from message routermonitor.v1.OutageRecord
+ */
+export type OutageRecord = Message<"routermonitor.v1.OutageRecord"> & {
+  /**
+   * @generated from field: int64 id = 1;
+   */
+  id: bigint;
+
+  /**
+   * @generated from field: int64 start_unix = 2;
+   */
+  startUnix: bigint;
+
+  /**
+   * @generated from field: int64 end_unix = 3;
+   */
+  endUnix: bigint;
+
+  /**
+   * @generated from field: double duration_seconds = 4;
+   */
+  durationSeconds: number;
+
+  /**
+   * "degraded", "down"
+   *
+   * @generated from field: string status = 5;
+   */
+  status: string;
+
+  /**
+   * @generated from field: string reason = 6;
+   */
+  reason: string;
+};
+
+/**
+ * Describes the message routermonitor.v1.OutageRecord.
+ * Use `create(OutageRecordSchema)` to create a new message.
+ */
+export const OutageRecordSchema: GenMessage<OutageRecord> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 13);
 
 /**
  * @generated from message routermonitor.v1.GetInternetHealthResponse
  */
 export type GetInternetHealthResponse = Message<"routermonitor.v1.GetInternetHealthResponse"> & {
   /**
-   * @generated from field: bool overall_is_up = 1;
+   * "operational", "degraded", "down"
+   *
+   * @generated from field: string overall_status = 1;
+   */
+  overallStatus: string;
+
+  /**
+   * @generated from field: bool overall_is_up = 2;
    */
   overallIsUp: boolean;
 
   /**
-   * @generated from field: repeated routermonitor.v1.PingTargetStatus targets = 2;
+   * @generated from field: double overall_latency_seconds = 3;
    */
-  targets: PingTargetStatus[];
+  overallLatencySeconds: number;
+
+  /**
+   * @generated from field: double overall_packet_loss_ratio = 4;
+   */
+  overallPacketLossRatio: number;
+
+  /**
+   * @generated from field: double overall_jitter_seconds = 5;
+   */
+  overallJitterSeconds: number;
+
+  /**
+   * @generated from field: repeated routermonitor.v1.TargetHealth targets = 6;
+   */
+  targets: TargetHealth[];
+
+  /**
+   * @generated from field: repeated routermonitor.v1.OutageRecord recent_outages = 7;
+   */
+  recentOutages: OutageRecord[];
 };
 
 /**
@@ -464,7 +594,7 @@ export type GetInternetHealthResponse = Message<"routermonitor.v1.GetInternetHea
  * Use `create(GetInternetHealthResponseSchema)` to create a new message.
  */
 export const GetInternetHealthResponseSchema: GenMessage<GetInternetHealthResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 13);
+  messageDesc(file_routermonitor_v1_router_monitor, 14);
 
 /**
  * @generated from message routermonitor.v1.StreamLiveStatsRequest
@@ -483,7 +613,7 @@ export type StreamLiveStatsRequest = Message<"routermonitor.v1.StreamLiveStatsRe
  * Use `create(StreamLiveStatsRequestSchema)` to create a new message.
  */
 export const StreamLiveStatsRequestSchema: GenMessage<StreamLiveStatsRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 14);
+  messageDesc(file_routermonitor_v1_router_monitor, 15);
 
 /**
  * @generated from message routermonitor.v1.LiveStatsResponse
@@ -523,6 +653,23 @@ export type LiveStatsResponse = Message<"routermonitor.v1.LiveStatsResponse"> & 
    * @generated from field: routermonitor.v1.DirectionalTraffic lan = 7;
    */
   lan?: DirectionalTraffic | undefined;
+
+  /**
+   * "operational", "degraded", "down"
+   *
+   * @generated from field: string internet_status = 8;
+   */
+  internetStatus: string;
+
+  /**
+   * @generated from field: double internet_packet_loss_ratio = 9;
+   */
+  internetPacketLossRatio: number;
+
+  /**
+   * @generated from field: double internet_jitter_seconds = 10;
+   */
+  internetJitterSeconds: number;
 };
 
 /**
@@ -530,7 +677,7 @@ export type LiveStatsResponse = Message<"routermonitor.v1.LiveStatsResponse"> & 
  * Use `create(LiveStatsResponseSchema)` to create a new message.
  */
 export const LiveStatsResponseSchema: GenMessage<LiveStatsResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 15);
+  messageDesc(file_routermonitor_v1_router_monitor, 16);
 
 /**
  * @generated from message routermonitor.v1.QueryTimeSeriesRequest
@@ -573,7 +720,7 @@ export type QueryTimeSeriesRequest = Message<"routermonitor.v1.QueryTimeSeriesRe
  * Use `create(QueryTimeSeriesRequestSchema)` to create a new message.
  */
 export const QueryTimeSeriesRequestSchema: GenMessage<QueryTimeSeriesRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 16);
+  messageDesc(file_routermonitor_v1_router_monitor, 17);
 
 /**
  * @generated from message routermonitor.v1.TimeSeriesPoint
@@ -605,7 +752,7 @@ export type TimeSeriesPoint = Message<"routermonitor.v1.TimeSeriesPoint"> & {
  * Use `create(TimeSeriesPointSchema)` to create a new message.
  */
 export const TimeSeriesPointSchema: GenMessage<TimeSeriesPoint> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 17);
+  messageDesc(file_routermonitor_v1_router_monitor, 18);
 
 /**
  * @generated from message routermonitor.v1.TimeSeries
@@ -632,7 +779,7 @@ export type TimeSeries = Message<"routermonitor.v1.TimeSeries"> & {
  * Use `create(TimeSeriesSchema)` to create a new message.
  */
 export const TimeSeriesSchema: GenMessage<TimeSeries> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 18);
+  messageDesc(file_routermonitor_v1_router_monitor, 19);
 
 /**
  * @generated from message routermonitor.v1.QueryTimeSeriesResponse
@@ -649,7 +796,7 @@ export type QueryTimeSeriesResponse = Message<"routermonitor.v1.QueryTimeSeriesR
  * Use `create(QueryTimeSeriesResponseSchema)` to create a new message.
  */
 export const QueryTimeSeriesResponseSchema: GenMessage<QueryTimeSeriesResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 19);
+  messageDesc(file_routermonitor_v1_router_monitor, 20);
 
 /**
  * @generated from service routermonitor.v1.RouterMonitorService

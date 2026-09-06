@@ -79,14 +79,17 @@ func (s *RouterMonitorService) GetOverview(
 	total, wan, lan := liveRatesToTraffic(rates)
 
 	res := &routermonitorv1.GetOverviewResponse{
-		InterfaceName:          s.interfaceName,
-		LanSubnetCidr:          s.lanSubnetCIDR,
-		InternetIsUp:           rates.InternetIsUp,
-		InternetLatencySeconds: rates.InternetLatencySeconds,
-		ConnectedDevicesCount:  rates.ConnectedDevicesCount,
-		Total:                  total,
-		Wan:                    wan,
-		Lan:                    lan,
+		InterfaceName:           s.interfaceName,
+		LanSubnetCidr:           s.lanSubnetCIDR,
+		InternetIsUp:            rates.InternetIsUp,
+		InternetLatencySeconds:  rates.InternetLatencySeconds,
+		InternetStatus:          rates.InternetStatus,
+		InternetPacketLossRatio: rates.InternetPacketLossRatio,
+		InternetJitterSeconds:   rates.InternetJitterSeconds,
+		ConnectedDevicesCount:   rates.ConnectedDevicesCount,
+		Total:                   total,
+		Wan:                     wan,
+		Lan:                     lan,
 	}
 
 	return connect.NewResponse(res), nil
@@ -331,25 +334,52 @@ func (s *RouterMonitorService) GetInternetHealth(
 	ctx context.Context,
 	req *connect.Request[routermonitorv1.GetInternetHealthRequest],
 ) (*connect.Response[routermonitorv1.GetInternetHealthResponse], error) {
-	rawTargets := s.internetChecker.GetStatus()
+	health := s.internetChecker.GetOverallHealth()
+	rawResults := s.internetChecker.GetTargetResults()
+	persistedOutages, _ := s.tsdbDB.GetRecentOutages(25)
 
-	overallUp := false
-	targets := make([]*routermonitorv1.PingTargetStatus, 0, len(rawTargets))
-	for _, t := range rawTargets {
-		if t.IsUp {
-			overallUp = true
+	targets := make([]*routermonitorv1.TargetHealth, 0, len(rawResults))
+	for _, r := range rawResults {
+		targets = append(targets, &routermonitorv1.TargetHealth{
+			Name:              r.Target.Name,
+			Target:            r.Target.Target,
+			ProbeType:         string(r.Target.Type),
+			IsUp:              r.IsUp,
+			LatencySeconds:    r.Latency.Seconds(),
+			MinLatencySeconds: r.MinLatency.Seconds(),
+			MaxLatencySeconds: r.MaxLatency.Seconds(),
+			AvgLatencySeconds: r.AvgLatency.Seconds(),
+			JitterSeconds:     r.Jitter.Seconds(),
+			PacketLossRatio:   r.PacketLossRatio,
+			LastError:         r.LastError,
+			LastCheckedUnix:   r.Timestamp.Unix(),
+		})
+	}
+
+	outages := make([]*routermonitorv1.OutageRecord, 0, len(persistedOutages))
+	for _, o := range persistedOutages {
+		var endUnix int64
+		if !o.EndTime.IsZero() {
+			endUnix = o.EndTime.Unix()
 		}
-		targets = append(targets, &routermonitorv1.PingTargetStatus{
-			Addr:               t.Addr,
-			IsUp:               t.IsUp,
-			LastLatencySeconds: t.LastLatencySec,
-			AvgLatencySeconds:  t.AvgLatencySec,
+		outages = append(outages, &routermonitorv1.OutageRecord{
+			Id:              o.ID,
+			StartUnix:       o.StartTime.Unix(),
+			EndUnix:         endUnix,
+			DurationSeconds: o.DurationSeconds,
+			Status:          o.Status,
+			Reason:          o.Reason,
 		})
 	}
 
 	return connect.NewResponse(&routermonitorv1.GetInternetHealthResponse{
-		OverallIsUp: overallUp,
-		Targets:     targets,
+		OverallStatus:          health.Status,
+		OverallIsUp:            health.IsUp,
+		OverallLatencySeconds:  health.LatencySeconds,
+		OverallPacketLossRatio: health.PacketLossRatio,
+		OverallJitterSeconds:   health.JitterSeconds,
+		Targets:                targets,
+		RecentOutages:          outages,
 	}), nil
 }
 
@@ -370,13 +400,16 @@ func (s *RouterMonitorService) StreamLiveStats(
 		rates := s.sampler.GetLiveRates()
 		total, wan, lan := liveRatesToTraffic(rates)
 		return stream.Send(&routermonitorv1.LiveStatsResponse{
-			TimestampUnix:          time.Now().Unix(),
-			InternetIsUp:           rates.InternetIsUp,
-			InternetLatencySeconds: rates.InternetLatencySeconds,
-			ConnectedDevicesCount:  rates.ConnectedDevicesCount,
-			Total:                  total,
-			Wan:                    wan,
-			Lan:                    lan,
+			TimestampUnix:           time.Now().Unix(),
+			InternetIsUp:            rates.InternetIsUp,
+			InternetLatencySeconds:  rates.InternetLatencySeconds,
+			InternetStatus:          rates.InternetStatus,
+			InternetPacketLossRatio: rates.InternetPacketLossRatio,
+			InternetJitterSeconds:   rates.InternetJitterSeconds,
+			ConnectedDevicesCount:   rates.ConnectedDevicesCount,
+			Total:                   total,
+			Wan:                     wan,
+			Lan:                     lan,
 		})
 	}
 

@@ -98,6 +98,7 @@ export function RootLayout() {
         lanSubnet={overview?.lanSubnetCidr || '10.100.0.0/16'}
         isLive={isConnected}
         internetIsUp={overview ? overview.internetIsUp : true}
+        internetStatus={overview?.internetStatus}
         onRefresh={fetchAllData}
         isRefreshing={isRefreshing}
       />

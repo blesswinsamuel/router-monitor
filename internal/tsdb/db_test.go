@@ -105,3 +105,58 @@ func TestTSDB_DevicePersistence(t *testing.T) {
 		t.Fatalf("last_seen should be updated: got %v, want %v", devs[0].LastSeen, t2)
 	}
 }
+
+func TestTSDB_OutagePersistence(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "outages.db")
+
+	db, err := Open(dbPath)
+	if err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	defer db.Close()
+
+	t1 := time.Now().Add(-5 * time.Minute).Truncate(time.Second)
+	t2 := time.Now().Truncate(time.Second)
+
+	id, err := db.RecordOutageStart("degraded", "High packet loss: 33%", t1)
+	if err != nil {
+		t.Fatalf("RecordOutageStart failed: %v", err)
+	}
+	if id <= 0 {
+		t.Fatalf("expected positive id, got %d", id)
+	}
+
+	outages, err := db.GetRecentOutages(10)
+	if err != nil {
+		t.Fatalf("GetRecentOutages failed: %v", err)
+	}
+	if len(outages) != 1 {
+		t.Fatalf("expected 1 outage, got %d", len(outages))
+	}
+	if outages[0].Status != "degraded" || outages[0].Reason != "High packet loss: 33%" {
+		t.Fatalf("unexpected outage: %+v", outages[0])
+	}
+	if !outages[0].EndTime.IsZero() {
+		t.Fatalf("expected end time zero for active outage")
+	}
+
+	// Resolve outage
+	if err := db.RecordOutageEnd(id, t2); err != nil {
+		t.Fatalf("RecordOutageEnd failed: %v", err)
+	}
+
+	outages, err = db.GetRecentOutages(10)
+	if err != nil {
+		t.Fatalf("GetRecentOutages failed: %v", err)
+	}
+	if len(outages) != 1 {
+		t.Fatalf("expected 1 outage, got %d", len(outages))
+	}
+	if outages[0].DurationSeconds <= 0 {
+		t.Fatalf("expected positive duration, got %v", outages[0].DurationSeconds)
+	}
+	if !outages[0].EndTime.Equal(t2) {
+		t.Fatalf("expected end time %v, got %v", t2, outages[0].EndTime)
+	}
+}

@@ -565,3 +565,80 @@ func (d *DB) GetPersistedDevices() ([]PersistedDevice, error) {
 	}
 	return devices, nil
 }
+
+type OutageRecord struct {
+	ID              int64     `json:"id"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	DurationSeconds float64   `json:"duration_seconds"`
+	Status          string    `json:"status"`
+	Reason          string    `json:"reason"`
+}
+
+func (d *DB) RecordOutageStart(status, reason string, startTime time.Time) (int64, error) {
+	d.writeMu.Lock()
+	defer d.writeMu.Unlock()
+
+	res, err := d.db.Exec(
+		"INSERT INTO internet_outages(start_time, status, reason) VALUES(?, ?, ?)",
+		startTime.Unix(), status, reason,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("insert outage start: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (d *DB) RecordOutageEnd(id int64, endTime time.Time) error {
+	d.writeMu.Lock()
+	defer d.writeMu.Unlock()
+
+	var startUnix int64
+	err := d.db.QueryRow("SELECT start_time FROM internet_outages WHERE id = ?", id).Scan(&startUnix)
+	if err != nil {
+		return fmt.Errorf("query outage start_time: %w", err)
+	}
+
+	duration := float64(endTime.Unix() - startUnix)
+	if duration < 0 {
+		duration = 0
+	}
+
+	_, err = d.db.Exec(
+		"UPDATE internet_outages SET end_time = ?, duration_seconds = ? WHERE id = ?",
+		endTime.Unix(), duration, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update outage end: %w", err)
+	}
+	return nil
+}
+
+func (d *DB) GetRecentOutages(limit int) ([]OutageRecord, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	rows, err := d.db.Query(
+		"SELECT id, start_time, COALESCE(end_time, 0), COALESCE(duration_seconds, 0), status, reason FROM internet_outages ORDER BY start_time DESC LIMIT ?",
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query recent outages: %w", err)
+	}
+	defer rows.Close()
+
+	var outages []OutageRecord
+	for rows.Next() {
+		var o OutageRecord
+		var startUnix, endUnix int64
+		if err := rows.Scan(&o.ID, &startUnix, &endUnix, &o.DurationSeconds, &o.Status, &o.Reason); err != nil {
+			continue
+		}
+		o.StartTime = time.Unix(startUnix, 0)
+		if endUnix > 0 {
+			o.EndTime = time.Unix(endUnix, 0)
+		}
+		outages = append(outages, o)
+	}
+	return outages, nil
+}
