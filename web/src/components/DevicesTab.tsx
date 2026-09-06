@@ -69,7 +69,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     }
 
     fetchPeriodData()
-    const interval = setInterval(fetchPeriodData, 5000)
+    const interval = setInterval(fetchPeriodData, 30000)
     return () => {
       active = false
       clearInterval(interval)

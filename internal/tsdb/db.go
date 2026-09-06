@@ -3,6 +3,7 @@ package tsdb
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,8 +12,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite"
 )
+
+//go:embed migrations/*.sql
+var migrationFS embed.FS
 
 type Sample struct {
 	Metric    string
@@ -43,17 +48,39 @@ type PersistedDevice struct {
 	LastSeen  time.Time `json:"last_seen"`
 }
 
+type seriesMetaInfo struct {
+	Name      string
+	IP        string
+	Direction string
+}
+
+type cachedUsage struct {
+	fromUnix int64
+	toUnix   int64
+	expiry   time.Time
+	data     map[string]*DevicePeriodUsage
+}
+
 type DB struct {
-	db          *sql.DB
-	seriesCache map[string]int64
-	cacheMu     sync.RWMutex
-	writeMu     sync.Mutex
+	db             *sql.DB
+	sampleInterval float64
+	seriesCache    map[string]int64
+	seriesMeta     map[int64]seriesMetaInfo
+	cacheMu        sync.RWMutex
+	writeMu        sync.Mutex
+
+	usageCacheMu sync.RWMutex
+	usageCache   map[string]cachedUsage
 }
 
 func Open(dbPath string) (*DB, error) {
 	dsn := dbPath
 	if !strings.Contains(dsn, "?") {
-		dsn += "?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(5000)"
+		if strings.HasPrefix(dbPath, ":memory:") {
+			dsn += "?_pragma=busy_timeout(5000)&_pragma=cache_size(-8000)&_pragma=temp_store(MEMORY)"
+		} else {
+			dsn += "?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)&_pragma=busy_timeout(5000)&_pragma=cache_size(-8000)&_pragma=temp_store(MEMORY)&_pragma=mmap_size(67108864)"
+		}
 	}
 
 	db, err := sql.Open("sqlite", dsn)
@@ -64,37 +91,23 @@ func Open(dbPath string) (*DB, error) {
 	db.SetMaxOpenConns(5)
 	db.SetMaxIdleConns(5)
 
-	schema := `
-	CREATE TABLE IF NOT EXISTS series (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		labels_json TEXT NOT NULL,
-		UNIQUE(name, labels_json)
-	);
-	CREATE TABLE IF NOT EXISTS samples (
-		series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
-		timestamp INTEGER NOT NULL,
-		value REAL NOT NULL
-	);
-	CREATE INDEX IF NOT EXISTS idx_samples_series_time ON samples(series_id, timestamp);
-	CREATE TABLE IF NOT EXISTS devices (
-		mac TEXT PRIMARY KEY,
-		ip TEXT NOT NULL,
-		hostname TEXT NOT NULL,
-		interface TEXT NOT NULL,
-		first_seen INTEGER NOT NULL,
-		last_seen INTEGER NOT NULL
-	);
-	CREATE INDEX IF NOT EXISTS idx_devices_last_seen ON devices(last_seen);
-	`
-	if _, err := db.Exec(schema); err != nil {
+	goose.SetBaseFS(migrationFS)
+	goose.SetLogger(goose.NopLogger())
+	if err := goose.SetDialect("sqlite3"); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("init sqlite schema: %w", err)
+		return nil, fmt.Errorf("set goose dialect: %w", err)
+	}
+	if err := goose.Up(db, "migrations"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("run goose migrations: %w", err)
 	}
 
 	t := &DB{
-		db:          db,
-		seriesCache: make(map[string]int64),
+		db:             db,
+		sampleInterval: 15.0,
+		seriesCache:    make(map[string]int64),
+		seriesMeta:     make(map[int64]seriesMetaInfo),
+		usageCache:     make(map[string]cachedUsage),
 	}
 
 	if err := t.loadSeriesCache(); err != nil {
@@ -102,6 +115,13 @@ func Open(dbPath string) (*DB, error) {
 	}
 
 	return t, nil
+}
+
+func (d *DB) SetSampleInterval(interval time.Duration) {
+	if interval <= 0 {
+		interval = 15 * time.Second
+	}
+	d.sampleInterval = interval.Seconds()
 }
 
 func (d *DB) Close() error {
@@ -129,11 +149,22 @@ func canonicalLabels(labels map[string]string) string {
 	return sb.String()
 }
 
+func parseSeriesMeta(name, labelsJSON string) seriesMetaInfo {
+	meta := seriesMetaInfo{Name: name}
+	var labels map[string]string
+	if err := json.Unmarshal([]byte(labelsJSON), &labels); err == nil {
+		meta.IP = labels["ip"]
+		meta.Direction = labels["direction"]
+	}
+	return meta
+}
+
 func (d *DB) loadSeriesCache() error {
 	rows, err := d.db.Query("SELECT id, name, labels_json FROM series")
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	d.cacheMu.Lock()
 	defer d.cacheMu.Unlock()
@@ -142,9 +173,9 @@ func (d *DB) loadSeriesCache() error {
 		var name, labelsJSON string
 		if err := rows.Scan(&id, &name, &labelsJSON); err == nil {
 			d.seriesCache[name+":"+labelsJSON] = id
+			d.seriesMeta[id] = parseSeriesMeta(name, labelsJSON)
 		}
 	}
-	rows.Close()
 	return nil
 }
 
@@ -178,6 +209,11 @@ func (d *DB) getOrCreateSeriesID(metric string, labels map[string]string) (int64
 	}
 
 	d.seriesCache[cacheKey] = id
+	d.seriesMeta[id] = seriesMetaInfo{
+		Name:      metric,
+		IP:        labels["ip"],
+		Direction: labels["direction"],
+	}
 	return id, nil
 }
 
@@ -331,15 +367,22 @@ type DevicePeriodUsage struct {
 	LanUploadBytes   uint64
 }
 
-// GetDeviceUsageByPeriod aggregates device traffic samples over [fromUnix, toUnix]
+// GetDeviceUsageByPeriod aggregates device traffic samples over [fromUnix, toUnix].
+// Leverages covering index idx_samples_time_series_val and caches recent results in memory.
 func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DevicePeriodUsage, error) {
+	cacheKey := fmt.Sprintf("%d:%d", fromUnix/15, toUnix/15)
+	d.usageCacheMu.RLock()
+	if cu, ok := d.usageCache[cacheKey]; ok && time.Now().Before(cu.expiry) {
+		d.usageCacheMu.RUnlock()
+		return cu.data, nil
+	}
+	d.usageCacheMu.RUnlock()
+
 	q := `
-	SELECT s.name, s.labels_json, COALESCE(SUM(sp.value * 5), 0)
-	FROM samples sp
-	JOIN series s ON sp.series_id = s.id
-	WHERE s.name IN ('device_traffic_bytes_rate', 'device_wan_bytes_rate', 'device_lan_bytes_rate')
-	  AND sp.timestamp >= ? AND sp.timestamp <= ?
-	GROUP BY s.id
+	SELECT series_id, COALESCE(SUM(value), 0)
+	FROM samples
+	WHERE timestamp >= ? AND timestamp <= ?
+	GROUP BY series_id
 	`
 	rows, err := d.db.Query(q, fromUnix, toUnix)
 	if err != nil {
@@ -347,49 +390,67 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 	}
 	defer rows.Close()
 
+	interval := d.sampleInterval
+	if interval <= 0 {
+		interval = 15.0
+	}
+
 	usage := make(map[string]*DevicePeriodUsage)
 	for rows.Next() {
-		var metricName, labelsJSON string
-		var totalBytes float64
-		if err := rows.Scan(&metricName, &labelsJSON, &totalBytes); err != nil {
+		var seriesID int64
+		var sumRate float64
+		if err := rows.Scan(&seriesID, &sumRate); err != nil {
 			continue
 		}
-		var parsed map[string]string
-		if err := json.Unmarshal([]byte(labelsJSON), &parsed); err != nil {
+
+		d.cacheMu.RLock()
+		meta, ok := d.seriesMeta[seriesID]
+		d.cacheMu.RUnlock()
+		if !ok || meta.IP == "" {
 			continue
 		}
-		ip := parsed["ip"]
-		direction := parsed["direction"]
-		if ip == "" {
-			continue
-		}
-		u, ok := usage[ip]
-		if !ok {
+
+		u, exists := usage[meta.IP]
+		if !exists {
 			u = &DevicePeriodUsage{}
-			usage[ip] = u
+			usage[meta.IP] = u
 		}
-		b := uint64(totalBytes)
-		switch metricName {
+
+		b := uint64(sumRate * interval)
+		switch meta.Name {
 		case "device_traffic_bytes_rate":
-			if direction == "ingress" {
+			if meta.Direction == "ingress" {
 				u.DownloadBytes = b
-			} else if direction == "egress" {
+			} else if meta.Direction == "egress" {
 				u.UploadBytes = b
 			}
 		case "device_wan_bytes_rate":
-			if direction == "ingress" {
+			if meta.Direction == "ingress" {
 				u.WanDownloadBytes = b
-			} else if direction == "egress" {
+			} else if meta.Direction == "egress" {
 				u.WanUploadBytes = b
 			}
 		case "device_lan_bytes_rate":
-			if direction == "ingress" {
+			if meta.Direction == "ingress" {
 				u.LanDownloadBytes = b
-			} else if direction == "egress" {
+			} else if meta.Direction == "egress" {
 				u.LanUploadBytes = b
 			}
 		}
 	}
+
+	d.usageCacheMu.Lock()
+	d.usageCache[cacheKey] = cachedUsage{
+		fromUnix: fromUnix,
+		toUnix:   toUnix,
+		expiry:   time.Now().Add(15 * time.Second),
+		data:     usage,
+	}
+	if len(d.usageCache) > 50 {
+		d.usageCache = make(map[string]cachedUsage)
+	}
+	d.usageCacheMu.Unlock()
+
 	return usage, nil
 }
 
@@ -425,14 +486,20 @@ func (d *DB) StartRetentionWorker(ctx context.Context, interval time.Duration, r
 	}()
 }
 
-func (d *DB) UpsertDevice(hwAddr, ipAddr, hostname, iface string, seenAt time.Time) error {
-	if hwAddr == "" || hwAddr == "00:00:00:00:00:00" {
+// UpsertDevices updates device state in batch within a single transaction.
+func (d *DB) UpsertDevices(devices []PersistedDevice) error {
+	if len(devices) == 0 {
 		return nil
 	}
 	d.writeMu.Lock()
 	defer d.writeMu.Unlock()
 
-	ts := seenAt.Unix()
+	tx, err := d.db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
 	q := `
 	INSERT INTO devices (mac, ip, hostname, interface, first_seen, last_seen)
 	VALUES (?, ?, ?, ?, ?, ?)
@@ -442,8 +509,40 @@ func (d *DB) UpsertDevice(hwAddr, ipAddr, hostname, iface string, seenAt time.Ti
 		interface = excluded.interface,
 		last_seen = excluded.last_seen
 	`
-	_, err := d.db.Exec(q, hwAddr, ipAddr, hostname, iface, ts, ts)
-	return err
+	stmt, err := tx.Prepare(q)
+	if err != nil {
+		return fmt.Errorf("prepare upsert devices: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, dev := range devices {
+		if dev.HWAddr == "" || dev.HWAddr == "00:00:00:00:00:00" {
+			continue
+		}
+		firstUnix := dev.FirstSeen.Unix()
+		lastUnix := dev.LastSeen.Unix()
+		if firstUnix <= 0 {
+			firstUnix = lastUnix
+		}
+		if _, err := stmt.Exec(dev.HWAddr, dev.IPAddr, dev.Hostname, dev.Device, firstUnix, lastUnix); err != nil {
+			return fmt.Errorf("exec upsert device %s: %w", dev.HWAddr, err)
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (d *DB) UpsertDevice(hwAddr, ipAddr, hostname, iface string, seenAt time.Time) error {
+	return d.UpsertDevices([]PersistedDevice{
+		{
+			HWAddr:    hwAddr,
+			IPAddr:    ipAddr,
+			Hostname:  hostname,
+			Device:    iface,
+			FirstSeen: seenAt,
+			LastSeen:  seenAt,
+		},
+	})
 }
 
 func (d *DB) GetPersistedDevices() ([]PersistedDevice, error) {
@@ -466,4 +565,3 @@ func (d *DB) GetPersistedDevices() ([]PersistedDevice, error) {
 	}
 	return devices, nil
 }
-
