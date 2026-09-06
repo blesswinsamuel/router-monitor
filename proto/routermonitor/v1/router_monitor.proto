@@ -43,17 +43,15 @@ message GetOverviewResponse {
   double current_download_packets_per_sec = 12;
   double current_upload_packets_per_sec = 13;
 
-  int64 server_time_unix = 14;
+  uint64 total_wan_download_bytes = 14;
+  uint64 total_wan_upload_bytes = 15;
+  uint64 total_lan_download_bytes = 16;
+  uint64 total_lan_upload_bytes = 17;
 
-  uint64 total_wan_download_bytes = 15;
-  uint64 total_wan_upload_bytes = 16;
-  uint64 total_lan_download_bytes = 17;
-  uint64 total_lan_upload_bytes = 18;
-
-  double current_wan_download_bytes_per_sec = 19;
-  double current_wan_upload_bytes_per_sec = 20;
-  double current_lan_download_bytes_per_sec = 21;
-  double current_lan_upload_bytes_per_sec = 22;
+  double current_wan_download_bytes_per_sec = 18;
+  double current_wan_upload_bytes_per_sec = 19;
+  double current_lan_download_bytes_per_sec = 20;
+  double current_lan_upload_bytes_per_sec = 21;
 }
 
 message ListDevicesRequest {
@@ -61,57 +59,64 @@ message ListDevicesRequest {
   int64 to_unix = 2;
 }
 
-message ArpDevice {
+message ArpInfo {
+  int64 flags = 1; // ARP flags: e.g. 2 for dynamic/complete, 6 for static
+  bool is_valid = 2;
+  string interface = 3;
+}
+
+message NetworkRates {
+  double download_bytes_per_sec = 1;
+  double upload_bytes_per_sec = 2;
+  double download_packets_per_sec = 3;
+  double upload_packets_per_sec = 4;
+
+  double wan_download_bytes_per_sec = 5;
+  double wan_upload_bytes_per_sec = 6;
+  double wan_download_packets_per_sec = 7;
+  double wan_upload_packets_per_sec = 8;
+
+  double lan_download_bytes_per_sec = 9;
+  double lan_upload_bytes_per_sec = 10;
+  double lan_download_packets_per_sec = 11;
+  double lan_upload_packets_per_sec = 12;
+}
+
+message NetworkUsage {
+  uint64 download_bytes = 1;
+  uint64 upload_bytes = 2;
+  uint64 download_packets = 3;
+  uint64 upload_packets = 4;
+
+  uint64 wan_download_bytes = 5;
+  uint64 wan_upload_bytes = 6;
+  uint64 wan_download_packets = 7;
+  uint64 wan_upload_packets = 8;
+
+  uint64 lan_download_bytes = 9;
+  uint64 lan_upload_bytes = 10;
+  uint64 lan_download_packets = 11;
+  uint64 lan_upload_packets = 12;
+}
+
+message Device {
   string ip_addr = 1;
-  string hw_addr = 2;
+  string mac_addr = 2;
   string hostname = 3;
-  string device = 4;
-  int64 flags = 5; // e.g. 2 for valid ARP
-  bool is_valid = 6;
+  string interface = 4;
+  string status = 5; // "active", "static", "unreachable", "offline"
+  int64 first_seen_unix = 6;
+  int64 last_seen_unix = 7;
 
-  uint64 download_bytes = 7;
-  uint64 upload_bytes = 8;
-  uint64 download_packets = 9;
-  uint64 upload_packets = 10;
-  double current_rate_bytes_per_sec = 11;
+  ArpInfo arp = 8;
 
-  uint64 internet_download_bytes = 12;
-  uint64 internet_upload_bytes = 13;
-  uint64 lan_download_bytes = 14;
-  uint64 lan_upload_bytes = 15;
-  int64 first_seen_unix = 16;
-  int64 last_seen_unix = 17;
-  string status = 18; // "active", "static", "unreachable", "offline"
-  double current_download_bytes_per_sec = 19;
-  double current_upload_bytes_per_sec = 20;
-
-  double current_wan_download_bytes_per_sec = 21;
-  double current_wan_upload_bytes_per_sec = 22;
-  double current_lan_download_bytes_per_sec = 23;
-  double current_lan_upload_bytes_per_sec = 24;
-
-  uint64 internet_download_packets = 25;
-  uint64 internet_upload_packets = 26;
-  uint64 lan_download_packets = 27;
-  uint64 lan_upload_packets = 28;
-
-  double current_download_packets_per_sec = 29;
-  double current_upload_packets_per_sec = 30;
-  double current_wan_download_packets_per_sec = 31;
-  double current_wan_upload_packets_per_sec = 32;
-  double current_lan_download_packets_per_sec = 33;
-  double current_lan_upload_packets_per_sec = 34;
-
-  uint64 period_download_bytes = 35;
-  uint64 period_upload_bytes = 36;
-  uint64 period_wan_download_bytes = 37;
-  uint64 period_wan_upload_bytes = 38;
-  uint64 period_lan_download_bytes = 39;
-  uint64 period_lan_upload_bytes = 40;
+  NetworkRates current_rates = 9;
+  NetworkUsage period_usage = 10;
+  NetworkUsage session_usage = 11;
 }
 
 message ListDevicesResponse {
-  repeated ArpDevice devices = 1;
+  repeated Device devices = 1;
 }
 
 message GetTrafficFlowsRequest {
@@ -148,7 +153,6 @@ message PingTargetStatus {
   bool is_up = 2;
   double last_latency_seconds = 3;
   double avg_latency_seconds = 4;
-  repeated double recent_latencies_seconds = 5;
 }
 
 message GetInternetHealthResponse {
