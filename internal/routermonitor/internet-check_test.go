@@ -59,7 +59,7 @@ func TestParseTargetConfigs(t *testing.T) {
 	}
 
 	// 2. Custom string parsing
-	raw := "icmp:1.0.0.1,dns:google.com,http:http://example.com/204,tcp:127.0.0.1:8080"
+	raw := "icmp:1.0.0.1,dns:google.com@8.8.8.8,http:http://example.com/204,tcp:127.0.0.1:8080"
 	cfgs, err = ParseTargetConfigs(raw)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -71,14 +71,24 @@ func TestParseTargetConfigs(t *testing.T) {
 	if cfgs[0].Type != ProbeICMP || cfgs[0].Target != "1.0.0.1" {
 		t.Errorf("expected icmp 1.0.0.1, got %+v", cfgs[0])
 	}
-	if cfgs[1].Type != ProbeDNS || cfgs[1].Target != "google.com" {
-		t.Errorf("expected dns google.com, got %+v", cfgs[1])
+	if cfgs[1].Type != ProbeDNS || cfgs[1].Target != "google.com@8.8.8.8" || cfgs[1].Name != "DNS (google.com via 8.8.8.8)" {
+		t.Errorf("expected dns google.com@8.8.8.8, got %+v", cfgs[1])
 	}
 	if cfgs[2].Type != ProbeHTTP || cfgs[2].Target != "http://example.com/204" {
 		t.Errorf("expected http example.com, got %+v", cfgs[2])
 	}
 	if cfgs[3].Type != ProbeTCP || cfgs[3].Target != "127.0.0.1:8080" {
 		t.Errorf("expected tcp 127.0.0.1:8080, got %+v", cfgs[3])
+	}
+}
+
+func TestProbeDNS_CustomServer(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	res := probeDNS(ctx, "cloudflare.com@1.1.1.1:53", 2*time.Second)
+	if res.IsUp && res.Latency <= 0 {
+		t.Errorf("expected positive latency on successful DNS probe, got %v", res.Latency)
 	}
 }
 

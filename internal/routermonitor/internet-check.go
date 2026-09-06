@@ -54,12 +54,12 @@ var DefaultTargets = []TargetConfig{
 	{Name: "Cloudflare (1.1.1.1)", Target: "1.1.1.1", Type: ProbeICMP},
 	{Name: "Google (8.8.8.8)", Target: "8.8.8.8", Type: ProbeICMP},
 	{Name: "Quad9 (9.9.9.9)", Target: "9.9.9.9", Type: ProbeICMP},
-	{Name: "DNS (cloudflare.com)", Target: "cloudflare.com", Type: ProbeDNS},
+	{Name: "DNS (cloudflare.com via 1.1.1.1)", Target: "cloudflare.com@1.1.1.1:53", Type: ProbeDNS},
 	{Name: "HTTP (Cloudflare 204)", Target: "http://cp.cloudflare.com/generate_204", Type: ProbeHTTP},
 }
 
 // ParseTargetConfigs parses comma-separated target definitions, e.g.:
-// "icmp:1.1.1.1,dns:google.com,http:http://cp.cloudflare.com/generate_204"
+// "icmp:1.1.1.1,dns:google.com@8.8.8.8,http:http://cp.cloudflare.com/generate_204"
 func ParseTargetConfigs(raw string) ([]TargetConfig, error) {
 	if strings.TrimSpace(raw) == "" {
 		return append([]TargetConfig(nil), DefaultTargets...), nil
@@ -81,7 +81,12 @@ func ParseTargetConfigs(raw string) ([]TargetConfig, error) {
 		} else if strings.HasPrefix(item, "dns:") {
 			cfg.Type = ProbeDNS
 			cfg.Target = strings.TrimPrefix(item, "dns:")
-			cfg.Name = "DNS (" + cfg.Target + ")"
+			if strings.Contains(cfg.Target, "@") {
+				parts := strings.SplitN(cfg.Target, "@", 2)
+				cfg.Name = "DNS (" + parts[0] + " via " + parts[1] + ")"
+			} else {
+				cfg.Name = "DNS (" + cfg.Target + ")"
+			}
 		} else if strings.HasPrefix(item, "http:") || strings.HasPrefix(item, "https:") {
 			cfg.Type = ProbeHTTP
 			cfg.Target = item
