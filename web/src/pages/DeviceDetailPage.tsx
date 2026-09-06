@@ -79,7 +79,7 @@ export function DeviceDetailPage() {
   const { devices, isRefreshing, period } = useRootOutletContext()
 
   const [chartScope, setChartScope] = useState<'total' | 'wan' | 'lan'>('total')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [historyData, setHistoryData] = useState<{ time: string; download: number; upload: number }[]>([])
   const [fetchedDevice, setFetchedDevice] = useState<Device | null>(null)
   const [copiedField, setCopiedField] = useState<'ip' | 'mac' | null>(null)
@@ -104,6 +104,25 @@ export function DeviceDetailPage() {
   const { icon: DeviceIcon, label: categoryLabel } = useMemo(() => {
     return getDeviceCategory(device?.hostname, device?.vendor)
   }, [device?.hostname, device?.vendor])
+
+  // Ping diagnosis styling
+  const pingQuality = useMemo(() => {
+    if (!pingResult) return null
+    if (!pingResult.isReachable || pingResult.packetLossRatio === 1) {
+      return { label: 'Unreachable', color: 'text-destructive', badgeBg: 'border-destructive/20 bg-destructive/15 text-destructive' }
+    }
+    if (pingResult.packetLossRatio > 0) {
+      return { label: 'Packet Loss Detected', color: 'text-amber-500', badgeBg: 'border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400' }
+    }
+    const avgMs = pingResult.avgLatencySeconds * 1000
+    if (avgMs < 5) {
+      return { label: 'Optimal (<5ms)', color: 'text-emerald-500', badgeBg: 'border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' }
+    }
+    if (avgMs < 30) {
+      return { label: 'Good (<30ms)', color: 'text-sky-500', badgeBg: 'border-sky-500/20 bg-sky-500/15 text-sky-600 dark:text-sky-400' }
+    }
+    return { label: 'High Latency', color: 'text-amber-500', badgeBg: 'border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400' }
+  }, [pingResult])
 
   async function handleRunPing() {
     if (!ip) return
@@ -216,7 +235,25 @@ export function DeviceDetailPage() {
     }
   }, [ip, period, chartScope])
 
-  if (!device && !loading && !isRefreshing) {
+  if (!device) {
+    if (loading || isRefreshing) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link to="/devices" className="flex items-center gap-1.5 hover:text-foreground transition-colors font-medium">
+              <ArrowLeft className="w-4 h-4" /> Back to Devices
+            </Link>
+          </div>
+          <Card className="text-center py-16 border-dashed">
+            <CardContent className="flex flex-col items-center justify-center space-y-3">
+              <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Loading device details...</p>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -284,25 +321,6 @@ export function DeviceDetailPage() {
 
   // Local Peers
   const peers = device?.peers || []
-
-  // Ping diagnosis styling
-  const pingQuality = useMemo(() => {
-    if (!pingResult) return null
-    if (!pingResult.isReachable || pingResult.packetLossRatio === 1) {
-      return { label: 'Unreachable', color: 'text-destructive', badgeBg: 'border-destructive/20 bg-destructive/15 text-destructive' }
-    }
-    if (pingResult.packetLossRatio > 0) {
-      return { label: 'Packet Loss Detected', color: 'text-amber-500', badgeBg: 'border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400' }
-    }
-    const avgMs = pingResult.avgLatencySeconds * 1000
-    if (avgMs < 5) {
-      return { label: 'Optimal (<5ms)', color: 'text-emerald-500', badgeBg: 'border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' }
-    }
-    if (avgMs < 30) {
-      return { label: 'Good (<30ms)', color: 'text-sky-500', badgeBg: 'border-sky-500/20 bg-sky-500/15 text-sky-600 dark:text-sky-400' }
-    }
-    return { label: 'High Latency', color: 'text-amber-500', badgeBg: 'border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400' }
-  }, [pingResult])
 
   return (
     <div className="space-y-6">
