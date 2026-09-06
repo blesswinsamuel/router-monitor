@@ -159,3 +159,18 @@ export function getDeviceCategory(hostname?: string, vendor?: string): DeviceCat
   // Default fallback
   return { icon: HardDrive, category: 'unknown', label: 'Network Client' }
 }
+
+/**
+ * Checks if a MAC address is locally administered (randomized private address),
+ * which is commonly used by iOS (Private Wi-Fi Address), Android (MAC randomization),
+ * and Windows for privacy. In IEEE 802, bit 1 of the first octet indicates LAA.
+ */
+export function isLocallyAdministeredMac(mac?: string): boolean {
+  if (!mac) return false
+  const clean = mac.trim().replace(/[:-]/g, '')
+  if (clean.length < 2) return false
+  const firstByte = parseInt(clean.substring(0, 2), 16)
+  if (isNaN(firstByte)) return false
+  return (firstByte & 0x02) !== 0
+}
+

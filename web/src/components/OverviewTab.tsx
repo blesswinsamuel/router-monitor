@@ -18,6 +18,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
   type ChartConfig,
 } from './ui/chart'
 
@@ -456,6 +458,7 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                     fillOpacity={1}
                     fill="url(#ulGrad)"
                   />
+                  <ChartLegend content={<ChartLegendContent className="text-xs pt-3" />} />
                 </AreaChart>
               </ChartContainer>
             )}
