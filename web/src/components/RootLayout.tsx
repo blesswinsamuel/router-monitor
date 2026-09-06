@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Outlet, NavLink, useOutletContext } from 'react-router-dom'
+import { Outlet, NavLink, useOutletContext, useSearchParams } from 'react-router-dom'
 import { Header } from './Header'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import { LayoutDashboard, Laptop, Activity } from 'lucide-react'
+import { type Period, isPeriod, getPeriodRange } from '@/lib/period'
 
 export interface RootOutletContext {
   overview: any
@@ -13,6 +14,10 @@ export interface RootOutletContext {
   isRefreshing: boolean
   error: string | null
   fetchAllData: () => Promise<void>
+  period: Period
+  setPeriod: (period: Period) => void
+  fromUnix: number
+  toUnix: number
 }
 
 export function useRootOutletContext() {
@@ -20,19 +25,38 @@ export function useRootOutletContext() {
 }
 
 export function RootLayout() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const periodParam = searchParams.get('period')
+  const period: Period = isPeriod(periodParam) ? periodParam : '1h'
+
+  const handlePeriodChange = useCallback((newPeriod: Period) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set('period', newPeriod)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
   const [overview, setOverview] = useState<any>(null)
   const [devices, setDevices] = useState<any[]>([])
   const [health, setHealth] = useState<any>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch all snapshot data (devices, flows, health, overview)
+  // Fetch all snapshot data (devices, flows, health, overview) for the current period
   const fetchAllData = useCallback(async () => {
     setIsRefreshing(true)
     try {
+      const { fromUnix: from, toUnix: to } = getPeriodRange(period)
       const [ov, dev, hl] = await Promise.all([
-        rpcClient.getOverview({}),
-        rpcClient.listDevices({}),
+        rpcClient.getOverview({
+          fromUnix: BigInt(from),
+          toUnix: BigInt(to),
+        }),
+        rpcClient.listDevices({
+          fromUnix: BigInt(from),
+          toUnix: BigInt(to),
+        }),
         rpcClient.getInternetHealth({}),
       ])
       setOverview(ov)
@@ -45,7 +69,7 @@ export function RootLayout() {
     } finally {
       setIsRefreshing(false)
     }
-  }, [])
+  }, [period])
 
   // Initial load and periodic snapshot refresh every 15s (matching TSDB sample interval)
   useEffect(() => {
@@ -55,6 +79,7 @@ export function RootLayout() {
   }, [fetchAllData])
 
   const isConnected = !error && !!overview
+  const { fromUnix, toUnix } = getPeriodRange(period)
 
   const outletContext: RootOutletContext = {
     overview,
@@ -64,6 +89,10 @@ export function RootLayout() {
     isRefreshing,
     error,
     fetchAllData,
+    period,
+    setPeriod: handlePeriodChange,
+    fromUnix,
+    toUnix,
   }
 
   return (
@@ -76,6 +105,8 @@ export function RootLayout() {
         internetStatus={overview?.internetStatus}
         onRefresh={fetchAllData}
         isRefreshing={isRefreshing}
+        period={period}
+        onPeriodChange={handlePeriodChange}
       />
 
       <main className="container mx-auto px-4 py-6 flex-1 flex flex-col">

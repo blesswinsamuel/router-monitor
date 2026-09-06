@@ -80,6 +80,24 @@ func (s *RouterMonitorService) GetOverview(
 	rates := s.sampler.GetLiveRates()
 	total, wan, lan := liveRatesToTraffic(rates)
 
+	from := req.Msg.FromUnix
+	to := req.Msg.ToUnix
+	if to <= 0 {
+		to = time.Now().Unix()
+	}
+	if from <= 0 {
+		from = to - 3600
+	}
+
+	if ovUsage, err := s.tsdbDB.GetOverviewUsageByPeriod(from, to); err == nil && ovUsage != nil {
+		total.DownloadBytes = ovUsage.TotalDownloadBytes
+		total.UploadBytes = ovUsage.TotalUploadBytes
+		wan.DownloadBytes = ovUsage.WanDownloadBytes
+		wan.UploadBytes = ovUsage.WanUploadBytes
+		lan.DownloadBytes = ovUsage.LanDownloadBytes
+		lan.UploadBytes = ovUsage.LanUploadBytes
+	}
+
 	res := &routermonitorv1.GetOverviewResponse{
 		InterfaceName:           s.interfaceName,
 		LanSubnetCidr:           s.lanSubnetCIDR,
@@ -158,13 +176,26 @@ func (s *RouterMonitorService) ListDevices(
 			vendor = oui.Vendor(mac)
 		}
 
+		seenProtos := make(map[string]bool)
 		protoList := make([]*routermonitorv1.ProtocolTraffic, 0, len(rate.Protocols))
 		for _, p := range rate.Protocols {
+			seenProtos[p.Protocol] = true
+			dlBytes := p.DownloadBytes
+			ulBytes := p.UploadBytes
+			if pu != nil && pu.Protocols != nil {
+				if protoUsage, ok := pu.Protocols[p.Protocol]; ok {
+					dlBytes = protoUsage.DownloadBytes
+					ulBytes = protoUsage.UploadBytes
+				} else {
+					dlBytes = 0
+					ulBytes = 0
+				}
+			}
 			protoList = append(protoList, &routermonitorv1.ProtocolTraffic{
 				Protocol: p.Protocol,
 				Traffic: &routermonitorv1.DirectionalTraffic{
-					DownloadBytes:         p.DownloadBytes,
-					UploadBytes:           p.UploadBytes,
+					DownloadBytes:         dlBytes,
+					UploadBytes:           ulBytes,
 					DownloadPackets:       p.DownloadPackets,
 					UploadPackets:         p.UploadPackets,
 					DownloadBytesPerSec:   p.DownloadBytesPerSec,
@@ -174,16 +205,46 @@ func (s *RouterMonitorService) ListDevices(
 				},
 			})
 		}
+		if pu != nil && pu.Protocols != nil {
+			for protoName, protoUsage := range pu.Protocols {
+				if !seenProtos[protoName] {
+					protoList = append(protoList, &routermonitorv1.ProtocolTraffic{
+						Protocol: protoName,
+						Traffic: &routermonitorv1.DirectionalTraffic{
+							DownloadBytes: protoUsage.DownloadBytes,
+							UploadBytes:   protoUsage.UploadBytes,
+						},
+					})
+				}
+			}
+		}
+		sort.Slice(protoList, func(a, b int) bool {
+			return (protoList[a].Traffic.DownloadBytes + protoList[a].Traffic.UploadBytes) >
+				(protoList[b].Traffic.DownloadBytes + protoList[b].Traffic.UploadBytes)
+		})
 
+		seenPeers := make(map[string]bool)
 		peerList := make([]*routermonitorv1.PeerTraffic, 0, len(rate.Peers))
 		for _, pr := range rate.Peers {
+			seenPeers[pr.IPAddr] = true
 			pHost := ipToHostname[pr.IPAddr]
+			dlBytes := pr.BytesReceived
+			ulBytes := pr.BytesSent
+			if pu != nil && pu.Peers != nil {
+				if peerUsage, ok := pu.Peers[pr.IPAddr]; ok {
+					dlBytes = peerUsage.BytesReceived
+					ulBytes = peerUsage.BytesSent
+				} else {
+					dlBytes = 0
+					ulBytes = 0
+				}
+			}
 			peerList = append(peerList, &routermonitorv1.PeerTraffic{
 				IpAddr:   pr.IPAddr,
 				Hostname: pHost,
 				Traffic: &routermonitorv1.DirectionalTraffic{
-					DownloadBytes:         pr.BytesReceived,
-					UploadBytes:           pr.BytesSent,
+					DownloadBytes:         dlBytes,
+					UploadBytes:           ulBytes,
 					DownloadPackets:       pr.PacketsReceived,
 					UploadPackets:         pr.PacketsSent,
 					DownloadBytesPerSec:   pr.DownloadBytesPerSec,
@@ -193,6 +254,25 @@ func (s *RouterMonitorService) ListDevices(
 				},
 			})
 		}
+		if pu != nil && pu.Peers != nil {
+			for peerIP, peerUsage := range pu.Peers {
+				if !seenPeers[peerIP] {
+					pHost := ipToHostname[peerIP]
+					peerList = append(peerList, &routermonitorv1.PeerTraffic{
+						IpAddr:   peerIP,
+						Hostname: pHost,
+						Traffic: &routermonitorv1.DirectionalTraffic{
+							DownloadBytes: peerUsage.BytesReceived,
+							UploadBytes:   peerUsage.BytesSent,
+						},
+					})
+				}
+			}
+		}
+		sort.Slice(peerList, func(a, b int) bool {
+			return (peerList[a].Traffic.DownloadBytes + peerList[a].Traffic.UploadBytes) >
+				(peerList[b].Traffic.DownloadBytes + peerList[b].Traffic.UploadBytes)
+		})
 
 		return &routermonitorv1.Device{
 			IpAddr:        ip,

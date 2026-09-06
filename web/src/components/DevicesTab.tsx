@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Search,
   Laptop,
@@ -9,7 +9,6 @@ import {
   HelpCircle,
   Globe,
   HardDrive,
-  Clock,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Input } from './ui/input'
@@ -23,61 +22,25 @@ import {
   formatPacketsRate,
   formatRelativeTime,
 } from '@/lib/format'
-import { rpcClient } from '@/lib/client'
 import { useNavigate } from 'react-router-dom'
 import { getDeviceCategory } from '@/lib/device-icons'
 import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
+
+import { useRootOutletContext } from './RootLayout'
 
 interface DevicesTabProps {
   devices: Device[]
 }
 
 export function DevicesTab({ devices }: DevicesTabProps) {
+  const { period } = useRootOutletContext()
   const [search, setSearch] = useState('')
   const [selectedInterface, setSelectedInterface] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
-  const [period, setPeriod] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
   const navigate = useNavigate()
 
-  const [periodDevices, setPeriodDevices] = useState<Device[] | null>(null)
-  const [periodLoading, setPeriodLoading] = useState(false)
-
-  // Fetch period-aggregated device usage from TSDB every 5 seconds
-  useEffect(() => {
-    let active = true
-    async function fetchPeriodData() {
-      setPeriodLoading(true)
-      try {
-        const now = Math.floor(Date.now() / 1000)
-        let from = now - 3600
-        if (period === '15m') from = now - 900
-        else if (period === '6h') from = now - 21600
-        else if (period === '24h') from = now - 86400
-
-        const res = await rpcClient.listDevices({
-          fromUnix: BigInt(from),
-          toUnix: BigInt(now),
-        })
-        if (active) {
-          setPeriodDevices(res.devices || [])
-        }
-      } catch (err) {
-        console.error('Failed to fetch period devices:', err)
-      } finally {
-        if (active) setPeriodLoading(false)
-      }
-    }
-
-    fetchPeriodData()
-    const interval = setInterval(fetchPeriodData, 30000)
-    return () => {
-      active = false
-      clearInterval(interval)
-    }
-  }, [period])
-
-  const activeDeviceList = periodDevices !== null ? periodDevices : devices
+  const activeDeviceList = devices
 
   // Extract unique interface names
   const interfaces = useMemo(() => {
@@ -219,33 +182,6 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     </TabsTrigger>
                   </TabsList>
                 </Tabs>
-              </div>
-
-              {/* Period Selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground shrink-0 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Period:
-                </span>
-                <Tabs value={period} onValueChange={(v: any) => setPeriod(v)} className="shrink-0">
-                  <TabsList className="h-8">
-                    <TabsTrigger value="15m" className="text-xs px-2.5 py-1 font-mono">
-                      15m
-                    </TabsTrigger>
-                    <TabsTrigger value="1h" className="text-xs px-2.5 py-1 font-mono">
-                      1h
-                    </TabsTrigger>
-                    <TabsTrigger value="6h" className="text-xs px-2.5 py-1 font-mono">
-                      6h
-                    </TabsTrigger>
-                    <TabsTrigger value="24h" className="text-xs px-2.5 py-1 font-mono">
-                      24h
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                {periodLoading && (
-                  <span className="text-[11px] text-muted-foreground animate-pulse">Loading...</span>
-                )}
               </div>
             </div>
 

@@ -4,6 +4,9 @@ import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { cn } from '@/lib/utils'
 
+import type { Period } from '@/lib/period'
+import { PERIODS } from '@/lib/period'
+
 interface HeaderProps {
   interfaceName: string
   lanSubnet: string
@@ -12,6 +15,8 @@ interface HeaderProps {
   internetStatus?: string
   onRefresh: () => void
   isRefreshing: boolean
+  period: Period
+  onPeriodChange: (period: Period) => void
 }
 
 export function Header({
@@ -22,6 +27,8 @@ export function Header({
   internetStatus,
   onRefresh,
   isRefreshing,
+  period,
+  onPeriodChange,
 }: HeaderProps) {
   const [isDark, setIsDark] = React.useState(true)
 
@@ -72,6 +79,25 @@ export function Header({
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Global Period Selector */}
+          <div className="flex items-center bg-muted/80 p-0.5 rounded-lg border border-border/50">
+            {PERIODS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onPeriodChange(p)}
+                className={cn(
+                  "px-2 py-0.5 text-xs font-mono font-medium rounded-md transition-all cursor-pointer",
+                  period === p
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
           <Badge
             variant={isDown ? "destructive" : "outline"}
             className={cn(
