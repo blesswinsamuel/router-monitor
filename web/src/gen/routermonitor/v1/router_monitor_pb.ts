@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file routermonitor/v1/router_monitor.proto.
  */
 export const file_routermonitor_v1_router_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASIUChJHZXRPdmVydmlld1JlcXVlc3QimgMKE0dldE92ZXJ2aWV3UmVzcG9uc2USFgoOaW50ZXJmYWNlX25hbWUYASABKAkSFwoPbGFuX3N1Ym5ldF9jaWRyGAIgASgJEhYKDmludGVybmV0X2lzX3VwGAMgASgIEiAKGGludGVybmV0X2xhdGVuY3lfc2Vjb25kcxgEIAEoARIfChdjb25uZWN0ZWRfZGV2aWNlc19jb3VudBgFIAEoBRIzCgV0b3RhbBgGIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgHIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgIIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEhcKD2ludGVybmV0X3N0YXR1cxgJIAEoCRIiChppbnRlcm5ldF9wYWNrZXRfbG9zc19yYXRpbxgKIAEoARIfChdpbnRlcm5ldF9qaXR0ZXJfc2Vjb25kcxgLIAEoASI4ChJMaXN0RGV2aWNlc1JlcXVlc3QSEQoJZnJvbV91bml4GAEgASgDEg8KB3RvX3VuaXgYAiABKAMiPQoHQXJwSW5mbxINCgVmbGFncxgBIAEoAxIQCghpc192YWxpZBgCIAEoCBIRCglpbnRlcmZhY2UYAyABKAki1AIKBkRldmljZRIPCgdpcF9hZGRyGAEgASgJEhAKCG1hY19hZGRyGAIgASgJEhAKCGhvc3RuYW1lGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIOCgZzdGF0dXMYBSABKAkSFwoPZmlyc3Rfc2Vlbl91bml4GAYgASgDEhYKDmxhc3Rfc2Vlbl91bml4GAcgASgDEiYKA2FycBgIIAEoCzIZLnJvdXRlcm1vbml0b3IudjEuQXJwSW5mbxIzCgV0b3RhbBgJIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgKIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgLIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIkAKE0xpc3REZXZpY2VzUmVzcG9uc2USKQoHZGV2aWNlcxgBIAMoCzIYLnJvdXRlcm1vbml0b3IudjEuRGV2aWNlIicKFkdldFRyYWZmaWNGbG93c1JlcXVlc3QSDQoFbGltaXQYASABKAUihQEKC1RyYWZmaWNGbG93EhEKCWRpcmVjdGlvbhgBIAEoCRIRCglldGhfcHJvdG8YAiABKAkSEAoIaXBfcHJvdG8YAyABKAkSDgoGc3JjX2lwGAQgASgJEg4KBmRzdF9pcBgFIAEoCRIPCgdwYWNrZXRzGAYgASgEEg0KBWJ5dGVzGAcgASgEIkEKDVByb3RvY29sU3RhdHMSEAoIcHJvdG9jb2wYASABKAkSDQoFYnl0ZXMYAiABKAQSDwoHcGFja2V0cxgDIAEoBCKnAQoXR2V0VHJhZmZpY0Zsb3dzUmVzcG9uc2USLAoFZmxvd3MYASADKAsyHS5yb3V0ZXJtb25pdG9yLnYxLlRyYWZmaWNGbG93EjIKCXByb3RvY29scxgCIAMoCzIfLnJvdXRlcm1vbml0b3IudjEuUHJvdG9jb2xTdGF0cxITCgt0b3RhbF9ieXRlcxgDIAEoBBIVCg10b3RhbF9wYWNrZXRzGAQgASgEIhoKGEdldEludGVybmV0SGVhbHRoUmVxdWVzdCKhAgoMVGFyZ2V0SGVhbHRoEgwKBG5hbWUYASABKAkSDgoGdGFyZ2V0GAIgASgJEhIKCnByb2JlX3R5cGUYAyABKAkSDQoFaXNfdXAYBCABKAgSFwoPbGF0ZW5jeV9zZWNvbmRzGAUgASgBEhsKE21pbl9sYXRlbmN5X3NlY29uZHMYBiABKAESGwoTbWF4X2xhdGVuY3lfc2Vjb25kcxgHIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAggASgBEhYKDmppdHRlcl9zZWNvbmRzGAkgASgBEhkKEXBhY2tldF9sb3NzX3JhdGlvGAogASgBEhIKCmxhc3RfZXJyb3IYCyABKAkSGQoRbGFzdF9jaGVja2VkX3VuaXgYDCABKAMiegoMT3V0YWdlUmVjb3JkEgoKAmlkGAEgASgDEhIKCnN0YXJ0X3VuaXgYAiABKAMSEAoIZW5kX3VuaXgYAyABKAMSGAoQZHVyYXRpb25fc2Vjb25kcxgEIAEoARIOCgZzdGF0dXMYBSABKAkSDgoGcmVhc29uGAYgASgJIpcCChlHZXRJbnRlcm5ldEhlYWx0aFJlc3BvbnNlEhYKDm92ZXJhbGxfc3RhdHVzGAEgASgJEhUKDW92ZXJhbGxfaXNfdXAYAiABKAgSHwoXb3ZlcmFsbF9sYXRlbmN5X3NlY29uZHMYAyABKAESIQoZb3ZlcmFsbF9wYWNrZXRfbG9zc19yYXRpbxgEIAEoARIeChZvdmVyYWxsX2ppdHRlcl9zZWNvbmRzGAUgASgBEi8KB3RhcmdldHMYBiADKAsyHi5yb3V0ZXJtb25pdG9yLnYxLlRhcmdldEhlYWx0aBI2Cg5yZWNlbnRfb3V0YWdlcxgHIAMoCzIeLnJvdXRlcm1vbml0b3IudjEuT3V0YWdlUmVjb3JkIjIKFlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QSGAoQaW50ZXJ2YWxfc2Vjb25kcxgBIAEoBSL/AgoRTGl2ZVN0YXRzUmVzcG9uc2USFgoOdGltZXN0YW1wX3VuaXgYASABKAMSFgoOaW50ZXJuZXRfaXNfdXAYAiABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAMgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAQgASgFEjMKBXRvdGFsGAUgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSFwoPaW50ZXJuZXRfc3RhdHVzGAggASgJEiIKGmludGVybmV0X3BhY2tldF9sb3NzX3JhdGlvGAkgASgBEh8KF2ludGVybmV0X2ppdHRlcl9zZWNvbmRzGAogASgBIuwBChZRdWVyeVRpbWVTZXJpZXNSZXF1ZXN0EhMKC21ldHJpY19uYW1lGAEgASgJEk8KDG1hdGNoX2xhYmVscxgCIAMoCzI5LnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVxdWVzdC5NYXRjaExhYmVsc0VudHJ5EhEKCWZyb21fdW5peBgDIAEoAxIPCgd0b191bml4GAQgASgDEhQKDHN0ZXBfc2Vjb25kcxgFIAEoBRoyChBNYXRjaExhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiXgoPVGltZVNlcmllc1BvaW50EhYKDnRpbWVzdGFtcF91bml4GAEgASgDEg0KBXZhbHVlGAIgASgBEhEKCW1pbl92YWx1ZRgDIAEoARIRCgltYXhfdmFsdWUYBCABKAEivQEKClRpbWVTZXJpZXMSEwoLbWV0cmljX25hbWUYASABKAkSOAoGbGFiZWxzGAIgAygLMigucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzLkxhYmVsc0VudHJ5EjEKBnBvaW50cxgDIAMoCzIhLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllc1BvaW50Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiRwoXUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2USLAoGc2VyaWVzGAEgAygLMhwucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzMvAEChRSb3V0ZXJNb25pdG9yU2VydmljZRJaCgtHZXRPdmVydmlldxIkLnJvdXRlcm1vbml0b3IudjEuR2V0T3ZlcnZpZXdSZXF1ZXN0GiUucm91dGVybW9uaXRvci52MS5HZXRPdmVydmlld1Jlc3BvbnNlEloKC0xpc3REZXZpY2VzEiQucm91dGVybW9uaXRvci52MS5MaXN0RGV2aWNlc1JlcXVlc3QaJS5yb3V0ZXJtb25pdG9yLnYxLkxpc3REZXZpY2VzUmVzcG9uc2USZgoPR2V0VHJhZmZpY0Zsb3dzEigucm91dGVybW9uaXRvci52MS5HZXRUcmFmZmljRmxvd3NSZXF1ZXN0Gikucm91dGVybW9uaXRvci52MS5HZXRUcmFmZmljRmxvd3NSZXNwb25zZRJsChFHZXRJbnRlcm5ldEhlYWx0aBIqLnJvdXRlcm1vbml0b3IudjEuR2V0SW50ZXJuZXRIZWFsdGhSZXF1ZXN0Gisucm91dGVybW9uaXRvci52MS5HZXRJbnRlcm5ldEhlYWx0aFJlc3BvbnNlEmIKD1N0cmVhbUxpdmVTdGF0cxIoLnJvdXRlcm1vbml0b3IudjEuU3RyZWFtTGl2ZVN0YXRzUmVxdWVzdBojLnJvdXRlcm1vbml0b3IudjEuTGl2ZVN0YXRzUmVzcG9uc2UwARJmCg9RdWVyeVRpbWVTZXJpZXMSKC5yb3V0ZXJtb25pdG9yLnYxLlF1ZXJ5VGltZVNlcmllc1JlcXVlc3QaKS5yb3V0ZXJtb25pdG9yLnYxLlF1ZXJ5VGltZVNlcmllc1Jlc3BvbnNlQlJaUGdpdGh1Yi5jb20vYmxlc3N3aW5zYW11ZWwvcm91dGVyLW1vbml0b3IvZ2VuL2dvL3JvdXRlcm1vbml0b3IvdjE7cm91dGVybW9uaXRvcnYxYgZwcm90bzM");
+  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASIUChJHZXRPdmVydmlld1JlcXVlc3QimgMKE0dldE92ZXJ2aWV3UmVzcG9uc2USFgoOaW50ZXJmYWNlX25hbWUYASABKAkSFwoPbGFuX3N1Ym5ldF9jaWRyGAIgASgJEhYKDmludGVybmV0X2lzX3VwGAMgASgIEiAKGGludGVybmV0X2xhdGVuY3lfc2Vjb25kcxgEIAEoARIfChdjb25uZWN0ZWRfZGV2aWNlc19jb3VudBgFIAEoBRIzCgV0b3RhbBgGIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgHIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgIIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEhcKD2ludGVybmV0X3N0YXR1cxgJIAEoCRIiChppbnRlcm5ldF9wYWNrZXRfbG9zc19yYXRpbxgKIAEoARIfChdpbnRlcm5ldF9qaXR0ZXJfc2Vjb25kcxgLIAEoASI4ChJMaXN0RGV2aWNlc1JlcXVlc3QSEQoJZnJvbV91bml4GAEgASgDEg8KB3RvX3VuaXgYAiABKAMiPQoHQXJwSW5mbxINCgVmbGFncxgBIAEoAxIQCghpc192YWxpZBgCIAEoCBIRCglpbnRlcmZhY2UYAyABKAki1AIKBkRldmljZRIPCgdpcF9hZGRyGAEgASgJEhAKCG1hY19hZGRyGAIgASgJEhAKCGhvc3RuYW1lGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIOCgZzdGF0dXMYBSABKAkSFwoPZmlyc3Rfc2Vlbl91bml4GAYgASgDEhYKDmxhc3Rfc2Vlbl91bml4GAcgASgDEiYKA2FycBgIIAEoCzIZLnJvdXRlcm1vbml0b3IudjEuQXJwSW5mbxIzCgV0b3RhbBgJIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgKIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgLIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIkAKE0xpc3REZXZpY2VzUmVzcG9uc2USKQoHZGV2aWNlcxgBIAMoCzIYLnJvdXRlcm1vbml0b3IudjEuRGV2aWNlIhoKGEdldEludGVybmV0SGVhbHRoUmVxdWVzdCKhAgoMVGFyZ2V0SGVhbHRoEgwKBG5hbWUYASABKAkSDgoGdGFyZ2V0GAIgASgJEhIKCnByb2JlX3R5cGUYAyABKAkSDQoFaXNfdXAYBCABKAgSFwoPbGF0ZW5jeV9zZWNvbmRzGAUgASgBEhsKE21pbl9sYXRlbmN5X3NlY29uZHMYBiABKAESGwoTbWF4X2xhdGVuY3lfc2Vjb25kcxgHIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAggASgBEhYKDmppdHRlcl9zZWNvbmRzGAkgASgBEhkKEXBhY2tldF9sb3NzX3JhdGlvGAogASgBEhIKCmxhc3RfZXJyb3IYCyABKAkSGQoRbGFzdF9jaGVja2VkX3VuaXgYDCABKAMiegoMT3V0YWdlUmVjb3JkEgoKAmlkGAEgASgDEhIKCnN0YXJ0X3VuaXgYAiABKAMSEAoIZW5kX3VuaXgYAyABKAMSGAoQZHVyYXRpb25fc2Vjb25kcxgEIAEoARIOCgZzdGF0dXMYBSABKAkSDgoGcmVhc29uGAYgASgJIpcCChlHZXRJbnRlcm5ldEhlYWx0aFJlc3BvbnNlEhYKDm92ZXJhbGxfc3RhdHVzGAEgASgJEhUKDW92ZXJhbGxfaXNfdXAYAiABKAgSHwoXb3ZlcmFsbF9sYXRlbmN5X3NlY29uZHMYAyABKAESIQoZb3ZlcmFsbF9wYWNrZXRfbG9zc19yYXRpbxgEIAEoARIeChZvdmVyYWxsX2ppdHRlcl9zZWNvbmRzGAUgASgBEi8KB3RhcmdldHMYBiADKAsyHi5yb3V0ZXJtb25pdG9yLnYxLlRhcmdldEhlYWx0aBI2Cg5yZWNlbnRfb3V0YWdlcxgHIAMoCzIeLnJvdXRlcm1vbml0b3IudjEuT3V0YWdlUmVjb3JkIjIKFlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QSGAoQaW50ZXJ2YWxfc2Vjb25kcxgBIAEoBSL/AgoRTGl2ZVN0YXRzUmVzcG9uc2USFgoOdGltZXN0YW1wX3VuaXgYASABKAMSFgoOaW50ZXJuZXRfaXNfdXAYAiABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAMgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAQgASgFEjMKBXRvdGFsGAUgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSFwoPaW50ZXJuZXRfc3RhdHVzGAggASgJEiIKGmludGVybmV0X3BhY2tldF9sb3NzX3JhdGlvGAkgASgBEh8KF2ludGVybmV0X2ppdHRlcl9zZWNvbmRzGAogASgBIuwBChZRdWVyeVRpbWVTZXJpZXNSZXF1ZXN0EhMKC21ldHJpY19uYW1lGAEgASgJEk8KDG1hdGNoX2xhYmVscxgCIAMoCzI5LnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVxdWVzdC5NYXRjaExhYmVsc0VudHJ5EhEKCWZyb21fdW5peBgDIAEoAxIPCgd0b191bml4GAQgASgDEhQKDHN0ZXBfc2Vjb25kcxgFIAEoBRoyChBNYXRjaExhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiXgoPVGltZVNlcmllc1BvaW50EhYKDnRpbWVzdGFtcF91bml4GAEgASgDEg0KBXZhbHVlGAIgASgBEhEKCW1pbl92YWx1ZRgDIAEoARIRCgltYXhfdmFsdWUYBCABKAEivQEKClRpbWVTZXJpZXMSEwoLbWV0cmljX25hbWUYASABKAkSOAoGbGFiZWxzGAIgAygLMigucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzLkxhYmVsc0VudHJ5EjEKBnBvaW50cxgDIAMoCzIhLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllc1BvaW50Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiRwoXUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2USLAoGc2VyaWVzGAEgAygLMhwucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzMogEChRSb3V0ZXJNb25pdG9yU2VydmljZRJaCgtHZXRPdmVydmlldxIkLnJvdXRlcm1vbml0b3IudjEuR2V0T3ZlcnZpZXdSZXF1ZXN0GiUucm91dGVybW9uaXRvci52MS5HZXRPdmVydmlld1Jlc3BvbnNlEloKC0xpc3REZXZpY2VzEiQucm91dGVybW9uaXRvci52MS5MaXN0RGV2aWNlc1JlcXVlc3QaJS5yb3V0ZXJtb25pdG9yLnYxLkxpc3REZXZpY2VzUmVzcG9uc2USbAoRR2V0SW50ZXJuZXRIZWFsdGgSKi5yb3V0ZXJtb25pdG9yLnYxLkdldEludGVybmV0SGVhbHRoUmVxdWVzdBorLnJvdXRlcm1vbml0b3IudjEuR2V0SW50ZXJuZXRIZWFsdGhSZXNwb25zZRJiCg9TdHJlYW1MaXZlU3RhdHMSKC5yb3V0ZXJtb25pdG9yLnYxLlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QaIy5yb3V0ZXJtb25pdG9yLnYxLkxpdmVTdGF0c1Jlc3BvbnNlMAESZgoPUXVlcnlUaW1lU2VyaWVzEigucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXF1ZXN0Gikucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXNwb25zZUJSWlBnaXRodWIuY29tL2JsZXNzd2luc2FtdWVsL3JvdXRlci1tb25pdG9yL2dlbi9nby9yb3V0ZXJtb25pdG9yL3YxO3JvdXRlcm1vbml0b3J2MWIGcHJvdG8z");
 
 /**
  * @generated from message routermonitor.v1.DirectionalTraffic
@@ -288,135 +288,6 @@ export const ListDevicesResponseSchema: GenMessage<ListDevicesResponse> = /*@__P
   messageDesc(file_routermonitor_v1_router_monitor, 6);
 
 /**
- * @generated from message routermonitor.v1.GetTrafficFlowsRequest
- */
-export type GetTrafficFlowsRequest = Message<"routermonitor.v1.GetTrafficFlowsRequest"> & {
-  /**
-   * @generated from field: int32 limit = 1;
-   */
-  limit: number;
-};
-
-/**
- * Describes the message routermonitor.v1.GetTrafficFlowsRequest.
- * Use `create(GetTrafficFlowsRequestSchema)` to create a new message.
- */
-export const GetTrafficFlowsRequestSchema: GenMessage<GetTrafficFlowsRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 7);
-
-/**
- * @generated from message routermonitor.v1.TrafficFlow
- */
-export type TrafficFlow = Message<"routermonitor.v1.TrafficFlow"> & {
-  /**
-   * "ingress" or "egress"
-   *
-   * @generated from field: string direction = 1;
-   */
-  direction: string;
-
-  /**
-   * "IPv4", "IPv6", etc.
-   *
-   * @generated from field: string eth_proto = 2;
-   */
-  ethProto: string;
-
-  /**
-   * "TCP", "UDP", "ICMP", etc.
-   *
-   * @generated from field: string ip_proto = 3;
-   */
-  ipProto: string;
-
-  /**
-   * @generated from field: string src_ip = 4;
-   */
-  srcIp: string;
-
-  /**
-   * @generated from field: string dst_ip = 5;
-   */
-  dstIp: string;
-
-  /**
-   * @generated from field: uint64 packets = 6;
-   */
-  packets: bigint;
-
-  /**
-   * @generated from field: uint64 bytes = 7;
-   */
-  bytes: bigint;
-};
-
-/**
- * Describes the message routermonitor.v1.TrafficFlow.
- * Use `create(TrafficFlowSchema)` to create a new message.
- */
-export const TrafficFlowSchema: GenMessage<TrafficFlow> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 8);
-
-/**
- * @generated from message routermonitor.v1.ProtocolStats
- */
-export type ProtocolStats = Message<"routermonitor.v1.ProtocolStats"> & {
-  /**
-   * @generated from field: string protocol = 1;
-   */
-  protocol: string;
-
-  /**
-   * @generated from field: uint64 bytes = 2;
-   */
-  bytes: bigint;
-
-  /**
-   * @generated from field: uint64 packets = 3;
-   */
-  packets: bigint;
-};
-
-/**
- * Describes the message routermonitor.v1.ProtocolStats.
- * Use `create(ProtocolStatsSchema)` to create a new message.
- */
-export const ProtocolStatsSchema: GenMessage<ProtocolStats> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 9);
-
-/**
- * @generated from message routermonitor.v1.GetTrafficFlowsResponse
- */
-export type GetTrafficFlowsResponse = Message<"routermonitor.v1.GetTrafficFlowsResponse"> & {
-  /**
-   * @generated from field: repeated routermonitor.v1.TrafficFlow flows = 1;
-   */
-  flows: TrafficFlow[];
-
-  /**
-   * @generated from field: repeated routermonitor.v1.ProtocolStats protocols = 2;
-   */
-  protocols: ProtocolStats[];
-
-  /**
-   * @generated from field: uint64 total_bytes = 3;
-   */
-  totalBytes: bigint;
-
-  /**
-   * @generated from field: uint64 total_packets = 4;
-   */
-  totalPackets: bigint;
-};
-
-/**
- * Describes the message routermonitor.v1.GetTrafficFlowsResponse.
- * Use `create(GetTrafficFlowsResponseSchema)` to create a new message.
- */
-export const GetTrafficFlowsResponseSchema: GenMessage<GetTrafficFlowsResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 10);
-
-/**
  * @generated from message routermonitor.v1.GetInternetHealthRequest
  */
 export type GetInternetHealthRequest = Message<"routermonitor.v1.GetInternetHealthRequest"> & {
@@ -427,7 +298,7 @@ export type GetInternetHealthRequest = Message<"routermonitor.v1.GetInternetHeal
  * Use `create(GetInternetHealthRequestSchema)` to create a new message.
  */
 export const GetInternetHealthRequestSchema: GenMessage<GetInternetHealthRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 11);
+  messageDesc(file_routermonitor_v1_router_monitor, 7);
 
 /**
  * @generated from message routermonitor.v1.TargetHealth
@@ -501,7 +372,7 @@ export type TargetHealth = Message<"routermonitor.v1.TargetHealth"> & {
  * Use `create(TargetHealthSchema)` to create a new message.
  */
 export const TargetHealthSchema: GenMessage<TargetHealth> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 12);
+  messageDesc(file_routermonitor_v1_router_monitor, 8);
 
 /**
  * @generated from message routermonitor.v1.OutageRecord
@@ -545,7 +416,7 @@ export type OutageRecord = Message<"routermonitor.v1.OutageRecord"> & {
  * Use `create(OutageRecordSchema)` to create a new message.
  */
 export const OutageRecordSchema: GenMessage<OutageRecord> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 13);
+  messageDesc(file_routermonitor_v1_router_monitor, 9);
 
 /**
  * @generated from message routermonitor.v1.GetInternetHealthResponse
@@ -594,7 +465,7 @@ export type GetInternetHealthResponse = Message<"routermonitor.v1.GetInternetHea
  * Use `create(GetInternetHealthResponseSchema)` to create a new message.
  */
 export const GetInternetHealthResponseSchema: GenMessage<GetInternetHealthResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 14);
+  messageDesc(file_routermonitor_v1_router_monitor, 10);
 
 /**
  * @generated from message routermonitor.v1.StreamLiveStatsRequest
@@ -613,7 +484,7 @@ export type StreamLiveStatsRequest = Message<"routermonitor.v1.StreamLiveStatsRe
  * Use `create(StreamLiveStatsRequestSchema)` to create a new message.
  */
 export const StreamLiveStatsRequestSchema: GenMessage<StreamLiveStatsRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 15);
+  messageDesc(file_routermonitor_v1_router_monitor, 11);
 
 /**
  * @generated from message routermonitor.v1.LiveStatsResponse
@@ -677,7 +548,7 @@ export type LiveStatsResponse = Message<"routermonitor.v1.LiveStatsResponse"> & 
  * Use `create(LiveStatsResponseSchema)` to create a new message.
  */
 export const LiveStatsResponseSchema: GenMessage<LiveStatsResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 16);
+  messageDesc(file_routermonitor_v1_router_monitor, 12);
 
 /**
  * @generated from message routermonitor.v1.QueryTimeSeriesRequest
@@ -720,7 +591,7 @@ export type QueryTimeSeriesRequest = Message<"routermonitor.v1.QueryTimeSeriesRe
  * Use `create(QueryTimeSeriesRequestSchema)` to create a new message.
  */
 export const QueryTimeSeriesRequestSchema: GenMessage<QueryTimeSeriesRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 17);
+  messageDesc(file_routermonitor_v1_router_monitor, 13);
 
 /**
  * @generated from message routermonitor.v1.TimeSeriesPoint
@@ -752,7 +623,7 @@ export type TimeSeriesPoint = Message<"routermonitor.v1.TimeSeriesPoint"> & {
  * Use `create(TimeSeriesPointSchema)` to create a new message.
  */
 export const TimeSeriesPointSchema: GenMessage<TimeSeriesPoint> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 18);
+  messageDesc(file_routermonitor_v1_router_monitor, 14);
 
 /**
  * @generated from message routermonitor.v1.TimeSeries
@@ -779,7 +650,7 @@ export type TimeSeries = Message<"routermonitor.v1.TimeSeries"> & {
  * Use `create(TimeSeriesSchema)` to create a new message.
  */
 export const TimeSeriesSchema: GenMessage<TimeSeries> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 19);
+  messageDesc(file_routermonitor_v1_router_monitor, 15);
 
 /**
  * @generated from message routermonitor.v1.QueryTimeSeriesResponse
@@ -796,7 +667,7 @@ export type QueryTimeSeriesResponse = Message<"routermonitor.v1.QueryTimeSeriesR
  * Use `create(QueryTimeSeriesResponseSchema)` to create a new message.
  */
 export const QueryTimeSeriesResponseSchema: GenMessage<QueryTimeSeriesResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 20);
+  messageDesc(file_routermonitor_v1_router_monitor, 16);
 
 /**
  * @generated from service routermonitor.v1.RouterMonitorService
@@ -821,16 +692,6 @@ export const RouterMonitorService: GenService<{
     methodKind: "unary";
     input: typeof ListDevicesRequestSchema;
     output: typeof ListDevicesResponseSchema;
-  },
-  /**
-   * Get current traffic flows classified by IP, protocol, and direction.
-   *
-   * @generated from rpc routermonitor.v1.RouterMonitorService.GetTrafficFlows
-   */
-  getTrafficFlows: {
-    methodKind: "unary";
-    input: typeof GetTrafficFlowsRequestSchema;
-    output: typeof GetTrafficFlowsResponseSchema;
   },
   /**
    * Get internet connectivity targets, status, and latency diagnostics.

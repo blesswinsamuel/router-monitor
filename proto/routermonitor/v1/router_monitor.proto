@@ -11,9 +11,6 @@ service RouterMonitorService {
   // List discovered ARP devices with cached hostnames and per-device traffic stats.
   rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
 
-  // Get current traffic flows classified by IP, protocol, and direction.
-  rpc GetTrafficFlows(GetTrafficFlowsRequest) returns (GetTrafficFlowsResponse);
-
   // Get internet connectivity targets, status, and latency diagnostics.
   rpc GetInternetHealth(GetInternetHealthRequest) returns (GetInternetHealthResponse);
 
@@ -85,33 +82,6 @@ message Device {
 
 message ListDevicesResponse {
   repeated Device devices = 1;
-}
-
-message GetTrafficFlowsRequest {
-  int32 limit = 1;
-}
-
-message TrafficFlow {
-  string direction = 1; // "ingress" or "egress"
-  string eth_proto = 2; // "IPv4", "IPv6", etc.
-  string ip_proto = 3;  // "TCP", "UDP", "ICMP", etc.
-  string src_ip = 4;
-  string dst_ip = 5;
-  uint64 packets = 6;
-  uint64 bytes = 7;
-}
-
-message ProtocolStats {
-  string protocol = 1;
-  uint64 bytes = 2;
-  uint64 packets = 3;
-}
-
-message GetTrafficFlowsResponse {
-  repeated TrafficFlow flows = 1;
-  repeated ProtocolStats protocols = 2;
-  uint64 total_bytes = 3;
-  uint64 total_packets = 4;
 }
 
 message GetInternetHealthRequest {}

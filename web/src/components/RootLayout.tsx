@@ -3,17 +3,11 @@ import { Outlet, NavLink, useOutletContext } from 'react-router-dom'
 import { Header } from './Header'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Laptop, ArrowLeftRight, Activity } from 'lucide-react'
+import { LayoutDashboard, Laptop, Activity } from 'lucide-react'
 
 export interface RootOutletContext {
   overview: any
   devices: any[]
-  trafficData: {
-    flows: any[]
-    protocols: any[]
-    totalBytes: bigint | number
-    totalPackets: bigint | number
-  }
   health: any
   isLive: boolean
   isRefreshing: boolean
@@ -28,17 +22,6 @@ export function useRootOutletContext() {
 export function RootLayout() {
   const [overview, setOverview] = useState<any>(null)
   const [devices, setDevices] = useState<any[]>([])
-  const [trafficData, setTrafficData] = useState<{
-    flows: any[]
-    protocols: any[]
-    totalBytes: bigint | number
-    totalPackets: bigint | number
-  }>({
-    flows: [],
-    protocols: [],
-    totalBytes: 0,
-    totalPackets: 0,
-  })
   const [health, setHealth] = useState<any>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,20 +30,13 @@ export function RootLayout() {
   const fetchAllData = useCallback(async () => {
     setIsRefreshing(true)
     try {
-      const [ov, dev, tr, hl] = await Promise.all([
+      const [ov, dev, hl] = await Promise.all([
         rpcClient.getOverview({}),
         rpcClient.listDevices({}),
-        rpcClient.getTrafficFlows({ limit: 100 }),
         rpcClient.getInternetHealth({}),
       ])
       setOverview(ov)
       setDevices(dev.devices || [])
-      setTrafficData({
-        flows: tr.flows || [],
-        protocols: tr.protocols || [],
-        totalBytes: tr.totalBytes,
-        totalPackets: tr.totalPackets,
-      })
       setHealth(hl)
       setError(null)
     } catch (err: any) {
@@ -83,7 +59,6 @@ export function RootLayout() {
   const outletContext: RootOutletContext = {
     overview,
     devices,
-    trafficData,
     health,
     isLive: isConnected,
     isRefreshing,
@@ -138,20 +113,6 @@ export function RootLayout() {
                 {devices.length}
               </span>
             )}
-          </NavLink>
-          <NavLink
-            to="/traffic"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap",
-                isActive
-                  ? "bg-background text-foreground shadow-xs font-semibold"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              )
-            }
-          >
-            <ArrowLeftRight className="w-4 h-4" />
-            <span>Traffic</span>
           </NavLink>
           <NavLink
             to="/health"
