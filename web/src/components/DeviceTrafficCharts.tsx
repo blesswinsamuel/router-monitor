@@ -39,8 +39,12 @@ export const DEVICE_PALETTE = [
   '#8b5cf6', // violet
   '#ec4899', // pink
   '#06b6d4', // cyan
+  '#f97316', // orange
+  '#14b8a6', // teal
+  '#a855f7', // purple
+  '#e11d48', // rose
 ]
-const OTHER_COLOR = '#64748b'
+export const OTHER_COLOR = '#64748b'
 
 interface DeviceTrafficChartsProps {
   devices: Device[]
@@ -121,7 +125,7 @@ export function DeviceTrafficCharts({
       return { slices: [], grandTotal: 0, topDevices: [] }
     }
 
-    const topCount = 5
+    const topCount = 10
     const top = devData.slice(0, topCount)
     const rest = devData.slice(topCount)
 
@@ -155,8 +159,9 @@ export function DeviceTrafficCharts({
     return { slices: resultSlices, grandTotal: sumTotal, topDevices: top }
   }, [devices, scopeKey])
 
-  // 2. Fetch timeseries telemetry for top devices
-  const topIps = useMemo(() => topDevices.map((d) => d.ip), [topDevices])
+  // 2. Fetch timeseries telemetry for top devices (top 5 for readable chart)
+  const timeseriesDevices = useMemo(() => topDevices.slice(0, 5), [topDevices])
+  const topIps = useMemo(() => timeseriesDevices.map((d) => d.ip), [timeseriesDevices])
 
   const fetchTimeseries = useCallback(async () => {
     if (topIps.length === 0) {
@@ -251,14 +256,14 @@ export function DeviceTrafficCharts({
   // Chart config for shadcn ChartContainer
   const timeseriesChartConfig = useMemo(() => {
     const config: ChartConfig = {}
-    topDevices.forEach((d, idx) => {
+    timeseriesDevices.forEach((d, idx) => {
       config[d.ip] = {
         label: d.name,
         color: DEVICE_PALETTE[idx % DEVICE_PALETTE.length],
       }
     })
     return config
-  }, [topDevices])
+  }, [timeseriesDevices])
 
   if (slices.length === 0) {
     return null
@@ -525,7 +530,7 @@ export function DeviceTrafficCharts({
                   >
                     <AreaChart data={timeseriesData}>
                       <defs>
-                        {topDevices.map((d, index) => {
+                        {timeseriesDevices.map((d, index) => {
                           const color = DEVICE_PALETTE[index % DEVICE_PALETTE.length]
                           const gradId = `devGrad-${d.ip.replace(/[^a-zA-Z0-9]/g, '_')}`
                           return (
@@ -563,9 +568,9 @@ export function DeviceTrafficCharts({
                               </div>
                               {payload.map((item) => {
                                 const ip = item.dataKey as string
-                                const dev = topDevices.find((d) => d.ip === ip)
+                                const dev = timeseriesDevices.find((d) => d.ip === ip)
                                 const val = Number(item.value || 0)
-                                if (val === 0 && topDevices.length > 3) return null
+                                if (val === 0 && timeseriesDevices.length > 3) return null
 
                                 return (
                                   <div
@@ -591,7 +596,7 @@ export function DeviceTrafficCharts({
                           )
                         }}
                       />
-                      {topDevices.map((d, index) => {
+                      {timeseriesDevices.map((d, index) => {
                         const color = DEVICE_PALETTE[index % DEVICE_PALETTE.length]
                         const gradId = `devGrad-${d.ip.replace(/[^a-zA-Z0-9]/g, '_')}`
                         const isSelected = selectedDeviceIp === d.ip
@@ -617,7 +622,7 @@ export function DeviceTrafficCharts({
 
               {/* Devices mini indicator row */}
               <div className="flex flex-wrap items-center gap-3 pt-2 border-t text-[11px]">
-                {topDevices.map((d, idx) => {
+                {timeseriesDevices.map((d, idx) => {
                   const color = DEVICE_PALETTE[idx % DEVICE_PALETTE.length]
                   const isSelected = selectedDeviceIp === d.ip
 
