@@ -9,13 +9,17 @@ import {
   HelpCircle,
   Globe,
   HardDrive,
+  PieChart as PieChartIcon,
+  XCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
+import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { cn } from '@/lib/utils'
+import { DeviceTrafficCharts } from './DeviceTrafficCharts'
 import {
   formatBytes,
   formatRate,
@@ -38,6 +42,8 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [selectedInterface, setSelectedInterface] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
+  const [selectedDeviceIp, setSelectedDeviceIp] = useState<string | null>(null)
+  const [showCharts, setShowCharts] = useState(true)
   const navigate = useNavigate()
 
   const activeDeviceList = devices
@@ -84,6 +90,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
 
   const filtered = useMemo(() => {
     return activeDeviceList.filter((d) => {
+      if (selectedDeviceIp && d.ipAddr !== selectedDeviceIp) {
+        return false
+      }
+
       const iface = d.interface || d.arp?.interface || 'lan'
       if (currentInterface !== 'all' && iface !== currentInterface) {
         return false
@@ -107,7 +117,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         d.arp?.interface?.toLowerCase().includes(q)
       )
     })
-  }, [activeDeviceList, currentInterface, statusFilter, search])
+  }, [activeDeviceList, currentInterface, statusFilter, search, selectedDeviceIp])
 
   const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.downloadBytes || 0), 0)
   const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
@@ -115,7 +125,18 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const filteredUl = filtered.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
 
   return (
-    <Card>
+    <div className="space-y-6">
+      {showCharts && (
+        <DeviceTrafficCharts
+          devices={activeDeviceList}
+          trafficScope={trafficScope}
+          selectedDeviceIp={selectedDeviceIp}
+          onSelectDevice={setSelectedDeviceIp}
+          period={period}
+        />
+      )}
+
+      <Card>
         <CardHeader className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -127,14 +148,25 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 Inspect real-time rates (bytes/s & pps) and period-accurate bandwidth from SQLite TSDB. Click any row for details.
               </CardDescription>
             </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Filter by IP, MAC, Hostname..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 text-sm"
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCharts((prev) => !prev)}
+                className="h-9 text-xs gap-1.5 shrink-0"
+              >
+                <PieChartIcon className="w-3.5 h-3.5 text-primary" />
+                <span>{showCharts ? 'Hide Charts' : 'Show Charts'}</span>
+              </Button>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Filter by IP, MAC, Hostname..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 text-sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -159,6 +191,19 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   </TabsList>
                 </Tabs>
               </div>
+
+              {/* Active Device Filter Chip */}
+              {selectedDeviceIp && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs gap-1.5 cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors py-1 px-2.5"
+                  onClick={() => setSelectedDeviceIp(null)}
+                  title="Click to clear device filter"
+                >
+                  <span>Device: {selectedDeviceIp}</span>
+                  <XCircle className="w-3.5 h-3.5" />
+                </Badge>
+              )}
 
               {/* Traffic Scope Toggle */}
               <div className="flex items-center gap-2">
@@ -540,5 +585,6 @@ export function DevicesTab({ devices }: DevicesTabProps) {
           </div>
         </CardContent>
       </Card>
+    </div>
   )
 }
