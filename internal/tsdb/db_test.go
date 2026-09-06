@@ -50,3 +50,58 @@ func TestTSDB_InsertAndQuery(t *testing.T) {
 		t.Fatalf("expected 5 deleted samples, got %d", deleted)
 	}
 }
+
+func TestTSDB_DevicePersistence(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "devices.db")
+
+	db, err := Open(dbPath)
+	if err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	defer db.Close()
+
+	t1 := time.Now().Add(-10 * time.Minute).Truncate(time.Second)
+	t2 := time.Now().Truncate(time.Second)
+
+	// 1. Initial upsert
+	if err := db.UpsertDevice("aa:bb:cc:dd:ee:01", "10.100.1.10", "my-laptop", "lan", t1); err != nil {
+		t.Fatalf("UpsertDevice failed: %v", err)
+	}
+
+	devs, err := db.GetPersistedDevices()
+	if err != nil {
+		t.Fatalf("GetPersistedDevices failed: %v", err)
+	}
+	if len(devs) != 1 {
+		t.Fatalf("expected 1 device, got %d", len(devs))
+	}
+	if devs[0].Hostname != "my-laptop" || devs[0].HWAddr != "aa:bb:cc:dd:ee:01" {
+		t.Fatalf("unexpected device details: %+v", devs[0])
+	}
+	if !devs[0].FirstSeen.Equal(t1) || !devs[0].LastSeen.Equal(t1) {
+		t.Fatalf("unexpected timestamps: first=%v, last=%v", devs[0].FirstSeen, devs[0].LastSeen)
+	}
+
+	// 2. Subsequent upsert with unknown hostname should retain existing known hostname
+	if err := db.UpsertDevice("aa:bb:cc:dd:ee:01", "10.100.1.10", "unknown:10.100.1.10", "lan", t2); err != nil {
+		t.Fatalf("UpsertDevice second call failed: %v", err)
+	}
+
+	devs, err = db.GetPersistedDevices()
+	if err != nil {
+		t.Fatalf("GetPersistedDevices failed: %v", err)
+	}
+	if len(devs) != 1 {
+		t.Fatalf("expected 1 device, got %d", len(devs))
+	}
+	if devs[0].Hostname != "my-laptop" {
+		t.Fatalf("expected hostname 'my-laptop' preserved, got %q", devs[0].Hostname)
+	}
+	if !devs[0].FirstSeen.Equal(t1) {
+		t.Fatalf("first_seen should be preserved: got %v, want %v", devs[0].FirstSeen, t1)
+	}
+	if !devs[0].LastSeen.Equal(t2) {
+		t.Fatalf("last_seen should be updated: got %v, want %v", devs[0].LastSeen, t2)
+	}
+}

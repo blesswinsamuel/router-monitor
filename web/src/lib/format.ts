@@ -27,3 +27,19 @@ export function formatLatency(sec: number | undefined | null): string {
   if (ms < 1) return `${(ms).toFixed(2)} ms`
   return `${ms.toFixed(1)} ms`
 }
+
+export function formatRelativeTime(unixSeconds: number | bigint | undefined | null): string {
+  if (!unixSeconds) return "Never"
+  const sec = Number(unixSeconds)
+  if (sec <= 0) return "Never"
+  const diffSec = Math.floor(Date.now() / 1000) - sec
+  if (diffSec < 10) return "just now"
+  if (diffSec < 60) return `${diffSec}s ago`
+  const min = Math.floor(diffSec / 60)
+  if (min < 60) return `${min}m ago`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}h ago`
+  const days = Math.floor(hr / 24)
+  return `${days}d ago`
+}
+
