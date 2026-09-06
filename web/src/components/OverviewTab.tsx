@@ -8,7 +8,6 @@ import {
   ArrowUp,
   Activity,
   Network,
-  ArrowRight,
   Columns2,
   HardDrive,
 } from 'lucide-react'
@@ -207,15 +206,33 @@ export function OverviewTab({
     return () => clearInterval(interval)
   }, [fetchHistory])
 
-  const topDevices = useMemo(() => {
+  const topWanDevices = useMemo(() => {
     if (!devices || devices.length === 0) return []
     return [...devices]
-      .filter((d) => d.status === 'active' || d.status === 'static' || Number(d.total?.downloadBytes || 0) > 0)
-      .sort((a, b) => {
-        const aVol = Number(a.total?.downloadBytes || 0) + Number(a.total?.uploadBytes || 0)
-        const bVol = Number(b.total?.downloadBytes || 0) + Number(b.total?.uploadBytes || 0)
-        return bVol - aVol
+      .map((d) => {
+        const dl = Number(d.wan?.downloadBytes || 0)
+        const ul = Number(d.wan?.uploadBytes || 0)
+        const liveDl = Number(d.wan?.downloadBytesPerSec || 0)
+        const liveUl = Number(d.wan?.uploadBytesPerSec || 0)
+        return { device: d, dl, ul, total: dl + ul, liveDl, liveUl }
       })
+      .filter((x) => x.total > 0 || x.device.status === 'active' || x.device.status === 'static')
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5)
+  }, [devices])
+
+  const topLanDevices = useMemo(() => {
+    if (!devices || devices.length === 0) return []
+    return [...devices]
+      .map((d) => {
+        const dl = Number(d.lan?.downloadBytes || 0)
+        const ul = Number(d.lan?.uploadBytes || 0)
+        const liveDl = Number(d.lan?.downloadBytesPerSec || 0)
+        const liveUl = Number(d.lan?.uploadBytesPerSec || 0)
+        return { device: d, dl, ul, total: dl + ul, liveDl, liveUl }
+      })
+      .filter((x) => x.total > 0 || x.device.status === 'active' || x.device.status === 'static')
+      .sort((a, b) => b.total - a.total)
       .slice(0, 5)
   }, [devices])
 
@@ -766,85 +783,175 @@ export function OverviewTab({
         </CardContent>
       </Card>
 
-      {/* 3. At-A-Glance Insights: Top Bandwidth Consumers in Period */}
-      {topDevices.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Laptop className="w-4 h-4 text-primary" />
-                  Top Bandwidth Consumers ({period})
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Active local network clients with the highest combined traffic volume
-                </CardDescription>
+      {/* 3. At-A-Glance Insights: Top WAN and LAN Consumers Separately */}
+      {(topWanDevices.length > 0 || topLanDevices.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top WAN Consumers Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-semibold">Top Internet (WAN) Consumers</CardTitle>
+                    <CardDescription className="text-xs">Highest external traffic volume ({period})</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-[10px] border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono">
+                  External
+                </Badge>
               </div>
-              <Button asChild variant="ghost" size="sm" className="text-xs gap-1">
-                <Link to="/devices">
-                  <span>All Devices</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {topDevices.map((d, index) => {
-                const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
-                const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : d.ipAddr
-                const wanTotal = Number(d.wan?.downloadBytes || 0) + Number(d.wan?.uploadBytes || 0)
-                const lanTotal = Number(d.lan?.downloadBytes || 0) + Number(d.lan?.uploadBytes || 0)
-                const totalVol = Number(d.total?.downloadBytes || 0) + Number(d.total?.uploadBytes || 0)
-                const liveRate = Number(d.total?.downloadBytesPerSec || 0) + Number(d.total?.uploadBytesPerSec || 0)
+            </CardHeader>
+            <CardContent>
+              {topWanDevices.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  No active WAN client traffic recorded for this period.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {topWanDevices.map(({ device: d, dl, ul, total, liveDl, liveUl }, index) => {
+                    const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
+                    const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
+                    const liveRate = liveDl + liveUl
 
-                return (
-                  <Link
-                    key={d.ipAddr || index}
-                    to={`/devices/${d.ipAddr}`}
-                    className="block p-3 rounded-lg border bg-card/60 hover:bg-muted/40 hover:border-primary/40 transition-all space-y-2 group"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="p-1.5 rounded-md bg-muted text-muted-foreground group-hover:text-primary transition-colors shrink-0">
-                          <DevIcon className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-semibold truncate text-foreground group-hover:text-primary transition-colors">
-                            {dName}
-                          </h4>
-                          <span className="text-[10px] font-mono text-muted-foreground truncate block">
-                            {d.ipAddr}
+                    return (
+                      <Link
+                        key={d.ipAddr || index}
+                        to={`/devices/${d.ipAddr}`}
+                        className="flex items-center justify-between p-2.5 rounded-lg border bg-card/60 hover:bg-muted/40 hover:border-emerald-500/40 transition-all group"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <span className="text-xs font-mono font-semibold text-muted-foreground w-4 text-center shrink-0">
+                            #{index + 1}
                           </span>
+                          <div className="p-1.5 rounded-md bg-muted text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0">
+                            <DevIcon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-xs font-semibold truncate text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                {dName}
+                              </h4>
+                              {d.vendor && dName !== d.vendor && (
+                                <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
+                                  ({d.vendor})
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] font-mono text-muted-foreground block truncate">
+                              {d.ipAddr}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <span className="text-[10px] font-mono text-muted-foreground shrink-0">
-                        #{index + 1}
-                      </span>
-                    </div>
 
-                    <div className="pt-1.5 border-t border-border/50 text-[11px] space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Total:</span>
-                        <span className="font-mono font-semibold text-foreground">{formatBytes(totalVol)}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-emerald-600 dark:text-emerald-400">WAN: {formatBytes(wanTotal)}</span>
-                        <span className="text-blue-600 dark:text-blue-400">LAN: {formatBytes(lanTotal)}</span>
-                      </div>
-                      {liveRate > 0 && (
-                        <div className="text-[10px] text-primary font-mono flex items-center justify-between pt-0.5">
-                          <span>Live:</span>
-                          <span>{formatRate(liveRate)}</span>
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-mono font-bold text-foreground">
+                            {formatBytes(total)}
+                          </div>
+                          <div className="text-[10px] font-mono text-muted-foreground flex items-center justify-end gap-1.5">
+                            <span className="text-emerald-600 dark:text-emerald-400">↓ {formatBytes(dl)}</span>
+                            <span className="text-sky-600 dark:text-sky-400">↑ {formatBytes(ul)}</span>
+                          </div>
+                          {liveRate > 0 && (
+                            <div className="text-[10px] font-mono text-primary flex items-center justify-end gap-1 pt-0.5">
+                              <span>Live:</span>
+                              <span>↓{formatRate(liveDl)} ↑{formatRate(liveUl)}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top LAN Consumers Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    <Network className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-sm font-semibold">Top Local (LAN) Consumers</CardTitle>
+                    <CardDescription className="text-xs">Highest device-to-device traffic volume ({period})</CardDescription>
+                  </div>
+                </div>
+                <Badge variant="outline" className="text-[10px] border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono">
+                  Internal
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {topLanDevices.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  No active LAN client traffic recorded for this period.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {topLanDevices.map(({ device: d, dl, ul, total, liveDl, liveUl }, index) => {
+                    const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
+                    const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
+                    const liveRate = liveDl + liveUl
+
+                    return (
+                      <Link
+                        key={d.ipAddr || index}
+                        to={`/devices/${d.ipAddr}`}
+                        className="flex items-center justify-between p-2.5 rounded-lg border bg-card/60 hover:bg-muted/40 hover:border-blue-500/40 transition-all group"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                          <span className="text-xs font-mono font-semibold text-muted-foreground w-4 text-center shrink-0">
+                            #{index + 1}
+                          </span>
+                          <div className="p-1.5 rounded-md bg-muted text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors shrink-0">
+                            <DevIcon className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-xs font-semibold truncate text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                {dName}
+                              </h4>
+                              {d.vendor && dName !== d.vendor && (
+                                <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">
+                                  ({d.vendor})
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] font-mono text-muted-foreground block truncate">
+                              {d.ipAddr}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <div className="text-xs font-mono font-bold text-foreground">
+                            {formatBytes(total)}
+                          </div>
+                          <div className="text-[10px] font-mono text-muted-foreground flex items-center justify-end gap-1.5">
+                            <span className="text-blue-600 dark:text-blue-400">↓ {formatBytes(dl)}</span>
+                            <span className="text-indigo-600 dark:text-indigo-400">↑ {formatBytes(ul)}</span>
+                          </div>
+                          {liveRate > 0 && (
+                            <div className="text-[10px] font-mono text-primary flex items-center justify-end gap-1 pt-0.5">
+                              <span>Live:</span>
+                              <span>↓{formatRate(liveDl)} ↑{formatRate(liveUl)}</span>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   )
