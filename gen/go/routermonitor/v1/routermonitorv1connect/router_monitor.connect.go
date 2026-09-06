@@ -48,6 +48,9 @@ const (
 	// RouterMonitorServiceQueryTimeSeriesProcedure is the fully-qualified name of the
 	// RouterMonitorService's QueryTimeSeries RPC.
 	RouterMonitorServiceQueryTimeSeriesProcedure = "/routermonitor.v1.RouterMonitorService/QueryTimeSeries"
+	// RouterMonitorServicePingDeviceProcedure is the fully-qualified name of the RouterMonitorService's
+	// PingDevice RPC.
+	RouterMonitorServicePingDeviceProcedure = "/routermonitor.v1.RouterMonitorService/PingDevice"
 )
 
 // RouterMonitorServiceClient is a client for the routermonitor.v1.RouterMonitorService service.
@@ -62,6 +65,8 @@ type RouterMonitorServiceClient interface {
 	StreamLiveStats(context.Context, *connect.Request[v1.StreamLiveStatsRequest]) (*connect.ServerStreamForClient[v1.LiveStatsResponse], error)
 	// Query historical time series from the embedded SQLite TSDB with server-side downsampling.
 	QueryTimeSeries(context.Context, *connect.Request[v1.QueryTimeSeriesRequest]) (*connect.Response[v1.QueryTimeSeriesResponse], error)
+	// Ping a specific LAN device on-demand and measure round-trip latency, jitter, and packet loss.
+	PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error)
 }
 
 // NewRouterMonitorServiceClient constructs a client for the routermonitor.v1.RouterMonitorService
@@ -105,6 +110,12 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(routerMonitorServiceMethods.ByName("QueryTimeSeries")),
 			connect.WithClientOptions(opts...),
 		),
+		pingDevice: connect.NewClient[v1.PingDeviceRequest, v1.PingDeviceResponse](
+			httpClient,
+			baseURL+RouterMonitorServicePingDeviceProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("PingDevice")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -115,6 +126,7 @@ type routerMonitorServiceClient struct {
 	getInternetHealth *connect.Client[v1.GetInternetHealthRequest, v1.GetInternetHealthResponse]
 	streamLiveStats   *connect.Client[v1.StreamLiveStatsRequest, v1.LiveStatsResponse]
 	queryTimeSeries   *connect.Client[v1.QueryTimeSeriesRequest, v1.QueryTimeSeriesResponse]
+	pingDevice        *connect.Client[v1.PingDeviceRequest, v1.PingDeviceResponse]
 }
 
 // GetOverview calls routermonitor.v1.RouterMonitorService.GetOverview.
@@ -142,6 +154,11 @@ func (c *routerMonitorServiceClient) QueryTimeSeries(ctx context.Context, req *c
 	return c.queryTimeSeries.CallUnary(ctx, req)
 }
 
+// PingDevice calls routermonitor.v1.RouterMonitorService.PingDevice.
+func (c *routerMonitorServiceClient) PingDevice(ctx context.Context, req *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error) {
+	return c.pingDevice.CallUnary(ctx, req)
+}
+
 // RouterMonitorServiceHandler is an implementation of the routermonitor.v1.RouterMonitorService
 // service.
 type RouterMonitorServiceHandler interface {
@@ -155,6 +172,8 @@ type RouterMonitorServiceHandler interface {
 	StreamLiveStats(context.Context, *connect.Request[v1.StreamLiveStatsRequest], *connect.ServerStream[v1.LiveStatsResponse]) error
 	// Query historical time series from the embedded SQLite TSDB with server-side downsampling.
 	QueryTimeSeries(context.Context, *connect.Request[v1.QueryTimeSeriesRequest]) (*connect.Response[v1.QueryTimeSeriesResponse], error)
+	// Ping a specific LAN device on-demand and measure round-trip latency, jitter, and packet loss.
+	PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error)
 }
 
 // NewRouterMonitorServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -194,6 +213,12 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 		connect.WithSchema(routerMonitorServiceMethods.ByName("QueryTimeSeries")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routerMonitorServicePingDeviceHandler := connect.NewUnaryHandler(
+		RouterMonitorServicePingDeviceProcedure,
+		svc.PingDevice,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("PingDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/routermonitor.v1.RouterMonitorService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RouterMonitorServiceGetOverviewProcedure:
@@ -206,6 +231,8 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 			routerMonitorServiceStreamLiveStatsHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceQueryTimeSeriesProcedure:
 			routerMonitorServiceQueryTimeSeriesHandler.ServeHTTP(w, r)
+		case RouterMonitorServicePingDeviceProcedure:
+			routerMonitorServicePingDeviceHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -233,4 +260,8 @@ func (UnimplementedRouterMonitorServiceHandler) StreamLiveStats(context.Context,
 
 func (UnimplementedRouterMonitorServiceHandler) QueryTimeSeries(context.Context, *connect.Request[v1.QueryTimeSeriesRequest]) (*connect.Response[v1.QueryTimeSeriesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.QueryTimeSeries is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.PingDevice is not implemented"))
 }

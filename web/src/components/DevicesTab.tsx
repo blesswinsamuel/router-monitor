@@ -25,6 +25,7 @@ import {
 } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { useNavigate } from 'react-router-dom'
+import { getDeviceCategory } from '@/lib/device-icons'
 import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
 
 interface DevicesTabProps {
@@ -383,6 +384,8 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     const lanDlRate = Number(device.lan?.downloadBytesPerSec || 0)
                     const lanUlRate = Number(device.lan?.uploadBytesPerSec || 0)
 
+                    const { icon: RowIcon } = getDeviceCategory(device.hostname, device.vendor)
+
                     return (
                       <TableRow
                         key={`${device.ipAddr}-${idx}`}
@@ -390,15 +393,28 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                         className="cursor-pointer hover:bg-muted/40 transition-colors group"
                       >
                         <TableCell className="font-medium">
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
-                              {device.hostname && !device.hostname.startsWith('unknown:')
-                                ? device.hostname
-                                : 'Unknown Device'}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {device.ipAddr}
-                            </span>
+                          <div className="flex items-center gap-2.5">
+                            <div className="p-1.5 rounded-md bg-muted/60 text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors shrink-0">
+                              <RowIcon className="w-4 h-4" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
+                                {device.hostname && !device.hostname.startsWith('unknown:')
+                                  ? device.hostname
+                                  : 'Unknown Device'}
+                              </span>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
+                                <span>{device.ipAddr}</span>
+                                {device.vendor && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-[11px] text-muted-foreground/80 font-sans truncate max-w-[150px]">
+                                      {device.vendor}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-xs">{device.ipAddr}</TableCell>
