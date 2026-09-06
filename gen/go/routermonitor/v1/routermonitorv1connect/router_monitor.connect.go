@@ -39,9 +39,6 @@ const (
 	// RouterMonitorServiceListDevicesProcedure is the fully-qualified name of the
 	// RouterMonitorService's ListDevices RPC.
 	RouterMonitorServiceListDevicesProcedure = "/routermonitor.v1.RouterMonitorService/ListDevices"
-	// RouterMonitorServiceGetTrafficFlowsProcedure is the fully-qualified name of the
-	// RouterMonitorService's GetTrafficFlows RPC.
-	RouterMonitorServiceGetTrafficFlowsProcedure = "/routermonitor.v1.RouterMonitorService/GetTrafficFlows"
 	// RouterMonitorServiceGetInternetHealthProcedure is the fully-qualified name of the
 	// RouterMonitorService's GetInternetHealth RPC.
 	RouterMonitorServiceGetInternetHealthProcedure = "/routermonitor.v1.RouterMonitorService/GetInternetHealth"
@@ -59,8 +56,6 @@ type RouterMonitorServiceClient interface {
 	GetOverview(context.Context, *connect.Request[v1.GetOverviewRequest]) (*connect.Response[v1.GetOverviewResponse], error)
 	// List discovered ARP devices with cached hostnames and per-device traffic stats.
 	ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error)
-	// Get current traffic flows classified by IP, protocol, and direction.
-	GetTrafficFlows(context.Context, *connect.Request[v1.GetTrafficFlowsRequest]) (*connect.Response[v1.GetTrafficFlowsResponse], error)
 	// Get internet connectivity targets, status, and latency diagnostics.
 	GetInternetHealth(context.Context, *connect.Request[v1.GetInternetHealthRequest]) (*connect.Response[v1.GetInternetHealthResponse], error)
 	// Server-streaming RPC emitting periodic snapshots for real-time live graphs.
@@ -92,12 +87,6 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(routerMonitorServiceMethods.ByName("ListDevices")),
 			connect.WithClientOptions(opts...),
 		),
-		getTrafficFlows: connect.NewClient[v1.GetTrafficFlowsRequest, v1.GetTrafficFlowsResponse](
-			httpClient,
-			baseURL+RouterMonitorServiceGetTrafficFlowsProcedure,
-			connect.WithSchema(routerMonitorServiceMethods.ByName("GetTrafficFlows")),
-			connect.WithClientOptions(opts...),
-		),
 		getInternetHealth: connect.NewClient[v1.GetInternetHealthRequest, v1.GetInternetHealthResponse](
 			httpClient,
 			baseURL+RouterMonitorServiceGetInternetHealthProcedure,
@@ -123,7 +112,6 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 type routerMonitorServiceClient struct {
 	getOverview       *connect.Client[v1.GetOverviewRequest, v1.GetOverviewResponse]
 	listDevices       *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
-	getTrafficFlows   *connect.Client[v1.GetTrafficFlowsRequest, v1.GetTrafficFlowsResponse]
 	getInternetHealth *connect.Client[v1.GetInternetHealthRequest, v1.GetInternetHealthResponse]
 	streamLiveStats   *connect.Client[v1.StreamLiveStatsRequest, v1.LiveStatsResponse]
 	queryTimeSeries   *connect.Client[v1.QueryTimeSeriesRequest, v1.QueryTimeSeriesResponse]
@@ -137,11 +125,6 @@ func (c *routerMonitorServiceClient) GetOverview(ctx context.Context, req *conne
 // ListDevices calls routermonitor.v1.RouterMonitorService.ListDevices.
 func (c *routerMonitorServiceClient) ListDevices(ctx context.Context, req *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error) {
 	return c.listDevices.CallUnary(ctx, req)
-}
-
-// GetTrafficFlows calls routermonitor.v1.RouterMonitorService.GetTrafficFlows.
-func (c *routerMonitorServiceClient) GetTrafficFlows(ctx context.Context, req *connect.Request[v1.GetTrafficFlowsRequest]) (*connect.Response[v1.GetTrafficFlowsResponse], error) {
-	return c.getTrafficFlows.CallUnary(ctx, req)
 }
 
 // GetInternetHealth calls routermonitor.v1.RouterMonitorService.GetInternetHealth.
@@ -166,8 +149,6 @@ type RouterMonitorServiceHandler interface {
 	GetOverview(context.Context, *connect.Request[v1.GetOverviewRequest]) (*connect.Response[v1.GetOverviewResponse], error)
 	// List discovered ARP devices with cached hostnames and per-device traffic stats.
 	ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error)
-	// Get current traffic flows classified by IP, protocol, and direction.
-	GetTrafficFlows(context.Context, *connect.Request[v1.GetTrafficFlowsRequest]) (*connect.Response[v1.GetTrafficFlowsResponse], error)
 	// Get internet connectivity targets, status, and latency diagnostics.
 	GetInternetHealth(context.Context, *connect.Request[v1.GetInternetHealthRequest]) (*connect.Response[v1.GetInternetHealthResponse], error)
 	// Server-streaming RPC emitting periodic snapshots for real-time live graphs.
@@ -195,12 +176,6 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 		connect.WithSchema(routerMonitorServiceMethods.ByName("ListDevices")),
 		connect.WithHandlerOptions(opts...),
 	)
-	routerMonitorServiceGetTrafficFlowsHandler := connect.NewUnaryHandler(
-		RouterMonitorServiceGetTrafficFlowsProcedure,
-		svc.GetTrafficFlows,
-		connect.WithSchema(routerMonitorServiceMethods.ByName("GetTrafficFlows")),
-		connect.WithHandlerOptions(opts...),
-	)
 	routerMonitorServiceGetInternetHealthHandler := connect.NewUnaryHandler(
 		RouterMonitorServiceGetInternetHealthProcedure,
 		svc.GetInternetHealth,
@@ -225,8 +200,6 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 			routerMonitorServiceGetOverviewHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceListDevicesProcedure:
 			routerMonitorServiceListDevicesHandler.ServeHTTP(w, r)
-		case RouterMonitorServiceGetTrafficFlowsProcedure:
-			routerMonitorServiceGetTrafficFlowsHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceGetInternetHealthProcedure:
 			routerMonitorServiceGetInternetHealthHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceStreamLiveStatsProcedure:
@@ -248,10 +221,6 @@ func (UnimplementedRouterMonitorServiceHandler) GetOverview(context.Context, *co
 
 func (UnimplementedRouterMonitorServiceHandler) ListDevices(context.Context, *connect.Request[v1.ListDevicesRequest]) (*connect.Response[v1.ListDevicesResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.ListDevices is not implemented"))
-}
-
-func (UnimplementedRouterMonitorServiceHandler) GetTrafficFlows(context.Context, *connect.Request[v1.GetTrafficFlowsRequest]) (*connect.Response[v1.GetTrafficFlowsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.GetTrafficFlows is not implemented"))
 }
 
 func (UnimplementedRouterMonitorServiceHandler) GetInternetHealth(context.Context, *connect.Request[v1.GetInternetHealthRequest]) (*connect.Response[v1.GetInternetHealthResponse], error) {

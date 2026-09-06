@@ -52,16 +52,7 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 		t.Errorf("expected non-nil devices list")
 	}
 
-	// 3. Test GetTrafficFlows
-	flowsRes, err := svc.GetTrafficFlows(ctx, connect.NewRequest(&routermonitorv1.GetTrafficFlowsRequest{}))
-	if err != nil {
-		t.Fatalf("GetTrafficFlows failed: %v", err)
-	}
-	if flowsRes.Msg.Flows == nil {
-		t.Errorf("expected non-nil flows list")
-	}
-
-	// 4. Test GetInternetHealth
+	// 3. Test GetInternetHealth
 	healthRes, err := svc.GetInternetHealth(ctx, connect.NewRequest(&routermonitorv1.GetInternetHealthRequest{}))
 	if err != nil {
 		t.Fatalf("GetInternetHealth failed: %v", err)
@@ -70,7 +61,7 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 		t.Errorf("expected 1 target, got %d", len(healthRes.Msg.Targets))
 	}
 
-	// 5. Test QueryTimeSeries
+	// 4. Test QueryTimeSeries
 	tsRes, err := svc.QueryTimeSeries(ctx, connect.NewRequest(&routermonitorv1.QueryTimeSeriesRequest{
 		MetricName: "traffic_bytes_rate",
 	}))
