@@ -88,6 +88,9 @@ type Sampler struct {
 
 	prevDeviceBytes   map[string]devByteCounts
 	prevDevicePackets map[string]devPacketCounts
+
+	lastDeviceUpsert time.Time
+	knownDeviceState map[string]string
 }
 
 func NewSampler(
@@ -98,8 +101,9 @@ func NewSampler(
 	interval time.Duration,
 ) *Sampler {
 	if interval <= 0 {
-		interval = 5 * time.Second
+		interval = 15 * time.Second
 	}
+	db.SetSampleInterval(interval)
 	return &Sampler{
 		db:                db,
 		ebpfCollector:     ebpf,
@@ -109,6 +113,7 @@ func NewSampler(
 		deviceRates:       make(map[string]DeviceRate),
 		prevDeviceBytes:   make(map[string]devByteCounts),
 		prevDevicePackets: make(map[string]devPacketCounts),
+		knownDeviceState:  make(map[string]string),
 	}
 }
 
@@ -395,14 +400,37 @@ func (s *Sampler) SampleOnce() {
 	// 3. Gather Devices
 	devices := s.arpCollector.GetDevices()
 	var validDevices int32
+	var devicesToUpsert []PersistedDevice
+	needsPeriodicRefresh := now.Sub(s.lastDeviceUpsert) >= 5*time.Minute
+
 	for _, d := range devices {
 		if d.IsValid {
 			validDevices++
 		}
 		if d.HWAddr != "" && d.HWAddr != "00:00:00:00:00:00" && (d.Flag&2 != 0 || d.Flag&4 != 0) {
-			_ = s.db.UpsertDevice(d.HWAddr, d.IPAddr, d.Hostname, d.Device, now)
+			stateSig := d.IPAddr + "|" + d.Hostname + "|" + d.Device
+			if needsPeriodicRefresh || s.knownDeviceState[d.HWAddr] != stateSig {
+				s.knownDeviceState[d.HWAddr] = stateSig
+				devicesToUpsert = append(devicesToUpsert, PersistedDevice{
+					HWAddr:    d.HWAddr,
+					IPAddr:    d.IPAddr,
+					Hostname:  d.Hostname,
+					Device:    d.Device,
+					FirstSeen: now,
+					LastSeen:  now,
+				})
+			}
 		}
 	}
+
+	if len(devicesToUpsert) > 0 {
+		if err := s.db.UpsertDevices(devicesToUpsert); err != nil {
+			log.Printf("error upserting devices to tsdb: %v", err)
+		} else {
+			s.lastDeviceUpsert = now
+		}
+	}
+
 	samples = append(samples,
 		Sample{Metric: "connected_devices_count", Labels: map[string]string{}, Timestamp: now, Value: float64(validDevices)},
 	)

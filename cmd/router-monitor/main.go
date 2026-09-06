@@ -161,7 +161,12 @@ func main() {
 	defer tsdbDB.Close()
 	tsdbDB.StartRetentionWorker(ctx, 1*time.Hour, 7*24*time.Hour)
 
-	sampler := tsdb.NewSampler(tsdbDB, ebpfFirewallCollector, arpCollector, internetChecker, 5*time.Second)
+	sampleInterval, err := parseDurationWithDefault(os.Getenv("SAMPLE_INTERVAL"), 15*time.Second)
+	if err != nil {
+		log.Fatalf("invalid SAMPLE_INTERVAL: %v", err)
+	}
+
+	sampler := tsdb.NewSampler(tsdbDB, ebpfFirewallCollector, arpCollector, internetChecker, sampleInterval)
 	sampler.Start(ctx)
 
 	routerService := api.NewRouterMonitorService(
