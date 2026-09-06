@@ -444,3 +444,160 @@ func RunProbe(ctx context.Context, cfg TargetConfig, timeout time.Duration) Prob
 		return probeICMP(ctx, cfg.Target, timeout)
 	}
 }
+
+type PingStats struct {
+	IsReachable      bool
+	PacketLossRatio  float64
+	MinLatency       time.Duration
+	AvgLatency       time.Duration
+	MaxLatency       time.Duration
+	Jitter           time.Duration
+	RoundTripTimesMS []float64
+	LastError        string
+}
+
+func PingHost(ctx context.Context, host string, count int, timeout time.Duration) PingStats {
+	if count <= 0 {
+		count = 4
+	}
+	if count > 10 {
+		count = 10
+	}
+	if timeout <= 0 {
+		timeout = 2 * time.Second
+	}
+
+	ipAddr, err := net.ResolveIPAddr("ip4", host)
+	if err != nil {
+		return PingStats{
+			PacketLossRatio: 1.0,
+			LastError:       err.Error(),
+		}
+	}
+
+	conn, err := net.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		return PingStats{
+			PacketLossRatio: 1.0,
+			LastError:       fmt.Sprintf("raw icmp socket error: %v", err),
+		}
+	}
+	defer conn.Close()
+
+	perPacketTimeout := timeout / time.Duration(count)
+	if perPacketTimeout < 150*time.Millisecond {
+		perPacketTimeout = 150 * time.Millisecond
+	}
+
+	var rtts []time.Duration
+	var rttsMS []float64
+	pid := os.Getpid() & 0xffff
+	id := uint16(pid ^ int(rand.Int32()&0xffff))
+
+	for seq := uint16(1); seq <= uint16(count); seq++ {
+		select {
+		case <-ctx.Done():
+			break
+		default:
+		}
+
+		pkt := make([]byte, 64)
+		pkt[0] = 8 // ICMP Echo Request
+		pkt[1] = 0 // Code 0
+		pkt[2] = 0 // Checksum high byte
+		pkt[3] = 0 // Checksum low byte
+		binary.BigEndian.PutUint16(pkt[4:6], id)
+		binary.BigEndian.PutUint16(pkt[6:8], seq)
+		binary.BigEndian.PutUint64(pkt[8:16], uint64(time.Now().UnixNano()))
+
+		csum := computeICMPChecksum(pkt)
+		binary.BigEndian.PutUint16(pkt[2:4], csum)
+
+		t0 := time.Now()
+		_ = conn.SetDeadline(t0.Add(perPacketTimeout))
+
+		if _, err := conn.WriteTo(pkt, ipAddr); err != nil {
+			rttsMS = append(rttsMS, -1.0)
+			continue
+		}
+
+		replyBuf := make([]byte, 256)
+		received := false
+		for {
+			n, _, err := conn.ReadFrom(replyBuf)
+			if err != nil {
+				break
+			}
+			rtt := time.Since(t0)
+
+			icmpPkt := replyBuf[:n]
+			if n >= 20 && icmpPkt[0] == 0x45 {
+				icmpPkt = icmpPkt[20:]
+			}
+			if len(icmpPkt) < 8 {
+				continue
+			}
+
+			if icmpPkt[0] == 0 && icmpPkt[1] == 0 {
+				replyID := binary.BigEndian.Uint16(icmpPkt[4:6])
+				replySeq := binary.BigEndian.Uint16(icmpPkt[6:8])
+				if replyID == id && replySeq == seq {
+					rtts = append(rtts, rtt)
+					rttsMS = append(rttsMS, float64(rtt.Microseconds())/1000.0)
+					received = true
+					break
+				}
+			}
+		}
+
+		if !received {
+			rttsMS = append(rttsMS, -1.0)
+		}
+	}
+
+	packetsReceived := len(rtts)
+	lossRatio := float64(count-packetsReceived) / float64(count)
+
+	if packetsReceived == 0 {
+		return PingStats{
+			PacketLossRatio:  1.0,
+			RoundTripTimesMS: rttsMS,
+			LastError:        "100% packet loss (host unreachable or timeout)",
+		}
+	}
+
+	minLat := rtts[0]
+	maxLat := rtts[0]
+	var sumLat time.Duration
+	for _, d := range rtts {
+		sumLat += d
+		if d < minLat {
+			minLat = d
+		}
+		if d > maxLat {
+			maxLat = d
+		}
+	}
+	avgLat := sumLat / time.Duration(packetsReceived)
+
+	var jitter time.Duration
+	if packetsReceived > 1 {
+		var jitterSum float64
+		for i := 1; i < packetsReceived; i++ {
+			diff := math.Abs(float64(rtts[i].Nanoseconds() - rtts[i-1].Nanoseconds()))
+			jitterSum += diff
+		}
+		jitter = time.Duration(jitterSum / float64(packetsReceived-1))
+	}
+
+	return PingStats{
+		IsReachable:      true,
+		PacketLossRatio:  lossRatio,
+		MinLatency:       minLat,
+		AvgLatency:       avgLat,
+		MaxLatency:       maxLat,
+		Jitter:           jitter,
+		RoundTripTimesMS: rttsMS,
+	}
+}
+

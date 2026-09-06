@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -10,6 +11,7 @@ import (
 	"github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1/routermonitorv1connect"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
+	"github.com/endobit/oui"
 )
 
 type RouterMonitorService struct {
@@ -105,8 +107,17 @@ func (s *RouterMonitorService) ListDevices(
 	// 1. Load persisted devices from SQLite TSDB
 	persistedDevices, _ := s.tsdbDB.GetPersistedDevices()
 	persistedByMAC := make(map[string]tsdb.PersistedDevice)
+	ipToHostname := make(map[string]string)
 	for _, pd := range persistedDevices {
 		persistedByMAC[pd.HWAddr] = pd
+		if pd.Hostname != "" && !strings.HasPrefix(pd.Hostname, "unknown:") {
+			ipToHostname[pd.IPAddr] = pd.Hostname
+		}
+	}
+	for _, rd := range rawDevices {
+		if rd.Hostname != "" && !strings.HasPrefix(rd.Hostname, "unknown:") {
+			ipToHostname[rd.IPAddr] = rd.Hostname
+		}
 	}
 
 	// 2. Query period usage from SQLite TSDB (default to last 1 hour if not specified)
@@ -142,6 +153,47 @@ func (s *RouterMonitorService) ListDevices(
 			puLanUl = pu.LanUploadBytes
 		}
 
+		vendor := ""
+		if mac != "" && mac != "00:00:00:00:00:00" {
+			vendor = oui.Vendor(mac)
+		}
+
+		protoList := make([]*routermonitorv1.ProtocolTraffic, 0, len(rate.Protocols))
+		for _, p := range rate.Protocols {
+			protoList = append(protoList, &routermonitorv1.ProtocolTraffic{
+				Protocol: p.Protocol,
+				Traffic: &routermonitorv1.DirectionalTraffic{
+					DownloadBytes:         p.DownloadBytes,
+					UploadBytes:           p.UploadBytes,
+					DownloadPackets:       p.DownloadPackets,
+					UploadPackets:         p.UploadPackets,
+					DownloadBytesPerSec:   p.DownloadBytesPerSec,
+					UploadBytesPerSec:     p.UploadBytesPerSec,
+					DownloadPacketsPerSec: p.DownloadPacketsPerSec,
+					UploadPacketsPerSec:   p.UploadPacketsPerSec,
+				},
+			})
+		}
+
+		peerList := make([]*routermonitorv1.PeerTraffic, 0, len(rate.Peers))
+		for _, pr := range rate.Peers {
+			pHost := ipToHostname[pr.IPAddr]
+			peerList = append(peerList, &routermonitorv1.PeerTraffic{
+				IpAddr:   pr.IPAddr,
+				Hostname: pHost,
+				Traffic: &routermonitorv1.DirectionalTraffic{
+					DownloadBytes:         pr.BytesReceived,
+					UploadBytes:           pr.BytesSent,
+					DownloadPackets:       pr.PacketsReceived,
+					UploadPackets:         pr.PacketsSent,
+					DownloadBytesPerSec:   pr.DownloadBytesPerSec,
+					UploadBytesPerSec:     pr.UploadBytesPerSec,
+					DownloadPacketsPerSec: pr.DownloadPacketsPerSec,
+					UploadPacketsPerSec:   pr.UploadPacketsPerSec,
+				},
+			})
+		}
+
 		return &routermonitorv1.Device{
 			IpAddr:        ip,
 			MacAddr:       mac,
@@ -175,6 +227,9 @@ func (s *RouterMonitorService) ListDevices(
 				DownloadPacketsPerSec: rate.LanDownloadPacketsPerSec,
 				UploadPacketsPerSec:   rate.LanUploadPacketsPerSec,
 			},
+			Protocols: protoList,
+			Peers:     peerList,
+			Vendor:    vendor,
 		}
 	}
 
@@ -399,3 +454,31 @@ func (s *RouterMonitorService) QueryTimeSeries(
 
 	return connect.NewResponse(&routermonitorv1.QueryTimeSeriesResponse{Series: seriesList}), nil
 }
+
+func (s *RouterMonitorService) PingDevice(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.PingDeviceRequest],
+) (*connect.Response[routermonitorv1.PingDeviceResponse], error) {
+	ip := req.Msg.IpAddr
+	count := int(req.Msg.PacketCount)
+	if count <= 0 {
+		count = 4
+	}
+
+	stats := routermonitor.PingHost(ctx, ip, count, 2*time.Second)
+
+	res := &routermonitorv1.PingDeviceResponse{
+		IpAddr:             ip,
+		IsReachable:        stats.IsReachable,
+		PacketLossRatio:    stats.PacketLossRatio,
+		MinLatencySeconds:  stats.MinLatency.Seconds(),
+		AvgLatencySeconds:  stats.AvgLatency.Seconds(),
+		MaxLatencySeconds:  stats.MaxLatency.Seconds(),
+		JitterSeconds:      stats.Jitter.Seconds(),
+		RoundTripTimesMs:   stats.RoundTripTimesMS,
+		ErrorMessage:       stats.LastError,
+	}
+
+	return connect.NewResponse(res), nil
+}
+

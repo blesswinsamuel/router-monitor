@@ -3,6 +3,8 @@ package tsdb
 import (
 	"context"
 	"log"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -39,6 +41,37 @@ type LiveRates struct {
 	LastSampleTime          time.Time
 }
 
+type ProtocolStats struct {
+	Protocol              string
+	DownloadBytes         uint64
+	UploadBytes           uint64
+	DownloadPackets       uint64
+	UploadPackets         uint64
+	DownloadBytesPerSec   float64
+	UploadBytesPerSec     float64
+	DownloadPacketsPerSec float64
+	UploadPacketsPerSec   float64
+}
+
+type PeerTrafficStat struct {
+	IPAddr                string
+	BytesSent             uint64
+	BytesReceived         uint64
+	PacketsSent           uint64
+	PacketsReceived       uint64
+	UploadBytesPerSec     float64
+	DownloadBytesPerSec   float64
+	UploadPacketsPerSec   float64
+	DownloadPacketsPerSec float64
+}
+
+type trafficStats struct {
+	dlBytes   uint64
+	ulBytes   uint64
+	dlPackets uint64
+	ulPackets uint64
+}
+
 type DeviceRate struct {
 	DownloadBytesPerSec      float64
 	UploadBytesPerSec        float64
@@ -52,6 +85,9 @@ type DeviceRate struct {
 	WanUploadPacketsPerSec   float64
 	LanDownloadPacketsPerSec float64
 	LanUploadPacketsPerSec   float64
+
+	Protocols []ProtocolStats
+	Peers     []PeerTrafficStat
 }
 
 type devByteCounts struct {
@@ -91,9 +127,34 @@ type Sampler struct {
 
 	prevDeviceBytes   map[string]devByteCounts
 	prevDevicePackets map[string]devPacketCounts
+	prevDeviceProto   map[string]map[string]trafficStats
+	prevDevicePeers   map[string]map[string]trafficStats
 
 	lastDeviceUpsert time.Time
 	knownDeviceState map[string]string
+}
+
+func normalizeProtocol(proto string) string {
+	p := strings.ToUpper(strings.TrimSpace(proto))
+	switch {
+	case strings.Contains(p, "TCP"):
+		return "TCP"
+	case strings.Contains(p, "UDP"):
+		return "UDP"
+	case strings.Contains(p, "ICMP"):
+		return "ICMP"
+	case strings.Contains(p, "IGMP"):
+		return "IGMP"
+	case strings.Contains(p, "ESP"):
+		return "ESP"
+	case strings.Contains(p, "GRE"):
+		return "GRE"
+	default:
+		if p == "" || p == "UNKNOWN" {
+			return "OTHER"
+		}
+		return p
+	}
 }
 
 func NewSampler(
@@ -116,6 +177,8 @@ func NewSampler(
 		deviceRates:       make(map[string]DeviceRate),
 		prevDeviceBytes:   make(map[string]devByteCounts),
 		prevDevicePackets: make(map[string]devPacketCounts),
+		prevDeviceProto:   make(map[string]map[string]trafficStats),
+		prevDevicePeers:   make(map[string]map[string]trafficStats),
 		knownDeviceState:  make(map[string]string),
 	}
 }
@@ -147,6 +210,42 @@ func (s *Sampler) SampleOnce() {
 	var curIngressPackets, curEgressPackets uint64
 	curDeviceBytes := make(map[string]devByteCounts)
 	curDevicePackets := make(map[string]devPacketCounts)
+	curDeviceProto := make(map[string]map[string]trafficStats)
+	curDevicePeers := make(map[string]map[string]trafficStats)
+
+	addProto := func(ip, proto string, dlB, ulB, dlP, ulP uint64) {
+		if ip == "" || ip == "internet" {
+			return
+		}
+		m, ok := curDeviceProto[ip]
+		if !ok {
+			m = make(map[string]trafficStats)
+			curDeviceProto[ip] = m
+		}
+		st := m[proto]
+		st.dlBytes += dlB
+		st.ulBytes += ulB
+		st.dlPackets += dlP
+		st.ulPackets += ulP
+		m[proto] = st
+	}
+
+	addPeer := func(ip, peerIP string, sentB, rcvdB, sentP, rcvdP uint64) {
+		if ip == "" || ip == "internet" || peerIP == "" || peerIP == "internet" || ip == peerIP {
+			return
+		}
+		m, ok := curDevicePeers[ip]
+		if !ok {
+			m = make(map[string]trafficStats)
+			curDevicePeers[ip] = m
+		}
+		st := m[peerIP]
+		st.ulBytes += sentB
+		st.dlBytes += rcvdB
+		st.ulPackets += sentP
+		st.dlPackets += rcvdP
+		m[peerIP] = st
+	}
 
 	for _, f := range flows {
 		if f.Direction == "ingress" {
@@ -155,6 +254,7 @@ func (s *Sampler) SampleOnce() {
 			curEgressPackets += f.Packets
 		}
 
+		proto := normalizeProtocol(f.IPProto)
 		isLanToLan := f.SrcIP != "" && f.SrcIP != "internet" && f.DstIP != "" && f.DstIP != "internet"
 
 		if isLanToLan {
@@ -177,6 +277,14 @@ func (s *Sampler) SampleOnce() {
 			dDevP := curDevicePackets[f.DstIP]
 			dDevP.lanDl += f.Packets
 			curDevicePackets[f.DstIP] = dDevP
+
+			// Track protocols for LAN devices
+			addProto(f.SrcIP, proto, 0, f.Bytes, 0, f.Packets)
+			addProto(f.DstIP, proto, f.Bytes, 0, f.Packets, 0)
+
+			// Track peer communication
+			addPeer(f.SrcIP, f.DstIP, f.Bytes, 0, f.Packets, 0)
+			addPeer(f.DstIP, f.SrcIP, 0, f.Bytes, 0, f.Packets)
 		} else if f.SrcIP != "" && f.SrcIP != "internet" && (f.DstIP == "internet" || f.DstIP == "") {
 			// Device uploading to Internet (WAN Upload)
 			curWanUlBytes += f.Bytes
@@ -188,6 +296,8 @@ func (s *Sampler) SampleOnce() {
 			sDevP := curDevicePackets[f.SrcIP]
 			sDevP.wanUl += f.Packets
 			curDevicePackets[f.SrcIP] = sDevP
+
+			addProto(f.SrcIP, proto, 0, f.Bytes, 0, f.Packets)
 		} else if f.DstIP != "" && f.DstIP != "internet" && (f.SrcIP == "internet" || f.SrcIP == "") {
 			// Device downloading from Internet (WAN Download)
 			curWanDlBytes += f.Bytes
@@ -199,6 +309,8 @@ func (s *Sampler) SampleOnce() {
 			dDevP := curDevicePackets[f.DstIP]
 			dDevP.wanDl += f.Packets
 			curDevicePackets[f.DstIP] = dDevP
+
+			addProto(f.DstIP, proto, f.Bytes, 0, f.Packets, 0)
 		}
 	}
 
@@ -282,8 +394,78 @@ func (s *Sampler) SampleOnce() {
 				devDlPktsRate := dWanDlP + dLanDlP
 				devUlPktsRate := dWanUlP + dLanUlP
 
+				// Compute protocol rates & cumulative stats
+				curProtMap := curDeviceProto[ip]
+				prevProtMap := s.prevDeviceProto[ip]
+				var protoStatsList []ProtocolStats
+				for pName, curP := range curProtMap {
+					prevP := prevProtMap[pName]
+					var dlBRate, ulBRate, dlPRate, ulPRate float64
+					if curP.dlBytes >= prevP.dlBytes {
+						dlBRate = float64(curP.dlBytes-prevP.dlBytes) / dt
+					}
+					if curP.ulBytes >= prevP.ulBytes {
+						ulBRate = float64(curP.ulBytes-prevP.ulBytes) / dt
+					}
+					if curP.dlPackets >= prevP.dlPackets {
+						dlPRate = float64(curP.dlPackets-prevP.dlPackets) / dt
+					}
+					if curP.ulPackets >= prevP.ulPackets {
+						ulPRate = float64(curP.ulPackets-prevP.ulPackets) / dt
+					}
+					protoStatsList = append(protoStatsList, ProtocolStats{
+						Protocol:              pName,
+						DownloadBytes:         curP.dlBytes,
+						UploadBytes:           curP.ulBytes,
+						DownloadPackets:       curP.dlPackets,
+						UploadPackets:         curP.ulPackets,
+						DownloadBytesPerSec:   dlBRate,
+						UploadBytesPerSec:     ulBRate,
+						DownloadPacketsPerSec: dlPRate,
+						UploadPacketsPerSec:   ulPRate,
+					})
+				}
+				sort.Slice(protoStatsList, func(a, b int) bool {
+					return (protoStatsList[a].DownloadBytes + protoStatsList[a].UploadBytes) > (protoStatsList[b].DownloadBytes + protoStatsList[b].UploadBytes)
+				})
+
+				// Compute peer rates & cumulative stats
+				curPeerMap := curDevicePeers[ip]
+				prevPeerMap := s.prevDevicePeers[ip]
+				var peerStatsList []PeerTrafficStat
+				for peerIP, curPeer := range curPeerMap {
+					prevPeer := prevPeerMap[peerIP]
+					var sentBRate, rcvdBRate, sentPRate, rcvdPRate float64
+					if curPeer.ulBytes >= prevPeer.ulBytes {
+						sentBRate = float64(curPeer.ulBytes-prevPeer.ulBytes) / dt
+					}
+					if curPeer.dlBytes >= prevPeer.dlBytes {
+						rcvdBRate = float64(curPeer.dlBytes-prevPeer.dlBytes) / dt
+					}
+					if curPeer.ulPackets >= prevPeer.ulPackets {
+						sentPRate = float64(curPeer.ulPackets-prevPeer.ulPackets) / dt
+					}
+					if curPeer.dlPackets >= prevPeer.dlPackets {
+						rcvdPRate = float64(curPeer.dlPackets-prevPeer.dlPackets) / dt
+					}
+					peerStatsList = append(peerStatsList, PeerTrafficStat{
+						IPAddr:                peerIP,
+						BytesSent:             curPeer.ulBytes,
+						BytesReceived:         curPeer.dlBytes,
+						PacketsSent:           curPeer.ulPackets,
+						PacketsReceived:       curPeer.dlPackets,
+						UploadBytesPerSec:     sentBRate,
+						DownloadBytesPerSec:   rcvdBRate,
+						UploadPacketsPerSec:   sentPRate,
+						DownloadPacketsPerSec: rcvdPRate,
+					})
+				}
+				sort.Slice(peerStatsList, func(a, b int) bool {
+					return (peerStatsList[a].BytesSent + peerStatsList[a].BytesReceived) > (peerStatsList[b].BytesSent + peerStatsList[b].BytesReceived)
+				})
+
 				prevRate := s.deviceRates[ip]
-				if devDlRate > 0 || devUlRate > 0 || devDlPktsRate > 0 || devUlPktsRate > 0 || prevRate.DownloadBytesPerSec > 0 || prevRate.UploadBytesPerSec > 0 {
+				if devDlRate > 0 || devUlRate > 0 || devDlPktsRate > 0 || devUlPktsRate > 0 || prevRate.DownloadBytesPerSec > 0 || prevRate.UploadBytesPerSec > 0 || len(protoStatsList) > 0 || len(peerStatsList) > 0 {
 					curDevRates[ip] = DeviceRate{
 						DownloadBytesPerSec:      devDlRate,
 						UploadBytesPerSec:        devUlRate,
@@ -297,6 +479,8 @@ func (s *Sampler) SampleOnce() {
 						WanUploadPacketsPerSec:   dWanUlP,
 						LanDownloadPacketsPerSec: dLanDlP,
 						LanUploadPacketsPerSec:   dLanUlP,
+						Protocols:                protoStatsList,
+						Peers:                    peerStatsList,
 					}
 					if devDlRate > 0 || prevRate.DownloadBytesPerSec > 0 {
 						devSamples = append(devSamples, Sample{
@@ -353,6 +537,8 @@ func (s *Sampler) SampleOnce() {
 	}
 	s.prevDeviceBytes = curDeviceBytes
 	s.prevDevicePackets = curDevicePackets
+	s.prevDeviceProto = curDeviceProto
+	s.prevDevicePeers = curDevicePeers
 	s.prevWanDlBytes = curWanDlBytes
 	s.prevWanUlBytes = curWanUlBytes
 	s.prevLanDlBytes = curLanDlBytes
