@@ -90,12 +90,16 @@ func (s *RouterMonitorService) ListDevices(
 
 	// 1. Separate flows into Internet and Device-to-Device (LAN) traffic
 	type ipTraffic struct {
-		internetDlBytes uint64
-		internetUlBytes uint64
-		lanDlBytes      uint64
-		lanUlBytes      uint64
-		dlPkts          uint64
-		ulPkts          uint64
+		internetDlBytes   uint64
+		internetUlBytes   uint64
+		lanDlBytes        uint64
+		lanUlBytes        uint64
+		internetDlPackets uint64
+		internetUlPackets uint64
+		lanDlPackets      uint64
+		lanUlPackets      uint64
+		dlPkts            uint64
+		ulPkts            uint64
 	}
 	trafficByIP := make(map[string]*ipTraffic)
 	getOrCreateTraffic := func(ip string) *ipTraffic {
@@ -114,20 +118,24 @@ func (s *RouterMonitorService) ListDevices(
 			// Device-to-device (LAN) traffic
 			srcT := getOrCreateTraffic(f.SrcIP)
 			srcT.lanUlBytes += f.Bytes
+			srcT.lanUlPackets += f.Packets
 			srcT.ulPkts += f.Packets
 
 			dstT := getOrCreateTraffic(f.DstIP)
 			dstT.lanDlBytes += f.Bytes
+			dstT.lanDlPackets += f.Packets
 			dstT.dlPkts += f.Packets
 		} else if f.SrcIP != "" && f.SrcIP != "internet" && (f.DstIP == "internet" || f.DstIP == "") {
 			// Device uploading to Internet (WAN Upload)
 			srcT := getOrCreateTraffic(f.SrcIP)
 			srcT.internetUlBytes += f.Bytes
+			srcT.internetUlPackets += f.Packets
 			srcT.ulPkts += f.Packets
 		} else if f.DstIP != "" && f.DstIP != "internet" && (f.SrcIP == "internet" || f.SrcIP == "") {
 			// Device downloading from Internet (WAN Download)
 			dstT := getOrCreateTraffic(f.DstIP)
 			dstT.internetDlBytes += f.Bytes
+			dstT.internetDlPackets += f.Packets
 			dstT.dlPkts += f.Packets
 		}
 	}
@@ -137,6 +145,15 @@ func (s *RouterMonitorService) ListDevices(
 	persistedByMAC := make(map[string]tsdb.PersistedDevice)
 	for _, pd := range persistedDevices {
 		persistedByMAC[pd.HWAddr] = pd
+	}
+
+	var periodUsage map[string]*tsdb.DevicePeriodUsage
+	if req.Msg.FromUnix > 0 {
+		to := req.Msg.ToUnix
+		if to <= 0 {
+			to = time.Now().Unix()
+		}
+		periodUsage, _ = s.tsdbDB.GetDeviceUsageByPeriod(req.Msg.FromUnix, to)
 	}
 
 	now := time.Now().Unix()
@@ -174,22 +191,28 @@ func (s *RouterMonitorService) ListDevices(
 		rate := deviceRates[d.IPAddr]
 
 		dev := &routermonitorv1.ArpDevice{
-			IpAddr:                         d.IPAddr,
-			HwAddr:                         d.HWAddr,
-			Hostname:                       d.Hostname,
-			Device:                         d.Device,
-			Flags:                          d.Flag,
-			IsValid:                        d.IsValid,
-			Status:                         status,
-			FirstSeenUnix:                  firstSeen,
-			LastSeenUnix:                   lastSeen,
-			CurrentDownloadBytesPerSec:     rate.DownloadBytesPerSec,
-			CurrentUploadBytesPerSec:       rate.UploadBytesPerSec,
-			CurrentRateBytesPerSec:         rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
-			CurrentWanDownloadBytesPerSec: rate.WanDownloadBytesPerSec,
-			CurrentWanUploadBytesPerSec:   rate.WanUploadBytesPerSec,
-			CurrentLanDownloadBytesPerSec: rate.LanDownloadBytesPerSec,
-			CurrentLanUploadBytesPerSec:   rate.LanUploadBytesPerSec,
+			IpAddr:                             d.IPAddr,
+			HwAddr:                             d.HWAddr,
+			Hostname:                           d.Hostname,
+			Device:                             d.Device,
+			Flags:                              d.Flag,
+			IsValid:                            d.IsValid,
+			Status:                             status,
+			FirstSeenUnix:                      firstSeen,
+			LastSeenUnix:                       lastSeen,
+			CurrentDownloadBytesPerSec:         rate.DownloadBytesPerSec,
+			CurrentUploadBytesPerSec:           rate.UploadBytesPerSec,
+			CurrentRateBytesPerSec:             rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
+			CurrentWanDownloadBytesPerSec:     rate.WanDownloadBytesPerSec,
+			CurrentWanUploadBytesPerSec:       rate.WanUploadBytesPerSec,
+			CurrentLanDownloadBytesPerSec:     rate.LanDownloadBytesPerSec,
+			CurrentLanUploadBytesPerSec:       rate.LanUploadBytesPerSec,
+			CurrentDownloadPacketsPerSec:       rate.DownloadPacketsPerSec,
+			CurrentUploadPacketsPerSec:         rate.UploadPacketsPerSec,
+			CurrentWanDownloadPacketsPerSec:   rate.WanDownloadPacketsPerSec,
+			CurrentWanUploadPacketsPerSec:     rate.WanUploadPacketsPerSec,
+			CurrentLanDownloadPacketsPerSec:   rate.LanDownloadPacketsPerSec,
+			CurrentLanUploadPacketsPerSec:     rate.LanUploadPacketsPerSec,
 		}
 
 		if t, ok := trafficByIP[d.IPAddr]; ok {
@@ -199,8 +222,20 @@ func (s *RouterMonitorService) ListDevices(
 			dev.LanUploadBytes = t.lanUlBytes
 			dev.DownloadBytes = t.internetDlBytes + t.lanDlBytes
 			dev.UploadBytes = t.internetUlBytes + t.lanUlBytes
+			dev.InternetDownloadPackets = t.internetDlPackets
+			dev.InternetUploadPackets = t.internetUlPackets
+			dev.LanDownloadPackets = t.lanDlPackets
+			dev.LanUploadPackets = t.lanUlPackets
 			dev.DownloadPackets = t.dlPkts
 			dev.UploadPackets = t.ulPkts
+		}
+
+		if pu, ok := periodUsage[d.IPAddr]; ok && pu != nil {
+			dev.PeriodDownloadBytes = pu.DownloadBytes
+			dev.PeriodUploadBytes = pu.UploadBytes
+		} else {
+			dev.PeriodDownloadBytes = dev.DownloadBytes
+			dev.PeriodUploadBytes = dev.UploadBytes
 		}
 
 		devices = append(devices, dev)
@@ -217,22 +252,28 @@ func (s *RouterMonitorService) ListDevices(
 		rate := deviceRates[pd.IPAddr]
 
 		dev := &routermonitorv1.ArpDevice{
-			IpAddr:                         pd.IPAddr,
-			HwAddr:                         pd.HWAddr,
-			Hostname:                       pd.Hostname,
-			Device:                         pd.Device,
-			Flags:                          0,
-			IsValid:                        false,
-			Status:                         "offline",
-			FirstSeenUnix:                  pd.FirstSeen.Unix(),
-			LastSeenUnix:                   pd.LastSeen.Unix(),
-			CurrentDownloadBytesPerSec:     rate.DownloadBytesPerSec,
-			CurrentUploadBytesPerSec:       rate.UploadBytesPerSec,
-			CurrentRateBytesPerSec:         rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
-			CurrentWanDownloadBytesPerSec: rate.WanDownloadBytesPerSec,
-			CurrentWanUploadBytesPerSec:   rate.WanUploadBytesPerSec,
-			CurrentLanDownloadBytesPerSec: rate.LanDownloadBytesPerSec,
-			CurrentLanUploadBytesPerSec:   rate.LanUploadBytesPerSec,
+			IpAddr:                             pd.IPAddr,
+			HwAddr:                             pd.HWAddr,
+			Hostname:                           pd.Hostname,
+			Device:                             pd.Device,
+			Flags:                              0,
+			IsValid:                            false,
+			Status:                             "offline",
+			FirstSeenUnix:                      pd.FirstSeen.Unix(),
+			LastSeenUnix:                       pd.LastSeen.Unix(),
+			CurrentDownloadBytesPerSec:         rate.DownloadBytesPerSec,
+			CurrentUploadBytesPerSec:           rate.UploadBytesPerSec,
+			CurrentRateBytesPerSec:             rate.DownloadBytesPerSec + rate.UploadBytesPerSec,
+			CurrentWanDownloadBytesPerSec:     rate.WanDownloadBytesPerSec,
+			CurrentWanUploadBytesPerSec:       rate.WanUploadBytesPerSec,
+			CurrentLanDownloadBytesPerSec:     rate.LanDownloadBytesPerSec,
+			CurrentLanUploadBytesPerSec:       rate.LanUploadBytesPerSec,
+			CurrentDownloadPacketsPerSec:       rate.DownloadPacketsPerSec,
+			CurrentUploadPacketsPerSec:         rate.UploadPacketsPerSec,
+			CurrentWanDownloadPacketsPerSec:   rate.WanDownloadPacketsPerSec,
+			CurrentWanUploadPacketsPerSec:     rate.WanUploadPacketsPerSec,
+			CurrentLanDownloadPacketsPerSec:   rate.LanDownloadPacketsPerSec,
+			CurrentLanUploadPacketsPerSec:     rate.LanUploadPacketsPerSec,
 		}
 
 		if t, ok := trafficByIP[pd.IPAddr]; ok {
@@ -242,8 +283,20 @@ func (s *RouterMonitorService) ListDevices(
 			dev.LanUploadBytes = t.lanUlBytes
 			dev.DownloadBytes = t.internetDlBytes + t.lanDlBytes
 			dev.UploadBytes = t.internetUlBytes + t.lanUlBytes
+			dev.InternetDownloadPackets = t.internetDlPackets
+			dev.InternetUploadPackets = t.internetUlPackets
+			dev.LanDownloadPackets = t.lanDlPackets
+			dev.LanUploadPackets = t.lanUlPackets
 			dev.DownloadPackets = t.dlPkts
 			dev.UploadPackets = t.ulPkts
+		}
+
+		if pu, ok := periodUsage[pd.IPAddr]; ok && pu != nil {
+			dev.PeriodDownloadBytes = pu.DownloadBytes
+			dev.PeriodUploadBytes = pu.UploadBytes
+		} else {
+			dev.PeriodDownloadBytes = dev.DownloadBytes
+			dev.PeriodUploadBytes = dev.UploadBytes
 		}
 
 		devices = append(devices, dev)
