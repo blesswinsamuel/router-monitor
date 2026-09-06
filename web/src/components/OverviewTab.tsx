@@ -32,7 +32,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts'
-import { DEVICE_PALETTE } from './DeviceTrafficCharts'
+import { DEVICE_PALETTE, OTHER_COLOR } from './DeviceTrafficCharts'
 import {
   ChartContainer,
   ChartTooltip,
@@ -211,9 +211,12 @@ export function OverviewTab({
     return () => clearInterval(interval)
   }, [fetchHistory])
 
-  const topWanDevices = useMemo(() => {
-    if (!devices || devices.length === 0) return []
-    return [...devices]
+  const { topWanDevices, otherWanDevices, otherWanTotal, wanPieData, totalWanVolume } = useMemo(() => {
+    if (!devices || devices.length === 0) {
+      return { topWanDevices: [], otherWanDevices: [], otherWanTotal: 0, wanPieData: [], totalWanVolume: 0 }
+    }
+
+    const allWan = devices
       .map((d) => {
         const dl = Number(d.wan?.downloadBytes || 0)
         const ul = Number(d.wan?.uploadBytes || 0)
@@ -223,12 +226,45 @@ export function OverviewTab({
       })
       .filter((x) => x.total > 0 || x.device.status === 'active' || x.device.status === 'static')
       .sort((a, b) => b.total - a.total)
-      .slice(0, 5)
+
+    const totalWanVolume = allWan.reduce((acc, d) => acc + d.total, 0)
+    const topWanDevices = allWan.slice(0, 10)
+    const otherWanDevices = allWan.slice(10)
+    const otherWanTotal = otherWanDevices.reduce((acc, d) => acc + d.total, 0)
+
+    const wanPieData = topWanDevices.map((d, index) => ({
+      name: d.device.hostname && !d.device.hostname.startsWith('unknown:') ? d.device.hostname : (d.device.vendor || d.device.ipAddr),
+      ip: d.device.ipAddr,
+      value: d.total,
+      dl: d.dl,
+      ul: d.ul,
+      percent: totalWanVolume > 0 ? (d.total / totalWanVolume) * 100 : 0,
+      color: DEVICE_PALETTE[index % DEVICE_PALETTE.length],
+    }))
+
+    if (otherWanTotal > 0) {
+      const otherDl = otherWanDevices.reduce((acc, d) => acc + d.dl, 0)
+      const otherUl = otherWanDevices.reduce((acc, d) => acc + d.ul, 0)
+      wanPieData.push({
+        name: `Other (${otherWanDevices.length} devices)`,
+        ip: '',
+        value: otherWanTotal,
+        dl: otherDl,
+        ul: otherUl,
+        percent: totalWanVolume > 0 ? (otherWanTotal / totalWanVolume) * 100 : 0,
+        color: OTHER_COLOR,
+      })
+    }
+
+    return { topWanDevices, otherWanDevices, otherWanTotal, wanPieData, totalWanVolume }
   }, [devices])
 
-  const topLanDevices = useMemo(() => {
-    if (!devices || devices.length === 0) return []
-    return [...devices]
+  const { topLanDevices, otherLanDevices, otherLanTotal, lanPieData, totalLanVolume } = useMemo(() => {
+    if (!devices || devices.length === 0) {
+      return { topLanDevices: [], otherLanDevices: [], otherLanTotal: 0, lanPieData: [], totalLanVolume: 0 }
+    }
+
+    const allLan = devices
       .map((d) => {
         const dl = Number(d.lan?.downloadBytes || 0)
         const ul = Number(d.lan?.uploadBytes || 0)
@@ -238,32 +274,38 @@ export function OverviewTab({
       })
       .filter((x) => x.total > 0 || x.device.status === 'active' || x.device.status === 'static')
       .sort((a, b) => b.total - a.total)
-      .slice(0, 5)
+
+    const totalLanVolume = allLan.reduce((acc, d) => acc + d.total, 0)
+    const topLanDevices = allLan.slice(0, 10)
+    const otherLanDevices = allLan.slice(10)
+    const otherLanTotal = otherLanDevices.reduce((acc, d) => acc + d.total, 0)
+
+    const lanPieData = topLanDevices.map((d, index) => ({
+      name: d.device.hostname && !d.device.hostname.startsWith('unknown:') ? d.device.hostname : (d.device.vendor || d.device.ipAddr),
+      ip: d.device.ipAddr,
+      value: d.total,
+      dl: d.dl,
+      ul: d.ul,
+      percent: totalLanVolume > 0 ? (d.total / totalLanVolume) * 100 : 0,
+      color: DEVICE_PALETTE[index % DEVICE_PALETTE.length],
+    }))
+
+    if (otherLanTotal > 0) {
+      const otherDl = otherLanDevices.reduce((acc, d) => acc + d.dl, 0)
+      const otherUl = otherLanDevices.reduce((acc, d) => acc + d.ul, 0)
+      lanPieData.push({
+        name: `Other (${otherLanDevices.length} devices)`,
+        ip: '',
+        value: otherLanTotal,
+        dl: otherDl,
+        ul: otherUl,
+        percent: totalLanVolume > 0 ? (otherLanTotal / totalLanVolume) * 100 : 0,
+        color: OTHER_COLOR,
+      })
+    }
+
+    return { topLanDevices, otherLanDevices, otherLanTotal, lanPieData, totalLanVolume }
   }, [devices])
-
-  const wanPieData = useMemo(() => {
-    if (!topWanDevices || topWanDevices.length === 0) return []
-    const sum = topWanDevices.reduce((acc, d) => acc + d.total, 0)
-    if (sum === 0) return []
-    return topWanDevices.map((d, index) => ({
-      name: d.device.hostname && !d.device.hostname.startsWith('unknown:') ? d.device.hostname : (d.device.vendor || d.device.ipAddr),
-      ip: d.device.ipAddr,
-      value: d.total,
-      color: DEVICE_PALETTE[index % DEVICE_PALETTE.length],
-    }))
-  }, [topWanDevices])
-
-  const lanPieData = useMemo(() => {
-    if (!topLanDevices || topLanDevices.length === 0) return []
-    const sum = topLanDevices.reduce((acc, d) => acc + d.total, 0)
-    if (sum === 0) return []
-    return topLanDevices.map((d, index) => ({
-      name: d.device.hostname && !d.device.hostname.startsWith('unknown:') ? d.device.hostname : (d.device.vendor || d.device.ipAddr),
-      ip: d.device.ipAddr,
-      value: d.total,
-      color: DEVICE_PALETTE[index % DEVICE_PALETTE.length],
-    }))
-  }, [topLanDevices])
 
   const scopeRates = useMemo(() => {
     if (chartScope === 'wan') {
@@ -833,45 +875,122 @@ export function OverviewTab({
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {topWanDevices.length === 0 ? (
                 <div className="py-8 text-center text-xs text-muted-foreground">
                   No active WAN client traffic recorded for this period.
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row items-center gap-5">
-                  <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={wanPieData}
-                          dataKey="value"
-                          nameKey="name"
-                          innerRadius={28}
-                          outerRadius={44}
-                          paddingAngle={2}
-                          stroke="transparent"
-                        >
-                          {wanPieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center">
-                      <span className="text-[9px] uppercase font-semibold text-muted-foreground">WAN</span>
-                      <span className="text-xs font-bold font-mono text-foreground leading-none">
-                        {formatBytes(Number(overview?.wan?.downloadBytes || 0) + Number(overview?.wan?.uploadBytes || 0))}
-                      </span>
+                <>
+                  {/* Top: Prominent Donut Chart + At-a-glance Summary Stats */}
+                  <div className="flex flex-col sm:flex-row items-center justify-around gap-4 p-3 rounded-lg border bg-muted/20">
+                    <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <ChartTooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload || !payload.length) return null
+                              const data = payload[0].payload
+                              return (
+                                <div className="rounded-lg border bg-background p-2.5 shadow-md text-xs space-y-1">
+                                  <div className="flex items-center gap-2 font-medium">
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: data.color }}
+                                    />
+                                    <span className="text-foreground truncate max-w-[160px]">
+                                      {data.name}
+                                    </span>
+                                    {data.ip && (
+                                      <span className="font-mono text-muted-foreground text-[10px]">
+                                        ({data.ip})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-muted-foreground font-mono flex items-center justify-between gap-3">
+                                    <span>Volume:</span>
+                                    <span className="font-bold text-foreground">
+                                      {formatBytes(data.value)} ({formatPercent(data.percent / 100)})
+                                    </span>
+                                  </div>
+                                  {data.dl !== undefined && (
+                                    <div className="text-[10px] font-mono text-muted-foreground flex items-center justify-between gap-3 pt-1 border-t">
+                                      <span>↓ {formatBytes(data.dl)}</span>
+                                      <span>↑ {formatBytes(data.ul)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            }}
+                          />
+                          <Pie
+                            data={wanPieData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={48}
+                            outerRadius={70}
+                            paddingAngle={2}
+                            stroke="transparent"
+                          >
+                            {wanPieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center">
+                        <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                          WAN
+                        </span>
+                        <span className="text-sm font-bold font-mono text-foreground leading-tight">
+                          {formatBytes(totalWanVolume)}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground mt-0.5">
+                          {wanPieData.length} {wanPieData.length === 1 ? 'slice' : 'slices'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 text-xs w-full sm:w-auto">
+                      <div className="space-y-0.5">
+                        <span className="text-[11px] text-muted-foreground">Top Consumer:</span>
+                        <div className="font-semibold text-foreground truncate max-w-[200px]">
+                          {topWanDevices[0]?.device?.hostname && !topWanDevices[0]?.device?.hostname.startsWith('unknown:')
+                            ? topWanDevices[0]?.device?.hostname
+                            : (topWanDevices[0]?.device?.vendor || topWanDevices[0]?.device?.ipAddr)}
+                        </div>
+                        <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-medium">
+                          {formatBytes(topWanDevices[0]?.total)} ({formatPercent(wanPieData[0]?.percent / 100)})
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t space-y-1">
+                        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                          <span>Top 10 Share:</span>
+                          <span className="font-mono font-medium text-foreground">
+                            {formatPercent(topWanDevices.reduce((acc, d) => acc + d.total, 0) / (totalWanVolume || 1))}
+                          </span>
+                        </div>
+                        {otherWanTotal > 0 && (
+                          <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                            <span>Other ({otherWanDevices.length}):</span>
+                            <span className="font-mono font-medium text-foreground">
+                              {formatBytes(otherWanTotal)} ({formatPercent(otherWanTotal / (totalWanVolume || 1))})
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 w-full space-y-2 min-w-0">
+                  {/* Device Rankings List */}
+                  <div className="space-y-1.5 pt-1">
                     {topWanDevices.map(({ device: d, dl, ul, total, liveDl, liveUl }, index) => {
                       const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
                       const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
                       const liveRate = liveDl + liveUl
                       const color = DEVICE_PALETTE[index % DEVICE_PALETTE.length]
+                      const pct = totalWanVolume > 0 ? (total / totalWanVolume) * 100 : 0
 
                       return (
                         <Link
@@ -881,10 +1000,10 @@ export function OverviewTab({
                         >
                           <div className="flex items-center gap-2 min-w-0 pr-2">
                             <span
-                              className="w-2 h-2 rounded-full shrink-0"
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
                               style={{ backgroundColor: color }}
                             />
-                            <span className="text-xs font-mono font-semibold text-muted-foreground w-3.5 text-center shrink-0">
+                            <span className="text-xs font-mono font-semibold text-muted-foreground w-4 text-center shrink-0">
                               #{index + 1}
                             </span>
                             <div className="p-1 rounded-md bg-muted text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0">
@@ -908,8 +1027,13 @@ export function OverviewTab({
                           </div>
 
                           <div className="text-right shrink-0">
-                            <div className="text-xs font-mono font-bold text-foreground">
-                              {formatBytes(total)}
+                            <div className="flex items-center justify-end gap-1.5 font-mono">
+                              <span className="text-[10px] text-muted-foreground">
+                                {formatPercent(pct / 100)}
+                              </span>
+                              <span className="text-xs font-bold text-foreground">
+                                {formatBytes(total)}
+                              </span>
                             </div>
                             <div className="text-[10px] font-mono text-muted-foreground flex items-center justify-end gap-1.5">
                               <span className="text-emerald-600 dark:text-emerald-400">↓ {formatBytes(dl)}</span>
@@ -925,8 +1049,37 @@ export function OverviewTab({
                         </Link>
                       )
                     })}
+
+                    {otherWanTotal > 0 && (
+                      <div className="flex items-center justify-between p-2 rounded-lg border bg-muted/30 text-xs">
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: OTHER_COLOR }}
+                          />
+                          <span className="text-xs font-mono font-semibold text-muted-foreground w-4 text-center shrink-0">
+                            11+
+                          </span>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-medium text-muted-foreground">
+                              Other ({otherWanDevices.length} devices)
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 font-mono">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatPercent(otherWanTotal / (totalWanVolume || 1))}
+                            </span>
+                            <span className="text-xs font-semibold text-foreground">
+                              {formatBytes(otherWanTotal)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -949,45 +1102,122 @@ export function OverviewTab({
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               {topLanDevices.length === 0 ? (
                 <div className="py-8 text-center text-xs text-muted-foreground">
                   No active LAN client traffic recorded for this period.
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row items-center gap-5">
-                  <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={lanPieData}
-                          dataKey="value"
-                          nameKey="name"
-                          innerRadius={28}
-                          outerRadius={44}
-                          paddingAngle={2}
-                          stroke="transparent"
-                        >
-                          {lanPieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center">
-                      <span className="text-[9px] uppercase font-semibold text-muted-foreground">LAN</span>
-                      <span className="text-xs font-bold font-mono text-foreground leading-none">
-                        {formatBytes(Number(overview?.lan?.downloadBytes || 0) + Number(overview?.lan?.uploadBytes || 0))}
-                      </span>
+                <>
+                  {/* Top: Prominent Donut Chart + At-a-glance Summary Stats */}
+                  <div className="flex flex-col sm:flex-row items-center justify-around gap-4 p-3 rounded-lg border bg-muted/20">
+                    <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <ChartTooltip
+                            content={({ active, payload }) => {
+                              if (!active || !payload || !payload.length) return null
+                              const data = payload[0].payload
+                              return (
+                                <div className="rounded-lg border bg-background p-2.5 shadow-md text-xs space-y-1">
+                                  <div className="flex items-center gap-2 font-medium">
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: data.color }}
+                                    />
+                                    <span className="text-foreground truncate max-w-[160px]">
+                                      {data.name}
+                                    </span>
+                                    {data.ip && (
+                                      <span className="font-mono text-muted-foreground text-[10px]">
+                                        ({data.ip})
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-muted-foreground font-mono flex items-center justify-between gap-3">
+                                    <span>Volume:</span>
+                                    <span className="font-bold text-foreground">
+                                      {formatBytes(data.value)} ({formatPercent(data.percent / 100)})
+                                    </span>
+                                  </div>
+                                  {data.dl !== undefined && (
+                                    <div className="text-[10px] font-mono text-muted-foreground flex items-center justify-between gap-3 pt-1 border-t">
+                                      <span>↓ {formatBytes(data.dl)}</span>
+                                      <span>↑ {formatBytes(data.ul)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            }}
+                          />
+                          <Pie
+                            data={lanPieData}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={48}
+                            outerRadius={70}
+                            paddingAngle={2}
+                            stroke="transparent"
+                          >
+                            {lanPieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center">
+                        <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                          LAN
+                        </span>
+                        <span className="text-sm font-bold font-mono text-foreground leading-tight">
+                          {formatBytes(totalLanVolume)}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground mt-0.5">
+                          {lanPieData.length} {lanPieData.length === 1 ? 'slice' : 'slices'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 text-xs w-full sm:w-auto">
+                      <div className="space-y-0.5">
+                        <span className="text-[11px] text-muted-foreground">Top Consumer:</span>
+                        <div className="font-semibold text-foreground truncate max-w-[200px]">
+                          {topLanDevices[0]?.device?.hostname && !topLanDevices[0]?.device?.hostname.startsWith('unknown:')
+                            ? topLanDevices[0]?.device?.hostname
+                            : (topLanDevices[0]?.device?.vendor || topLanDevices[0]?.device?.ipAddr)}
+                        </div>
+                        <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-medium">
+                          {formatBytes(topLanDevices[0]?.total)} ({formatPercent(lanPieData[0]?.percent / 100)})
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t space-y-1">
+                        <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                          <span>Top 10 Share:</span>
+                          <span className="font-mono font-medium text-foreground">
+                            {formatPercent(topLanDevices.reduce((acc, d) => acc + d.total, 0) / (totalLanVolume || 1))}
+                          </span>
+                        </div>
+                        {otherLanTotal > 0 && (
+                          <div className="flex items-center justify-between gap-4 text-muted-foreground">
+                            <span>Other ({otherLanDevices.length}):</span>
+                            <span className="font-mono font-medium text-foreground">
+                              {formatBytes(otherLanTotal)} ({formatPercent(otherLanTotal / (totalLanVolume || 1))})
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 w-full space-y-2 min-w-0">
+                  {/* Device Rankings List */}
+                  <div className="space-y-1.5 pt-1">
                     {topLanDevices.map(({ device: d, dl, ul, total, liveDl, liveUl }, index) => {
                       const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
                       const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
                       const liveRate = liveDl + liveUl
                       const color = DEVICE_PALETTE[index % DEVICE_PALETTE.length]
+                      const pct = totalLanVolume > 0 ? (total / totalLanVolume) * 100 : 0
 
                       return (
                         <Link
@@ -997,10 +1227,10 @@ export function OverviewTab({
                         >
                           <div className="flex items-center gap-2 min-w-0 pr-2">
                             <span
-                              className="w-2 h-2 rounded-full shrink-0"
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
                               style={{ backgroundColor: color }}
                             />
-                            <span className="text-xs font-mono font-semibold text-muted-foreground w-3.5 text-center shrink-0">
+                            <span className="text-xs font-mono font-semibold text-muted-foreground w-4 text-center shrink-0">
                               #{index + 1}
                             </span>
                             <div className="p-1 rounded-md bg-muted text-muted-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors shrink-0">
@@ -1024,8 +1254,13 @@ export function OverviewTab({
                           </div>
 
                           <div className="text-right shrink-0">
-                            <div className="text-xs font-mono font-bold text-foreground">
-                              {formatBytes(total)}
+                            <div className="flex items-center justify-end gap-1.5 font-mono">
+                              <span className="text-[10px] text-muted-foreground">
+                                {formatPercent(pct / 100)}
+                              </span>
+                              <span className="text-xs font-bold text-foreground">
+                                {formatBytes(total)}
+                              </span>
                             </div>
                             <div className="text-[10px] font-mono text-muted-foreground flex items-center justify-end gap-1.5">
                               <span className="text-blue-600 dark:text-blue-400">↓ {formatBytes(dl)}</span>
@@ -1041,8 +1276,37 @@ export function OverviewTab({
                         </Link>
                       )
                     })}
+
+                    {otherLanTotal > 0 && (
+                      <div className="flex items-center justify-between p-2 rounded-lg border bg-muted/30 text-xs">
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: OTHER_COLOR }}
+                          />
+                          <span className="text-xs font-mono font-semibold text-muted-foreground w-4 text-center shrink-0">
+                            11+
+                          </span>
+                          <div className="min-w-0">
+                            <h4 className="text-xs font-medium text-muted-foreground">
+                              Other ({otherLanDevices.length} devices)
+                            </h4>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 font-mono">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatPercent(otherLanTotal / (totalLanVolume || 1))}
+                            </span>
+                            <span className="text-xs font-semibold text-foreground">
+                              {formatBytes(otherLanTotal)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
