@@ -397,6 +397,8 @@ func (x *PingDeviceResponse) GetErrorMessage() string {
 
 type GetOverviewRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromUnix      int64                  `protobuf:"varint,1,opt,name=from_unix,json=fromUnix,proto3" json:"from_unix,omitempty"`
+	ToUnix        int64                  `protobuf:"varint,2,opt,name=to_unix,json=toUnix,proto3" json:"to_unix,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -429,6 +431,20 @@ func (x *GetOverviewRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetOverviewRequest.ProtoReflect.Descriptor instead.
 func (*GetOverviewRequest) Descriptor() ([]byte, []int) {
 	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetOverviewRequest) GetFromUnix() int64 {
+	if x != nil {
+		return x.FromUnix
+	}
+	return 0
+}
+
+func (x *GetOverviewRequest) GetToUnix() int64 {
+	if x != nil {
+		return x.ToUnix
+	}
+	return 0
 }
 
 type GetOverviewResponse struct {
@@ -1644,8 +1660,10 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x13max_latency_seconds\x18\x06 \x01(\x01R\x11maxLatencySeconds\x12%\n" +
 	"\x0ejitter_seconds\x18\a \x01(\x01R\rjitterSeconds\x12-\n" +
 	"\x13round_trip_times_ms\x18\b \x03(\x01R\x10roundTripTimesMs\x12#\n" +
-	"\rerror_message\x18\t \x01(\tR\ferrorMessage\"\x14\n" +
-	"\x12GetOverviewRequest\"\xc6\x04\n" +
+	"\rerror_message\x18\t \x01(\tR\ferrorMessage\"J\n" +
+	"\x12GetOverviewRequest\x12\x1b\n" +
+	"\tfrom_unix\x18\x01 \x01(\x03R\bfromUnix\x12\x17\n" +
+	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"\xc6\x04\n" +
 	"\x13GetOverviewResponse\x12%\n" +
 	"\x0einterface_name\x18\x01 \x01(\tR\rinterfaceName\x12&\n" +
 	"\x0flan_subnet_cidr\x18\x02 \x01(\tR\rlanSubnetCidr\x12$\n" +

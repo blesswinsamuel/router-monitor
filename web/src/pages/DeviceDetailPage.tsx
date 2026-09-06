@@ -35,6 +35,7 @@ import {
 import { rpcClient } from '@/lib/client'
 import { useRootOutletContext } from '@/components/RootLayout'
 import { getDeviceCategory, isLocallyAdministeredMac } from '@/lib/device-icons'
+import { getPeriodRange } from '@/lib/period'
 import type { Device, PingDeviceResponse, ProtocolTraffic, PeerTraffic } from '@/gen/routermonitor/v1/router_monitor_pb'
 import {
   AreaChart,
@@ -75,9 +76,8 @@ const PROTOCOL_COLORS: Record<string, { bg: string; text: string; bar: string }>
 
 export function DeviceDetailPage() {
   const { ip } = useParams<{ ip: string }>()
-  const { devices, isRefreshing } = useRootOutletContext()
+  const { devices, isRefreshing, period } = useRootOutletContext()
 
-  const [timeRange, setTimeRange] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
   const [chartScope, setChartScope] = useState<'total' | 'wan' | 'lan'>('total')
   const [loading, setLoading] = useState(false)
   const [historyData, setHistoryData] = useState<{ time: string; download: number; upload: number }[]>([])
@@ -136,19 +136,7 @@ export function DeviceDetailPage() {
     async function fetchDeviceHistory() {
       setLoading(true)
       try {
-        const now = Math.floor(Date.now() / 1000)
-        let from = now - 3600
-        let step = 15
-        if (timeRange === '15m') {
-          from = now - 900
-          step = 5
-        } else if (timeRange === '6h') {
-          from = now - 21600
-          step = 60
-        } else if (timeRange === '24h') {
-          from = now - 86400
-          step = 300
-        }
+        const { fromUnix: from, toUnix: now, stepSeconds: step } = getPeriodRange(period)
 
         let metricName = 'device_traffic_bytes_rate'
         if (chartScope === 'wan') {
@@ -226,7 +214,7 @@ export function DeviceDetailPage() {
     return () => {
       active = false
     }
-  }, [ip, timeRange, chartScope])
+  }, [ip, period, chartScope])
 
   if (!device && !loading && !isRefreshing) {
     return (
@@ -473,7 +461,7 @@ export function DeviceDetailPage() {
             <CardTitle className="text-sm font-medium flex items-center justify-between text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Globe className="w-4 h-4 text-primary" />
-                Internet Traffic ({timeRange})
+                Internet Traffic ({period})
               </span>
               {(wanDlRate > 0 || wanUlRate > 0) && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-primary/30 text-primary font-mono">
@@ -500,7 +488,7 @@ export function DeviceDetailPage() {
               </div>
             </div>
             <div className="text-[11px] text-muted-foreground pt-2 border-t flex justify-between">
-              <span>Total WAN ({timeRange}):</span>
+              <span>Total WAN ({period}):</span>
               <strong className="text-foreground font-mono">{formatBytes(internetDl + internetUl)}</strong>
             </div>
           </CardContent>
@@ -512,7 +500,7 @@ export function DeviceDetailPage() {
             <CardTitle className="text-sm font-medium flex items-center justify-between text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <Network className="w-4 h-4 text-sky-500" />
-                Local Traffic ({timeRange})
+                Local Traffic ({period})
               </span>
               {(lanDlRate > 0 || lanUlRate > 0) && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-sky-500/30 text-sky-500 font-mono">
@@ -539,7 +527,7 @@ export function DeviceDetailPage() {
               </div>
             </div>
             <div className="text-[11px] text-muted-foreground pt-2 border-t flex justify-between">
-              <span>Total LAN ({timeRange}):</span>
+              <span>Total LAN ({period}):</span>
               <strong className="text-foreground font-mono">{formatBytes(lanDl + lanUl)}</strong>
             </div>
           </CardContent>
@@ -551,7 +539,7 @@ export function DeviceDetailPage() {
             <CardTitle className="text-sm font-medium flex items-center justify-between text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <HardDrive className="w-4 h-4 text-muted-foreground" />
-                Total Combined Traffic ({timeRange})
+                Total Combined Traffic ({period})
               </span>
               {(dlRate > 0 || ulRate > 0) && (
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono">
@@ -578,7 +566,7 @@ export function DeviceDetailPage() {
               </div>
             </div>
             <div className="text-[11px] text-muted-foreground pt-2 border-t flex items-center justify-between">
-              <span>Overall Total:</span>
+              <span>Overall Total ({period}):</span>
               <strong className="text-foreground font-mono">{formatBytes(totalDl + totalUl)}</strong>
             </div>
           </CardContent>
@@ -615,29 +603,18 @@ export function DeviceDetailPage() {
                 ))}
               </div>
 
-              {/* Time Range Selector */}
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
-                {(['15m', '1h', '6h', '24h'] as const).map((r) => (
-                  <Button
-                    key={r}
-                    variant={timeRange === r ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-7 text-xs px-2.5 font-mono"
-                    onClick={() => setTimeRange(r)}
-                  >
-                    {r}
-                  </Button>
-                ))}
+                <Badge variant="outline" className="font-mono text-xs px-2 py-0.5">
+                  {period}
+                </Badge>
               </div>
             </div>
-          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border bg-card p-4">
             {historyData.length === 0 ? (
               <div className="h-64 flex flex-col items-center justify-center text-muted-foreground text-xs text-center px-4">
                 <Activity className="w-8 h-8 opacity-25 mb-2" />
-                <span>No historical time series samples recorded for this device in the last {timeRange}.</span>
+                <span>No historical time series samples recorded for this device in the last {period}.</span>
                 <span className="text-[11px] opacity-75 mt-1">Data begins recording as soon as the device transmits network traffic.</span>
               </div>
             ) : (
@@ -693,11 +670,11 @@ export function DeviceDetailPage() {
                 Transport Protocol Breakdown
               </CardTitle>
               <span className="text-xs text-muted-foreground">
-                Observed L4/L3 IP protocols
+                Observed L4/L3 IP protocols ({period})
               </span>
             </div>
             <CardDescription className="text-xs">
-              Bandwidth and packet distribution categorized by transport protocol.
+              Bandwidth and packet distribution categorized by transport protocol over the last {period}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -744,7 +721,7 @@ export function DeviceDetailPage() {
                     </div>
                     <div className="text-xs font-mono space-y-0.5">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Volume:</span>
+                        <span className="text-muted-foreground">Volume ({period}):</span>
                         <strong className="text-foreground">{formatBytes(dl + ul)}</strong>
                       </div>
                       <div className="flex justify-between text-[11px]">
@@ -780,7 +757,7 @@ export function DeviceDetailPage() {
               </Badge>
             </div>
             <CardDescription className="text-xs">
-              Internal subnet devices that this client directly communicated with over LAN.
+              Internal subnet devices that this client directly communicated with over LAN in the last {period}.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -789,9 +766,9 @@ export function DeviceDetailPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Peer Device / IP</TableHead>
-                    <TableHead className="text-right">Sent to Peer</TableHead>
-                    <TableHead className="text-right">Received from Peer</TableHead>
-                    <TableHead className="text-right">Total Transferred</TableHead>
+                    <TableHead className="text-right">Sent ({period})</TableHead>
+                    <TableHead className="text-right">Received ({period})</TableHead>
+                    <TableHead className="text-right">Total Transferred ({period})</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>

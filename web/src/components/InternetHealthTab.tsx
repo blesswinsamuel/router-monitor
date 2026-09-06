@@ -32,6 +32,9 @@ import {
   type ChartConfig,
 } from './ui/chart'
 
+import { useRootOutletContext } from './RootLayout'
+import { getPeriodRange } from '@/lib/period'
+
 function safeKey(addr: string): string {
   return addr.replace(/[^a-zA-Z0-9_-]/g, '_')
 }
@@ -43,11 +46,10 @@ interface InternetHealthTabProps {
 }
 
 type ChartMetric = 'latency' | 'loss' | 'jitter'
-type TimeRange = '15m' | '1h' | '6h' | '24h'
 
 export function InternetHealthTab({ health }: InternetHealthTabProps) {
+  const { period } = useRootOutletContext()
   const [chartMetric, setChartMetric] = useState<ChartMetric>('latency')
-  const [timeRange, setTimeRange] = useState<TimeRange>('1h')
   const [chartHistory, setChartHistory] = useState<any[]>([])
   const [chartLoading, setChartLoading] = useState(false)
 
@@ -65,19 +67,7 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
     async function fetchChartHistory() {
       setChartLoading(true)
       try {
-        const now = Math.floor(Date.now() / 1000)
-        let from = now - 3600
-        let step = 30
-        if (timeRange === '15m') {
-          from = now - 900
-          step = 5
-        } else if (timeRange === '6h') {
-          from = now - 21600
-          step = 60
-        } else if (timeRange === '24h') {
-          from = now - 86400
-          step = 300
-        }
+        const { fromUnix: from, toUnix: now, stepSeconds: step } = getPeriodRange(period)
 
         let metricName = 'internet_latency_seconds'
         if (chartMetric === 'loss') {
@@ -139,7 +129,7 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
       active = false
       clearInterval(interval)
     }
-  }, [chartMetric, timeRange])
+  }, [chartMetric, period])
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {}
@@ -444,22 +434,11 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
                 </Button>
               </div>
 
-              {/* Time Range Selector */}
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
-                {(['15m', '1h', '6h', '24h'] as TimeRange[]).map((r) => (
-                  <Button
-                    key={r}
-                    variant={timeRange === r ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-7 text-xs px-2.5 font-mono"
-                    onClick={() => setTimeRange(r)}
-                  >
-                    {r}
-                  </Button>
-                ))}
+                <Badge variant="outline" className="font-mono text-xs px-2 py-0.5">
+                  {period}
+                </Badge>
               </div>
             </div>
-          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[280px] w-full">

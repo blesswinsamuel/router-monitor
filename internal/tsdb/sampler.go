@@ -530,6 +530,42 @@ func (s *Sampler) SampleOnce() {
 							Value:     dLanUl,
 						})
 					}
+					for _, proto := range protoStatsList {
+						if proto.DownloadBytesPerSec > 0 {
+							devSamples = append(devSamples, Sample{
+								Metric:    "device_protocol_bytes_rate",
+								Labels:    map[string]string{"ip": ip, "protocol": proto.Protocol, "direction": "ingress"},
+								Timestamp: now,
+								Value:     proto.DownloadBytesPerSec,
+							})
+						}
+						if proto.UploadBytesPerSec > 0 {
+							devSamples = append(devSamples, Sample{
+								Metric:    "device_protocol_bytes_rate",
+								Labels:    map[string]string{"ip": ip, "protocol": proto.Protocol, "direction": "egress"},
+								Timestamp: now,
+								Value:     proto.UploadBytesPerSec,
+							})
+						}
+					}
+					for _, peer := range peerStatsList {
+						if peer.DownloadBytesPerSec > 0 {
+							devSamples = append(devSamples, Sample{
+								Metric:    "device_peer_bytes_rate",
+								Labels:    map[string]string{"ip": ip, "peer_ip": peer.IPAddr, "direction": "ingress"},
+								Timestamp: now,
+								Value:     peer.DownloadBytesPerSec,
+							})
+						}
+						if peer.UploadBytesPerSec > 0 {
+							devSamples = append(devSamples, Sample{
+								Metric:    "device_peer_bytes_rate",
+								Labels:    map[string]string{"ip": ip, "peer_ip": peer.IPAddr, "direction": "egress"},
+								Timestamp: now,
+								Value:     peer.UploadBytesPerSec,
+							})
+						}
+					}
 				}
 			}
 			s.deviceRates = curDevRates

@@ -52,6 +52,8 @@ type seriesMetaInfo struct {
 	Name      string
 	IP        string
 	Direction string
+	Protocol  string
+	PeerIP    string
 }
 
 type cachedUsage struct {
@@ -155,6 +157,8 @@ func parseSeriesMeta(name, labelsJSON string) seriesMetaInfo {
 	if err := json.Unmarshal([]byte(labelsJSON), &labels); err == nil {
 		meta.IP = labels["ip"]
 		meta.Direction = labels["direction"]
+		meta.Protocol = labels["protocol"]
+		meta.PeerIP = labels["peer_ip"]
 	}
 	return meta
 }
@@ -358,6 +362,16 @@ func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to t
 	return results, nil
 }
 
+type ProtocolPeriodUsage struct {
+	DownloadBytes uint64
+	UploadBytes   uint64
+}
+
+type PeerPeriodUsage struct {
+	BytesReceived uint64
+	BytesSent     uint64
+}
+
 type DevicePeriodUsage struct {
 	DownloadBytes    uint64
 	UploadBytes      uint64
@@ -365,6 +379,17 @@ type DevicePeriodUsage struct {
 	WanUploadBytes   uint64
 	LanDownloadBytes uint64
 	LanUploadBytes   uint64
+	Protocols        map[string]*ProtocolPeriodUsage
+	Peers            map[string]*PeerPeriodUsage
+}
+
+type OverviewPeriodUsage struct {
+	TotalDownloadBytes uint64
+	TotalUploadBytes   uint64
+	WanDownloadBytes   uint64
+	WanUploadBytes     uint64
+	LanDownloadBytes   uint64
+	LanUploadBytes     uint64
 }
 
 // GetDeviceUsageByPeriod aggregates device traffic samples over [fromUnix, toUnix].
@@ -436,6 +461,38 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 			} else if meta.Direction == "egress" {
 				u.LanUploadBytes = b
 			}
+		case "device_protocol_bytes_rate":
+			if meta.Protocol != "" {
+				if u.Protocols == nil {
+					u.Protocols = make(map[string]*ProtocolPeriodUsage)
+				}
+				pu, ok := u.Protocols[meta.Protocol]
+				if !ok {
+					pu = &ProtocolPeriodUsage{}
+					u.Protocols[meta.Protocol] = pu
+				}
+				if meta.Direction == "ingress" {
+					pu.DownloadBytes = b
+				} else if meta.Direction == "egress" {
+					pu.UploadBytes = b
+				}
+			}
+		case "device_peer_bytes_rate":
+			if meta.PeerIP != "" {
+				if u.Peers == nil {
+					u.Peers = make(map[string]*PeerPeriodUsage)
+				}
+				pu, ok := u.Peers[meta.PeerIP]
+				if !ok {
+					pu = &PeerPeriodUsage{}
+					u.Peers[meta.PeerIP] = pu
+				}
+				if meta.Direction == "ingress" {
+					pu.BytesReceived = b
+				} else if meta.Direction == "egress" {
+					pu.BytesSent = b
+				}
+			}
 		}
 	}
 
@@ -452,6 +509,24 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 	d.usageCacheMu.Unlock()
 
 	return usage, nil
+}
+
+// GetOverviewUsageByPeriod aggregates router-wide WAN and LAN traffic volume over [fromUnix, toUnix].
+func (d *DB) GetOverviewUsageByPeriod(fromUnix, toUnix int64) (*OverviewPeriodUsage, error) {
+	devUsage, err := d.GetDeviceUsageByPeriod(fromUnix, toUnix)
+	if err != nil {
+		return nil, err
+	}
+	ov := &OverviewPeriodUsage{}
+	for _, u := range devUsage {
+		ov.TotalDownloadBytes += u.DownloadBytes
+		ov.TotalUploadBytes += u.UploadBytes
+		ov.WanDownloadBytes += u.WanDownloadBytes
+		ov.WanUploadBytes += u.WanUploadBytes
+		ov.LanDownloadBytes += u.LanDownloadBytes
+		ov.LanUploadBytes += u.LanUploadBytes
+	}
+	return ov, nil
 }
 
 func (d *DB) PurgeOlderThan(retention time.Duration) (int64, error) {

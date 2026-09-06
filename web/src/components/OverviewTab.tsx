@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom'
 import { ArrowDownCircle, ArrowUpCircle, Globe, Laptop, Clock, ArrowDown, ArrowUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
-import { Button } from './ui/button'
 import { formatBytes, formatRate, formatLatency } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
+import { useRootOutletContext } from './RootLayout'
+import { getPeriodRange } from '@/lib/period'
 import {
   AreaChart,
   Area,
@@ -39,7 +40,7 @@ interface OverviewTabProps {
 }
 
 export function OverviewTab({ overview }: OverviewTabProps) {
-  const [timeRange, setTimeRange] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
+  const { period } = useRootOutletContext()
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyData, setHistoryData] = useState<any[]>([])
 
@@ -48,19 +49,7 @@ export function OverviewTab({ overview }: OverviewTabProps) {
     async function fetchHistory() {
       setHistoryLoading(true)
       try {
-        const now = Math.floor(Date.now() / 1000)
-        let from = now - 3600
-        let step = 15
-        if (timeRange === '15m') {
-          from = now - 900
-          step = 5
-        } else if (timeRange === '6h') {
-          from = now - 21600
-          step = 60
-        } else if (timeRange === '24h') {
-          from = now - 86400
-          step = 300
-        }
+        const { fromUnix: from, toUnix: now, stepSeconds: step } = getPeriodRange(period)
 
         const [dlRes, ulRes] = await Promise.all([
           rpcClient.queryTimeSeries({
@@ -123,7 +112,7 @@ export function OverviewTab({ overview }: OverviewTabProps) {
       active = false
       clearInterval(interval)
     }
-  }, [timeRange])
+  }, [period])
 
   return (
     <div className="space-y-6">
@@ -155,8 +144,8 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>Total:</span>
-                <span className="font-mono text-foreground">
+                <span>Period Total ({period}):</span>
+                <span className="font-mono text-foreground font-medium">
                   {formatBytes(overview?.total?.downloadBytes)}
                 </span>
               </div>
@@ -191,8 +180,8 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>Total:</span>
-                <span className="font-mono text-foreground">
+                <span>Period Total ({period}):</span>
+                <span className="font-mono text-foreground font-medium">
                   {formatBytes(overview?.total?.uploadBytes)}
                 </span>
               </div>
@@ -271,7 +260,7 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                   {formatRate(overview?.wan?.downloadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: <span className="font-mono">{formatBytes(overview?.wan?.downloadBytes)}</span>
+                  Vol ({period}): <span className="font-mono">{formatBytes(overview?.wan?.downloadBytes)}</span>
                 </div>
               </div>
               <div>
@@ -282,12 +271,12 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                   {formatRate(overview?.wan?.uploadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: <span className="font-mono">{formatBytes(overview?.wan?.uploadBytes)}</span>
+                  Vol ({period}): <span className="font-mono">{formatBytes(overview?.wan?.uploadBytes)}</span>
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between text-xs pt-1 border-t">
-              <span className="text-muted-foreground">Total WAN Volume:</span>
+              <span className="text-muted-foreground">Total WAN Volume ({period}):</span>
               <span className="font-mono font-semibold text-foreground">
                 {formatBytes(Number(overview?.wan?.downloadBytes || 0) + Number(overview?.wan?.uploadBytes || 0))}
               </span>
@@ -321,7 +310,7 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                   {formatRate(overview?.lan?.downloadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: <span className="font-mono">{formatBytes(overview?.lan?.downloadBytes)}</span>
+                  Vol ({period}): <span className="font-mono">{formatBytes(overview?.lan?.downloadBytes)}</span>
                 </div>
               </div>
               <div>
@@ -332,12 +321,12 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                   {formatRate(overview?.lan?.uploadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: <span className="font-mono">{formatBytes(overview?.lan?.uploadBytes)}</span>
+                  Vol ({period}): <span className="font-mono">{formatBytes(overview?.lan?.uploadBytes)}</span>
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between text-xs pt-1 border-t">
-              <span className="text-muted-foreground">Total LAN Volume:</span>
+              <span className="text-muted-foreground">Total LAN Volume ({period}):</span>
               <span className="font-mono font-semibold text-foreground">
                 {formatBytes(Number(overview?.lan?.downloadBytes || 0) + Number(overview?.lan?.uploadBytes || 0))}
               </span>
@@ -368,19 +357,9 @@ export function OverviewTab({ overview }: OverviewTabProps) {
                   <span className="text-muted-foreground">Up:</span>
                   <span className="font-mono font-medium text-sky-600 dark:text-sky-400">{formatRate(overview?.total?.uploadBytesPerSec)}</span>
                 </div>
-              </div>
-              <div className="flex items-center space-x-1 bg-muted p-1 rounded-lg">
-                {(['15m', '1h', '6h', '24h'] as const).map((r) => (
-                  <Button
-                    key={r}
-                    variant={timeRange === r ? "default" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs px-2.5 font-mono"
-                    onClick={() => setTimeRange(r)}
-                  >
-                    {r}
-                  </Button>
-                ))}
+                <Badge variant="outline" className="font-mono text-xs px-2 py-0.5">
+                  {period}
+                </Badge>
               </div>
             </div>
           </div>
