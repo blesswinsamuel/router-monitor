@@ -279,6 +279,9 @@ export function OverviewTab({
                 <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
                   {formatRate(overview?.wan?.downloadBytesPerSec)}
                 </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.wan?.downloadBytes)}</span>
+                </div>
               </div>
               <div>
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
@@ -287,10 +290,13 @@ export function OverviewTab({
                 <div className="text-lg font-bold font-mono text-sky-600 dark:text-sky-400">
                   {formatRate(overview?.wan?.uploadBytesPerSec)}
                 </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.wan?.uploadBytes)}</span>
+                </div>
               </div>
             </div>
             <div className="pt-2 border-t flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Vol ({period}):</span>
+              <span className="text-muted-foreground">Combined ({period}):</span>
               <span className="font-mono font-semibold text-foreground">
                 {formatBytes(Number(overview?.wan?.downloadBytes || 0) + Number(overview?.wan?.uploadBytes || 0))}
               </span>
@@ -326,6 +332,9 @@ export function OverviewTab({
                 <div className="text-lg font-bold font-mono text-blue-600 dark:text-blue-400">
                   {formatRate(overview?.lan?.downloadBytesPerSec)}
                 </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.lan?.downloadBytes)}</span>
+                </div>
               </div>
               <div>
                 <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
@@ -334,10 +343,13 @@ export function OverviewTab({
                 <div className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
                   {formatRate(overview?.lan?.uploadBytesPerSec)}
                 </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.lan?.uploadBytes)}</span>
+                </div>
               </div>
             </div>
             <div className="pt-2 border-t flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Vol ({period}):</span>
+              <span className="text-muted-foreground">Combined ({period}):</span>
               <span className="font-mono font-semibold text-foreground">
                 {formatBytes(Number(overview?.lan?.downloadBytes || 0) + Number(overview?.lan?.uploadBytes || 0))}
               </span>
@@ -483,12 +495,17 @@ export function OverviewTab({
 
           {/* Rate Readout for Single Scope Mode */}
           {chartScope !== 'split' && (
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t text-xs">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-foreground">{scopeRates.label}:</span>
-                <span className="text-muted-foreground">Vol ({period}):</span>
-                <span className="font-mono font-medium text-foreground">
-                  {formatBytes(Number(scopeRates.downVol || 0) + Number(scopeRates.upVol || 0))}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 pt-2 border-t text-xs">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-medium text-foreground">{scopeRates.label} Totals ({period}):</span>
+                <span className="text-muted-foreground">
+                  Down: <span className="font-mono font-medium text-foreground">{formatBytes(scopeRates.downVol)}</span>
+                </span>
+                <span className="text-muted-foreground">
+                  Up: <span className="font-mono font-medium text-foreground">{formatBytes(scopeRates.upVol)}</span>
+                </span>
+                <span className="text-muted-foreground">
+                  Combined: <span className="font-mono font-semibold text-foreground">{formatBytes(Number(scopeRates.downVol || 0) + Number(scopeRates.upVol || 0))}</span>
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -567,6 +584,11 @@ export function OverviewTab({
                     </ChartContainer>
                   )}
                 </div>
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] pt-1.5 border-t border-border/40 text-muted-foreground">
+                  <span>Down Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.wan?.downloadBytes)}</span></span>
+                  <span>Up Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.wan?.uploadBytes)}</span></span>
+                  <span>Combined ({period}): <span className="font-mono font-semibold text-foreground">{formatBytes(Number(overview?.wan?.downloadBytes || 0) + Number(overview?.wan?.uploadBytes || 0))}</span></span>
+                </div>
               </div>
 
               {/* LAN Sub-chart */}
@@ -620,6 +642,11 @@ export function OverviewTab({
                       </AreaChart>
                     </ChartContainer>
                   )}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] pt-1.5 border-t border-border/40 text-muted-foreground">
+                  <span>Ingress Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.lan?.downloadBytes)}</span></span>
+                  <span>Egress Total: <span className="font-mono font-medium text-foreground">{formatBytes(overview?.lan?.uploadBytes)}</span></span>
+                  <span>Combined ({period}): <span className="font-mono font-semibold text-foreground">{formatBytes(Number(overview?.lan?.downloadBytes || 0) + Number(overview?.lan?.uploadBytes || 0))}</span></span>
                 </div>
               </div>
             </div>
