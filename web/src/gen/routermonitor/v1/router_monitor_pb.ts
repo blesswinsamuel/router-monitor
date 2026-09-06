@@ -10,188 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file routermonitor/v1/router_monitor.proto.
  */
 export const file_routermonitor_v1_router_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIhQKEkdldE92ZXJ2aWV3UmVxdWVzdCLpBQoTR2V0T3ZlcnZpZXdSZXNwb25zZRIWCg5pbnRlcmZhY2VfbmFtZRgBIAEoCRIXCg9sYW5fc3VibmV0X2NpZHIYAiABKAkSFgoOaW50ZXJuZXRfaXNfdXAYAyABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAQgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAUgASgFEhwKFHRvdGFsX2Rvd25sb2FkX2J5dGVzGAYgASgEEhoKEnRvdGFsX3VwbG9hZF9ieXRlcxgHIAEoBBIeChZ0b3RhbF9kb3dubG9hZF9wYWNrZXRzGAggASgEEhwKFHRvdGFsX3VwbG9hZF9wYWNrZXRzGAkgASgEEiYKHmN1cnJlbnRfZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgKIAEoARIkChxjdXJyZW50X3VwbG9hZF9ieXRlc19wZXJfc2VjGAsgASgBEigKIGN1cnJlbnRfZG93bmxvYWRfcGFja2V0c19wZXJfc2VjGAwgASgBEiYKHmN1cnJlbnRfdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgNIAEoARIgChh0b3RhbF93YW5fZG93bmxvYWRfYnl0ZXMYDiABKAQSHgoWdG90YWxfd2FuX3VwbG9hZF9ieXRlcxgPIAEoBBIgChh0b3RhbF9sYW5fZG93bmxvYWRfYnl0ZXMYECABKAQSHgoWdG90YWxfbGFuX3VwbG9hZF9ieXRlcxgRIAEoBBIqCiJjdXJyZW50X3dhbl9kb3dubG9hZF9ieXRlc19wZXJfc2VjGBIgASgBEigKIGN1cnJlbnRfd2FuX3VwbG9hZF9ieXRlc19wZXJfc2VjGBMgASgBEioKImN1cnJlbnRfbGFuX2Rvd25sb2FkX2J5dGVzX3Blcl9zZWMYFCABKAESKAogY3VycmVudF9sYW5fdXBsb2FkX2J5dGVzX3Blcl9zZWMYFSABKAEiOAoSTGlzdERldmljZXNSZXF1ZXN0EhEKCWZyb21fdW5peBgBIAEoAxIPCgd0b191bml4GAIgASgDIj0KB0FycEluZm8SDQoFZmxhZ3MYASABKAMSEAoIaXNfdmFsaWQYAiABKAgSEQoJaW50ZXJmYWNlGAMgASgJIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASLUAgoGRGV2aWNlEg8KB2lwX2FkZHIYASABKAkSEAoIbWFjX2FkZHIYAiABKAkSEAoIaG9zdG5hbWUYAyABKAkSEQoJaW50ZXJmYWNlGAQgASgJEg4KBnN0YXR1cxgFIAEoCRIXCg9maXJzdF9zZWVuX3VuaXgYBiABKAMSFgoObGFzdF9zZWVuX3VuaXgYByABKAMSJgoDYXJwGAggASgLMhkucm91dGVybW9uaXRvci52MS5BcnBJbmZvEjMKBXRvdGFsGAkgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAogASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAsgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMiQAoTTGlzdERldmljZXNSZXNwb25zZRIpCgdkZXZpY2VzGAEgAygLMhgucm91dGVybW9uaXRvci52MS5EZXZpY2UiJwoWR2V0VHJhZmZpY0Zsb3dzUmVxdWVzdBINCgVsaW1pdBgBIAEoBSKFAQoLVHJhZmZpY0Zsb3cSEQoJZGlyZWN0aW9uGAEgASgJEhEKCWV0aF9wcm90bxgCIAEoCRIQCghpcF9wcm90bxgDIAEoCRIOCgZzcmNfaXAYBCABKAkSDgoGZHN0X2lwGAUgASgJEg8KB3BhY2tldHMYBiABKAQSDQoFYnl0ZXMYByABKAQiQQoNUHJvdG9jb2xTdGF0cxIQCghwcm90b2NvbBgBIAEoCRINCgVieXRlcxgCIAEoBBIPCgdwYWNrZXRzGAMgASgEIqcBChdHZXRUcmFmZmljRmxvd3NSZXNwb25zZRIsCgVmbG93cxgBIAMoCzIdLnJvdXRlcm1vbml0b3IudjEuVHJhZmZpY0Zsb3cSMgoJcHJvdG9jb2xzGAIgAygLMh8ucm91dGVybW9uaXRvci52MS5Qcm90b2NvbFN0YXRzEhMKC3RvdGFsX2J5dGVzGAMgASgEEhUKDXRvdGFsX3BhY2tldHMYBCABKAQiGgoYR2V0SW50ZXJuZXRIZWFsdGhSZXF1ZXN0ImoKEFBpbmdUYXJnZXRTdGF0dXMSDAoEYWRkchgBIAEoCRINCgVpc191cBgCIAEoCBIcChRsYXN0X2xhdGVuY3lfc2Vjb25kcxgDIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAQgASgBImcKGUdldEludGVybmV0SGVhbHRoUmVzcG9uc2USFQoNb3ZlcmFsbF9pc191cBgBIAEoCBIzCgd0YXJnZXRzGAIgAygLMiIucm91dGVybW9uaXRvci52MS5QaW5nVGFyZ2V0U3RhdHVzIjIKFlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QSGAoQaW50ZXJ2YWxfc2Vjb25kcxgBIAEoBSKSAwoRTGl2ZVN0YXRzUmVzcG9uc2USFgoOdGltZXN0YW1wX3VuaXgYASABKAMSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgCIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgDIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYBCABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgFIAEoARIWCg5pbnRlcm5ldF9pc191cBgGIAEoCBIgChhpbnRlcm5ldF9sYXRlbmN5X3NlY29uZHMYByABKAESHwoXY29ubmVjdGVkX2RldmljZXNfY291bnQYCCABKAUSIgoad2FuX2Rvd25sb2FkX2J5dGVzX3Blcl9zZWMYCSABKAESIAoYd2FuX3VwbG9hZF9ieXRlc19wZXJfc2VjGAogASgBEiIKGmxhbl9kb3dubG9hZF9ieXRlc19wZXJfc2VjGAsgASgBEiAKGGxhbl91cGxvYWRfYnl0ZXNfcGVyX3NlYxgMIAEoASLsAQoWUXVlcnlUaW1lU2VyaWVzUmVxdWVzdBITCgttZXRyaWNfbmFtZRgBIAEoCRJPCgxtYXRjaF9sYWJlbHMYAiADKAsyOS5yb3V0ZXJtb25pdG9yLnYxLlF1ZXJ5VGltZVNlcmllc1JlcXVlc3QuTWF0Y2hMYWJlbHNFbnRyeRIRCglmcm9tX3VuaXgYAyABKAMSDwoHdG9fdW5peBgEIAEoAxIUCgxzdGVwX3NlY29uZHMYBSABKAUaMgoQTWF0Y2hMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIl4KD1RpbWVTZXJpZXNQb2ludBIWCg50aW1lc3RhbXBfdW5peBgBIAEoAxINCgV2YWx1ZRgCIAEoARIRCgltaW5fdmFsdWUYAyABKAESEQoJbWF4X3ZhbHVlGAQgASgBIr0BCgpUaW1lU2VyaWVzEhMKC21ldHJpY19uYW1lGAEgASgJEjgKBmxhYmVscxgCIAMoCzIoLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllcy5MYWJlbHNFbnRyeRIxCgZwb2ludHMYAyADKAsyIS5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXNQb2ludBotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIkcKF1F1ZXJ5VGltZVNlcmllc1Jlc3BvbnNlEiwKBnNlcmllcxgBIAMoCzIcLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllczLwBAoUUm91dGVyTW9uaXRvclNlcnZpY2USWgoLR2V0T3ZlcnZpZXcSJC5yb3V0ZXJtb25pdG9yLnYxLkdldE92ZXJ2aWV3UmVxdWVzdBolLnJvdXRlcm1vbml0b3IudjEuR2V0T3ZlcnZpZXdSZXNwb25zZRJaCgtMaXN0RGV2aWNlcxIkLnJvdXRlcm1vbml0b3IudjEuTGlzdERldmljZXNSZXF1ZXN0GiUucm91dGVybW9uaXRvci52MS5MaXN0RGV2aWNlc1Jlc3BvbnNlEmYKD0dldFRyYWZmaWNGbG93cxIoLnJvdXRlcm1vbml0b3IudjEuR2V0VHJhZmZpY0Zsb3dzUmVxdWVzdBopLnJvdXRlcm1vbml0b3IudjEuR2V0VHJhZmZpY0Zsb3dzUmVzcG9uc2USbAoRR2V0SW50ZXJuZXRIZWFsdGgSKi5yb3V0ZXJtb25pdG9yLnYxLkdldEludGVybmV0SGVhbHRoUmVxdWVzdBorLnJvdXRlcm1vbml0b3IudjEuR2V0SW50ZXJuZXRIZWFsdGhSZXNwb25zZRJiCg9TdHJlYW1MaXZlU3RhdHMSKC5yb3V0ZXJtb25pdG9yLnYxLlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QaIy5yb3V0ZXJtb25pdG9yLnYxLkxpdmVTdGF0c1Jlc3BvbnNlMAESZgoPUXVlcnlUaW1lU2VyaWVzEigucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXF1ZXN0Gikucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXNwb25zZUJSWlBnaXRodWIuY29tL2JsZXNzd2luc2FtdWVsL3JvdXRlci1tb25pdG9yL2dlbi9nby9yb3V0ZXJtb25pdG9yL3YxO3JvdXRlcm1vbml0b3J2MWIGcHJvdG8z");
-
-/**
- * @generated from message routermonitor.v1.GetOverviewRequest
- */
-export type GetOverviewRequest = Message<"routermonitor.v1.GetOverviewRequest"> & {
-};
-
-/**
- * Describes the message routermonitor.v1.GetOverviewRequest.
- * Use `create(GetOverviewRequestSchema)` to create a new message.
- */
-export const GetOverviewRequestSchema: GenMessage<GetOverviewRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 0);
-
-/**
- * @generated from message routermonitor.v1.GetOverviewResponse
- */
-export type GetOverviewResponse = Message<"routermonitor.v1.GetOverviewResponse"> & {
-  /**
-   * @generated from field: string interface_name = 1;
-   */
-  interfaceName: string;
-
-  /**
-   * @generated from field: string lan_subnet_cidr = 2;
-   */
-  lanSubnetCidr: string;
-
-  /**
-   * @generated from field: bool internet_is_up = 3;
-   */
-  internetIsUp: boolean;
-
-  /**
-   * @generated from field: double internet_latency_seconds = 4;
-   */
-  internetLatencySeconds: number;
-
-  /**
-   * @generated from field: int32 connected_devices_count = 5;
-   */
-  connectedDevicesCount: number;
-
-  /**
-   * @generated from field: uint64 total_download_bytes = 6;
-   */
-  totalDownloadBytes: bigint;
-
-  /**
-   * @generated from field: uint64 total_upload_bytes = 7;
-   */
-  totalUploadBytes: bigint;
-
-  /**
-   * @generated from field: uint64 total_download_packets = 8;
-   */
-  totalDownloadPackets: bigint;
-
-  /**
-   * @generated from field: uint64 total_upload_packets = 9;
-   */
-  totalUploadPackets: bigint;
-
-  /**
-   * @generated from field: double current_download_bytes_per_sec = 10;
-   */
-  currentDownloadBytesPerSec: number;
-
-  /**
-   * @generated from field: double current_upload_bytes_per_sec = 11;
-   */
-  currentUploadBytesPerSec: number;
-
-  /**
-   * @generated from field: double current_download_packets_per_sec = 12;
-   */
-  currentDownloadPacketsPerSec: number;
-
-  /**
-   * @generated from field: double current_upload_packets_per_sec = 13;
-   */
-  currentUploadPacketsPerSec: number;
-
-  /**
-   * @generated from field: uint64 total_wan_download_bytes = 14;
-   */
-  totalWanDownloadBytes: bigint;
-
-  /**
-   * @generated from field: uint64 total_wan_upload_bytes = 15;
-   */
-  totalWanUploadBytes: bigint;
-
-  /**
-   * @generated from field: uint64 total_lan_download_bytes = 16;
-   */
-  totalLanDownloadBytes: bigint;
-
-  /**
-   * @generated from field: uint64 total_lan_upload_bytes = 17;
-   */
-  totalLanUploadBytes: bigint;
-
-  /**
-   * @generated from field: double current_wan_download_bytes_per_sec = 18;
-   */
-  currentWanDownloadBytesPerSec: number;
-
-  /**
-   * @generated from field: double current_wan_upload_bytes_per_sec = 19;
-   */
-  currentWanUploadBytesPerSec: number;
-
-  /**
-   * @generated from field: double current_lan_download_bytes_per_sec = 20;
-   */
-  currentLanDownloadBytesPerSec: number;
-
-  /**
-   * @generated from field: double current_lan_upload_bytes_per_sec = 21;
-   */
-  currentLanUploadBytesPerSec: number;
-};
-
-/**
- * Describes the message routermonitor.v1.GetOverviewResponse.
- * Use `create(GetOverviewResponseSchema)` to create a new message.
- */
-export const GetOverviewResponseSchema: GenMessage<GetOverviewResponse> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 1);
-
-/**
- * @generated from message routermonitor.v1.ListDevicesRequest
- */
-export type ListDevicesRequest = Message<"routermonitor.v1.ListDevicesRequest"> & {
-  /**
-   * @generated from field: int64 from_unix = 1;
-   */
-  fromUnix: bigint;
-
-  /**
-   * @generated from field: int64 to_unix = 2;
-   */
-  toUnix: bigint;
-};
-
-/**
- * Describes the message routermonitor.v1.ListDevicesRequest.
- * Use `create(ListDevicesRequestSchema)` to create a new message.
- */
-export const ListDevicesRequestSchema: GenMessage<ListDevicesRequest> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 2);
-
-/**
- * @generated from message routermonitor.v1.ArpInfo
- */
-export type ArpInfo = Message<"routermonitor.v1.ArpInfo"> & {
-  /**
-   * ARP flags: e.g. 2 for dynamic/complete, 6 for static
-   *
-   * @generated from field: int64 flags = 1;
-   */
-  flags: bigint;
-
-  /**
-   * @generated from field: bool is_valid = 2;
-   */
-  isValid: boolean;
-
-  /**
-   * @generated from field: string interface = 3;
-   */
-  interface: string;
-};
-
-/**
- * Describes the message routermonitor.v1.ArpInfo.
- * Use `create(ArpInfoSchema)` to create a new message.
- */
-export const ArpInfoSchema: GenMessage<ArpInfo> = /*@__PURE__*/
-  messageDesc(file_routermonitor_v1_router_monitor, 3);
+  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASIUChJHZXRPdmVydmlld1JlcXVlc3QivAIKE0dldE92ZXJ2aWV3UmVzcG9uc2USFgoOaW50ZXJmYWNlX25hbWUYASABKAkSFwoPbGFuX3N1Ym5ldF9jaWRyGAIgASgJEhYKDmludGVybmV0X2lzX3VwGAMgASgIEiAKGGludGVybmV0X2xhdGVuY3lfc2Vjb25kcxgEIAEoARIfChdjb25uZWN0ZWRfZGV2aWNlc19jb3VudBgFIAEoBRIzCgV0b3RhbBgGIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgHIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgIIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIjgKEkxpc3REZXZpY2VzUmVxdWVzdBIRCglmcm9tX3VuaXgYASABKAMSDwoHdG9fdW5peBgCIAEoAyI9CgdBcnBJbmZvEg0KBWZsYWdzGAEgASgDEhAKCGlzX3ZhbGlkGAIgASgIEhEKCWludGVyZmFjZRgDIAEoCSLUAgoGRGV2aWNlEg8KB2lwX2FkZHIYASABKAkSEAoIbWFjX2FkZHIYAiABKAkSEAoIaG9zdG5hbWUYAyABKAkSEQoJaW50ZXJmYWNlGAQgASgJEg4KBnN0YXR1cxgFIAEoCRIXCg9maXJzdF9zZWVuX3VuaXgYBiABKAMSFgoObGFzdF9zZWVuX3VuaXgYByABKAMSJgoDYXJwGAggASgLMhkucm91dGVybW9uaXRvci52MS5BcnBJbmZvEjMKBXRvdGFsGAkgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAogASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAsgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMiQAoTTGlzdERldmljZXNSZXNwb25zZRIpCgdkZXZpY2VzGAEgAygLMhgucm91dGVybW9uaXRvci52MS5EZXZpY2UiJwoWR2V0VHJhZmZpY0Zsb3dzUmVxdWVzdBINCgVsaW1pdBgBIAEoBSKFAQoLVHJhZmZpY0Zsb3cSEQoJZGlyZWN0aW9uGAEgASgJEhEKCWV0aF9wcm90bxgCIAEoCRIQCghpcF9wcm90bxgDIAEoCRIOCgZzcmNfaXAYBCABKAkSDgoGZHN0X2lwGAUgASgJEg8KB3BhY2tldHMYBiABKAQSDQoFYnl0ZXMYByABKAQiQQoNUHJvdG9jb2xTdGF0cxIQCghwcm90b2NvbBgBIAEoCRINCgVieXRlcxgCIAEoBBIPCgdwYWNrZXRzGAMgASgEIqcBChdHZXRUcmFmZmljRmxvd3NSZXNwb25zZRIsCgVmbG93cxgBIAMoCzIdLnJvdXRlcm1vbml0b3IudjEuVHJhZmZpY0Zsb3cSMgoJcHJvdG9jb2xzGAIgAygLMh8ucm91dGVybW9uaXRvci52MS5Qcm90b2NvbFN0YXRzEhMKC3RvdGFsX2J5dGVzGAMgASgEEhUKDXRvdGFsX3BhY2tldHMYBCABKAQiGgoYR2V0SW50ZXJuZXRIZWFsdGhSZXF1ZXN0ImoKEFBpbmdUYXJnZXRTdGF0dXMSDAoEYWRkchgBIAEoCRINCgVpc191cBgCIAEoCBIcChRsYXN0X2xhdGVuY3lfc2Vjb25kcxgDIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAQgASgBImcKGUdldEludGVybmV0SGVhbHRoUmVzcG9uc2USFQoNb3ZlcmFsbF9pc191cBgBIAEoCBIzCgd0YXJnZXRzGAIgAygLMiIucm91dGVybW9uaXRvci52MS5QaW5nVGFyZ2V0U3RhdHVzIjIKFlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QSGAoQaW50ZXJ2YWxfc2Vjb25kcxgBIAEoBSKhAgoRTGl2ZVN0YXRzUmVzcG9uc2USFgoOdGltZXN0YW1wX3VuaXgYASABKAMSFgoOaW50ZXJuZXRfaXNfdXAYAiABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAMgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAQgASgFEjMKBXRvdGFsGAUgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMi7AEKFlF1ZXJ5VGltZVNlcmllc1JlcXVlc3QSEwoLbWV0cmljX25hbWUYASABKAkSTwoMbWF0Y2hfbGFiZWxzGAIgAygLMjkucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXF1ZXN0Lk1hdGNoTGFiZWxzRW50cnkSEQoJZnJvbV91bml4GAMgASgDEg8KB3RvX3VuaXgYBCABKAMSFAoMc3RlcF9zZWNvbmRzGAUgASgFGjIKEE1hdGNoTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJeCg9UaW1lU2VyaWVzUG9pbnQSFgoOdGltZXN0YW1wX3VuaXgYASABKAMSDQoFdmFsdWUYAiABKAESEQoJbWluX3ZhbHVlGAMgASgBEhEKCW1heF92YWx1ZRgEIAEoASK9AQoKVGltZVNlcmllcxITCgttZXRyaWNfbmFtZRgBIAEoCRI4CgZsYWJlbHMYAiADKAsyKC5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXMuTGFiZWxzRW50cnkSMQoGcG9pbnRzGAMgAygLMiEucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzUG9pbnQaLQoLTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJHChdRdWVyeVRpbWVTZXJpZXNSZXNwb25zZRIsCgZzZXJpZXMYASADKAsyHC5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXMy8AQKFFJvdXRlck1vbml0b3JTZXJ2aWNlEloKC0dldE92ZXJ2aWV3EiQucm91dGVybW9uaXRvci52MS5HZXRPdmVydmlld1JlcXVlc3QaJS5yb3V0ZXJtb25pdG9yLnYxLkdldE92ZXJ2aWV3UmVzcG9uc2USWgoLTGlzdERldmljZXMSJC5yb3V0ZXJtb25pdG9yLnYxLkxpc3REZXZpY2VzUmVxdWVzdBolLnJvdXRlcm1vbml0b3IudjEuTGlzdERldmljZXNSZXNwb25zZRJmCg9HZXRUcmFmZmljRmxvd3MSKC5yb3V0ZXJtb25pdG9yLnYxLkdldFRyYWZmaWNGbG93c1JlcXVlc3QaKS5yb3V0ZXJtb25pdG9yLnYxLkdldFRyYWZmaWNGbG93c1Jlc3BvbnNlEmwKEUdldEludGVybmV0SGVhbHRoEioucm91dGVybW9uaXRvci52MS5HZXRJbnRlcm5ldEhlYWx0aFJlcXVlc3QaKy5yb3V0ZXJtb25pdG9yLnYxLkdldEludGVybmV0SGVhbHRoUmVzcG9uc2USYgoPU3RyZWFtTGl2ZVN0YXRzEigucm91dGVybW9uaXRvci52MS5TdHJlYW1MaXZlU3RhdHNSZXF1ZXN0GiMucm91dGVybW9uaXRvci52MS5MaXZlU3RhdHNSZXNwb25zZTABEmYKD1F1ZXJ5VGltZVNlcmllcxIoLnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVxdWVzdBopLnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2VCUlpQZ2l0aHViLmNvbS9ibGVzc3dpbnNhbXVlbC9yb3V0ZXItbW9uaXRvci9nZW4vZ28vcm91dGVybW9uaXRvci92MTtyb3V0ZXJtb25pdG9ydjFiBnByb3RvMw");
 
 /**
  * @generated from message routermonitor.v1.DirectionalTraffic
@@ -247,6 +66,122 @@ export type DirectionalTraffic = Message<"routermonitor.v1.DirectionalTraffic"> 
  * Use `create(DirectionalTrafficSchema)` to create a new message.
  */
 export const DirectionalTrafficSchema: GenMessage<DirectionalTraffic> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 0);
+
+/**
+ * @generated from message routermonitor.v1.GetOverviewRequest
+ */
+export type GetOverviewRequest = Message<"routermonitor.v1.GetOverviewRequest"> & {
+};
+
+/**
+ * Describes the message routermonitor.v1.GetOverviewRequest.
+ * Use `create(GetOverviewRequestSchema)` to create a new message.
+ */
+export const GetOverviewRequestSchema: GenMessage<GetOverviewRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 1);
+
+/**
+ * @generated from message routermonitor.v1.GetOverviewResponse
+ */
+export type GetOverviewResponse = Message<"routermonitor.v1.GetOverviewResponse"> & {
+  /**
+   * @generated from field: string interface_name = 1;
+   */
+  interfaceName: string;
+
+  /**
+   * @generated from field: string lan_subnet_cidr = 2;
+   */
+  lanSubnetCidr: string;
+
+  /**
+   * @generated from field: bool internet_is_up = 3;
+   */
+  internetIsUp: boolean;
+
+  /**
+   * @generated from field: double internet_latency_seconds = 4;
+   */
+  internetLatencySeconds: number;
+
+  /**
+   * @generated from field: int32 connected_devices_count = 5;
+   */
+  connectedDevicesCount: number;
+
+  /**
+   * @generated from field: routermonitor.v1.DirectionalTraffic total = 6;
+   */
+  total?: DirectionalTraffic | undefined;
+
+  /**
+   * @generated from field: routermonitor.v1.DirectionalTraffic wan = 7;
+   */
+  wan?: DirectionalTraffic | undefined;
+
+  /**
+   * @generated from field: routermonitor.v1.DirectionalTraffic lan = 8;
+   */
+  lan?: DirectionalTraffic | undefined;
+};
+
+/**
+ * Describes the message routermonitor.v1.GetOverviewResponse.
+ * Use `create(GetOverviewResponseSchema)` to create a new message.
+ */
+export const GetOverviewResponseSchema: GenMessage<GetOverviewResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 2);
+
+/**
+ * @generated from message routermonitor.v1.ListDevicesRequest
+ */
+export type ListDevicesRequest = Message<"routermonitor.v1.ListDevicesRequest"> & {
+  /**
+   * @generated from field: int64 from_unix = 1;
+   */
+  fromUnix: bigint;
+
+  /**
+   * @generated from field: int64 to_unix = 2;
+   */
+  toUnix: bigint;
+};
+
+/**
+ * Describes the message routermonitor.v1.ListDevicesRequest.
+ * Use `create(ListDevicesRequestSchema)` to create a new message.
+ */
+export const ListDevicesRequestSchema: GenMessage<ListDevicesRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 3);
+
+/**
+ * @generated from message routermonitor.v1.ArpInfo
+ */
+export type ArpInfo = Message<"routermonitor.v1.ArpInfo"> & {
+  /**
+   * ARP flags: e.g. 2 for dynamic/complete, 6 for static
+   *
+   * @generated from field: int64 flags = 1;
+   */
+  flags: bigint;
+
+  /**
+   * @generated from field: bool is_valid = 2;
+   */
+  isValid: boolean;
+
+  /**
+   * @generated from field: string interface = 3;
+   */
+  interface: string;
+};
+
+/**
+ * Describes the message routermonitor.v1.ArpInfo.
+ * Use `create(ArpInfoSchema)` to create a new message.
+ */
+export const ArpInfoSchema: GenMessage<ArpInfo> = /*@__PURE__*/
   messageDesc(file_routermonitor_v1_router_monitor, 4);
 
 /**
@@ -560,59 +495,34 @@ export type LiveStatsResponse = Message<"routermonitor.v1.LiveStatsResponse"> & 
   timestampUnix: bigint;
 
   /**
-   * @generated from field: double download_bytes_per_sec = 2;
-   */
-  downloadBytesPerSec: number;
-
-  /**
-   * @generated from field: double upload_bytes_per_sec = 3;
-   */
-  uploadBytesPerSec: number;
-
-  /**
-   * @generated from field: double download_packets_per_sec = 4;
-   */
-  downloadPacketsPerSec: number;
-
-  /**
-   * @generated from field: double upload_packets_per_sec = 5;
-   */
-  uploadPacketsPerSec: number;
-
-  /**
-   * @generated from field: bool internet_is_up = 6;
+   * @generated from field: bool internet_is_up = 2;
    */
   internetIsUp: boolean;
 
   /**
-   * @generated from field: double internet_latency_seconds = 7;
+   * @generated from field: double internet_latency_seconds = 3;
    */
   internetLatencySeconds: number;
 
   /**
-   * @generated from field: int32 connected_devices_count = 8;
+   * @generated from field: int32 connected_devices_count = 4;
    */
   connectedDevicesCount: number;
 
   /**
-   * @generated from field: double wan_download_bytes_per_sec = 9;
+   * @generated from field: routermonitor.v1.DirectionalTraffic total = 5;
    */
-  wanDownloadBytesPerSec: number;
+  total?: DirectionalTraffic | undefined;
 
   /**
-   * @generated from field: double wan_upload_bytes_per_sec = 10;
+   * @generated from field: routermonitor.v1.DirectionalTraffic wan = 6;
    */
-  wanUploadBytesPerSec: number;
+  wan?: DirectionalTraffic | undefined;
 
   /**
-   * @generated from field: double lan_download_bytes_per_sec = 11;
+   * @generated from field: routermonitor.v1.DirectionalTraffic lan = 7;
    */
-  lanDownloadBytesPerSec: number;
-
-  /**
-   * @generated from field: double lan_upload_bytes_per_sec = 12;
-   */
-  lanUploadBytesPerSec: number;
+  lan?: DirectionalTraffic | undefined;
 };
 
 /**

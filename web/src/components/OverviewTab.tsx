@@ -140,7 +140,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tracking-tight">
-              {formatRate(overview?.currentDownloadBytesPerSec)}
+              {formatRate(overview?.total?.downloadBytesPerSec)}
             </div>
             <div className="mt-2.5 pt-2 border-t space-y-1 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
@@ -148,7 +148,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   WAN (Internet):
                 </span>
                 <span className="font-mono font-medium text-foreground">
-                  {formatRate(overview?.currentWanDownloadBytesPerSec)}
+                  {formatRate(overview?.wan?.downloadBytesPerSec)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
@@ -156,13 +156,13 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   LAN (Local):
                 </span>
                 <span className="font-mono font-medium text-foreground">
-                  {formatRate(overview?.currentLanDownloadBytesPerSec)}
+                  {formatRate(overview?.lan?.downloadBytesPerSec)}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>Total:</span>
                 <span className="font-mono text-foreground">
-                  {formatBytes(overview?.totalDownloadBytes)}
+                  {formatBytes(overview?.total?.downloadBytes)}
                 </span>
               </div>
             </div>
@@ -176,7 +176,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold tracking-tight">
-              {formatRate(overview?.currentUploadBytesPerSec)}
+              {formatRate(overview?.total?.uploadBytesPerSec)}
             </div>
             <div className="mt-2.5 pt-2 border-t space-y-1 text-xs">
               <div className="flex items-center justify-between text-muted-foreground">
@@ -184,7 +184,7 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   WAN (Internet):
                 </span>
                 <span className="font-mono font-medium text-foreground">
-                  {formatRate(overview?.currentWanUploadBytesPerSec)}
+                  {formatRate(overview?.wan?.uploadBytesPerSec)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-muted-foreground">
@@ -192,13 +192,13 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   LAN (Local):
                 </span>
                 <span className="font-mono font-medium text-foreground">
-                  {formatRate(overview?.currentLanUploadBytesPerSec)}
+                  {formatRate(overview?.lan?.uploadBytesPerSec)}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>Total:</span>
                 <span className="font-mono text-foreground">
-                  {formatBytes(overview?.totalUploadBytes)}
+                  {formatBytes(overview?.total?.uploadBytes)}
                 </span>
               </div>
             </div>
@@ -265,10 +265,10 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   <ArrowDown className="w-3 h-3 text-emerald-500" /> Download Rate
                 </span>
                 <div className="text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400">
-                  {formatRate(overview?.currentWanDownloadBytesPerSec)}
+                  {formatRate(overview?.wan?.downloadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.totalWanDownloadBytes)}
+                  Vol: {formatBytes(overview?.wan?.downloadBytes)}
                 </div>
               </div>
               <div>
@@ -276,17 +276,17 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   <ArrowUp className="w-3 h-3 text-sky-500" /> Upload Rate
                 </span>
                 <div className="text-lg font-bold font-mono text-sky-600 dark:text-sky-400">
-                  {formatRate(overview?.currentWanUploadBytesPerSec)}
+                  {formatRate(overview?.wan?.uploadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.totalWanUploadBytes)}
+                  Vol: {formatBytes(overview?.wan?.uploadBytes)}
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between text-xs pt-1 border-t">
               <span className="text-muted-foreground">Total WAN Volume:</span>
               <span className="font-mono font-semibold text-foreground">
-                {formatBytes(Number(overview?.totalWanDownloadBytes || 0) + Number(overview?.totalWanUploadBytes || 0))}
+                {formatBytes(Number(overview?.wan?.downloadBytes || 0) + Number(overview?.wan?.uploadBytes || 0))}
               </span>
             </div>
           </CardContent>
@@ -315,10 +315,10 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   <ArrowDown className="w-3 h-3 text-blue-500" /> Ingress Rate
                 </span>
                 <div className="text-lg font-bold font-mono text-blue-600 dark:text-blue-400">
-                  {formatRate(overview?.currentLanDownloadBytesPerSec)}
+                  {formatRate(overview?.lan?.downloadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.totalLanDownloadBytes)}
+                  Vol: {formatBytes(overview?.lan?.downloadBytes)}
                 </div>
               </div>
               <div>
@@ -326,17 +326,17 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
                   <ArrowUp className="w-3 h-3 text-indigo-500" /> Egress Rate
                 </span>
                 <div className="text-lg font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                  {formatRate(overview?.currentLanUploadBytesPerSec)}
+                  {formatRate(overview?.lan?.uploadBytesPerSec)}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Vol: {formatBytes(overview?.totalLanUploadBytes)}
+                  Vol: {formatBytes(overview?.lan?.uploadBytes)}
                 </div>
               </div>
             </div>
             <div className="flex items-center justify-between text-xs pt-1 border-t">
               <span className="text-muted-foreground">Total LAN Volume:</span>
               <span className="font-mono font-semibold text-foreground">
-                {formatBytes(Number(overview?.totalLanDownloadBytes || 0) + Number(overview?.totalLanUploadBytes || 0))}
+                {formatBytes(Number(overview?.lan?.downloadBytes || 0) + Number(overview?.lan?.uploadBytes || 0))}
               </span>
             </div>
           </CardContent>
@@ -358,11 +358,11 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
             <div className="flex items-center space-x-4 text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                <span>Download ({formatRate(overview?.currentDownloadBytesPerSec)})</span>
+                <span>Download ({formatRate(overview?.total?.downloadBytesPerSec)})</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-sky-500 inline-block"></span>
-                <span>Upload ({formatRate(overview?.currentUploadBytesPerSec)})</span>
+                <span>Upload ({formatRate(overview?.total?.uploadBytesPerSec)})</span>
               </div>
             </div>
           </div>

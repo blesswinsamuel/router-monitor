@@ -45,35 +45,48 @@ func NewRouterMonitorService(
 	}
 }
 
+func liveRatesToTraffic(rates tsdb.LiveRates) (total, wan, lan *routermonitorv1.DirectionalTraffic) {
+	total = &routermonitorv1.DirectionalTraffic{
+		DownloadBytes:         rates.TotalDownloadBytes,
+		UploadBytes:           rates.TotalUploadBytes,
+		DownloadPackets:       rates.TotalDownloadPackets,
+		UploadPackets:         rates.TotalUploadPackets,
+		DownloadBytesPerSec:   rates.DownloadBytesPerSec,
+		UploadBytesPerSec:     rates.UploadBytesPerSec,
+		DownloadPacketsPerSec: rates.DownloadPacketsPerSec,
+		UploadPacketsPerSec:   rates.UploadPacketsPerSec,
+	}
+	wan = &routermonitorv1.DirectionalTraffic{
+		DownloadBytes:       rates.TotalWanDownloadBytes,
+		UploadBytes:         rates.TotalWanUploadBytes,
+		DownloadBytesPerSec: rates.WanDownloadBytesPerSec,
+		UploadBytesPerSec:   rates.WanUploadBytesPerSec,
+	}
+	lan = &routermonitorv1.DirectionalTraffic{
+		DownloadBytes:       rates.TotalLanDownloadBytes,
+		UploadBytes:         rates.TotalLanUploadBytes,
+		DownloadBytesPerSec: rates.LanDownloadBytesPerSec,
+		UploadBytesPerSec:   rates.LanUploadBytesPerSec,
+	}
+	return
+}
+
 func (s *RouterMonitorService) GetOverview(
 	ctx context.Context,
 	req *connect.Request[routermonitorv1.GetOverviewRequest],
 ) (*connect.Response[routermonitorv1.GetOverviewResponse], error) {
 	rates := s.sampler.GetLiveRates()
+	total, wan, lan := liveRatesToTraffic(rates)
 
 	res := &routermonitorv1.GetOverviewResponse{
-		InterfaceName:                 s.interfaceName,
-		LanSubnetCidr:                 s.lanSubnetCIDR,
-		InternetIsUp:                  rates.InternetIsUp,
-		InternetLatencySeconds:        rates.InternetLatencySeconds,
-		ConnectedDevicesCount:         rates.ConnectedDevicesCount,
-		TotalDownloadBytes:            rates.TotalDownloadBytes,
-		TotalUploadBytes:              rates.TotalUploadBytes,
-		TotalDownloadPackets:          rates.TotalDownloadPackets,
-		TotalUploadPackets:            rates.TotalUploadPackets,
-		CurrentDownloadBytesPerSec:    rates.DownloadBytesPerSec,
-		CurrentUploadBytesPerSec:      rates.UploadBytesPerSec,
-		CurrentDownloadPacketsPerSec:  rates.DownloadPacketsPerSec,
-		CurrentUploadPacketsPerSec:    rates.UploadPacketsPerSec,
-
-		TotalWanDownloadBytes:         rates.TotalWanDownloadBytes,
-		TotalWanUploadBytes:           rates.TotalWanUploadBytes,
-		TotalLanDownloadBytes:         rates.TotalLanDownloadBytes,
-		TotalLanUploadBytes:           rates.TotalLanUploadBytes,
-		CurrentWanDownloadBytesPerSec: rates.WanDownloadBytesPerSec,
-		CurrentWanUploadBytesPerSec:   rates.WanUploadBytesPerSec,
-		CurrentLanDownloadBytesPerSec: rates.LanDownloadBytesPerSec,
-		CurrentLanUploadBytesPerSec:   rates.LanUploadBytesPerSec,
+		InterfaceName:          s.interfaceName,
+		LanSubnetCidr:          s.lanSubnetCIDR,
+		InternetIsUp:           rates.InternetIsUp,
+		InternetLatencySeconds: rates.InternetLatencySeconds,
+		ConnectedDevicesCount:  rates.ConnectedDevicesCount,
+		Total:                  total,
+		Wan:                    wan,
+		Lan:                    lan,
 	}
 
 	return connect.NewResponse(res), nil
@@ -355,19 +368,15 @@ func (s *RouterMonitorService) StreamLiveStats(
 
 	sendStats := func() error {
 		rates := s.sampler.GetLiveRates()
+		total, wan, lan := liveRatesToTraffic(rates)
 		return stream.Send(&routermonitorv1.LiveStatsResponse{
-			TimestampUnix:           time.Now().Unix(),
-			DownloadBytesPerSec:     rates.DownloadBytesPerSec,
-			UploadBytesPerSec:       rates.UploadBytesPerSec,
-			DownloadPacketsPerSec:   rates.DownloadPacketsPerSec,
-			UploadPacketsPerSec:     rates.UploadPacketsPerSec,
-			InternetIsUp:            rates.InternetIsUp,
-			InternetLatencySeconds:  rates.InternetLatencySeconds,
-			ConnectedDevicesCount:   rates.ConnectedDevicesCount,
-			WanDownloadBytesPerSec: rates.WanDownloadBytesPerSec,
-			WanUploadBytesPerSec:   rates.WanUploadBytesPerSec,
-			LanDownloadBytesPerSec: rates.LanDownloadBytesPerSec,
-			LanUploadBytesPerSec:   rates.LanUploadBytesPerSec,
+			TimestampUnix:          time.Now().Unix(),
+			InternetIsUp:           rates.InternetIsUp,
+			InternetLatencySeconds: rates.InternetLatencySeconds,
+			ConnectedDevicesCount:  rates.ConnectedDevicesCount,
+			Total:                  total,
+			Wan:                    wan,
+			Lan:                    lan,
 		})
 	}
 
