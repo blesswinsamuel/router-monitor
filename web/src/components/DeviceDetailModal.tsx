@@ -314,9 +314,9 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
           <Card className="bg-muted/30 border-muted">
             <CardContent className="p-3.5 space-y-2">
               <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5" title="Hardware counters accumulated since daemon start">
                   <HardDrive className="w-3.5 h-3.5 text-muted-foreground" />
-                  Lifetime Volume
+                  Session Volume (Since Restart)
                 </span>
                 {(dlRate > 0 || ulRate > 0) && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">

@@ -233,9 +233,17 @@ func (s *RouterMonitorService) ListDevices(
 		if pu, ok := periodUsage[d.IPAddr]; ok && pu != nil {
 			dev.PeriodDownloadBytes = pu.DownloadBytes
 			dev.PeriodUploadBytes = pu.UploadBytes
+			dev.PeriodWanDownloadBytes = pu.WanDownloadBytes
+			dev.PeriodWanUploadBytes = pu.WanUploadBytes
+			dev.PeriodLanDownloadBytes = pu.LanDownloadBytes
+			dev.PeriodLanUploadBytes = pu.LanUploadBytes
 		} else {
 			dev.PeriodDownloadBytes = dev.DownloadBytes
 			dev.PeriodUploadBytes = dev.UploadBytes
+			dev.PeriodWanDownloadBytes = dev.InternetDownloadBytes
+			dev.PeriodWanUploadBytes = dev.InternetUploadBytes
+			dev.PeriodLanDownloadBytes = dev.LanDownloadBytes
+			dev.PeriodLanUploadBytes = dev.LanUploadBytes
 		}
 
 		devices = append(devices, dev)
@@ -294,9 +302,17 @@ func (s *RouterMonitorService) ListDevices(
 		if pu, ok := periodUsage[pd.IPAddr]; ok && pu != nil {
 			dev.PeriodDownloadBytes = pu.DownloadBytes
 			dev.PeriodUploadBytes = pu.UploadBytes
+			dev.PeriodWanDownloadBytes = pu.WanDownloadBytes
+			dev.PeriodWanUploadBytes = pu.WanUploadBytes
+			dev.PeriodLanDownloadBytes = pu.LanDownloadBytes
+			dev.PeriodLanUploadBytes = pu.LanUploadBytes
 		} else {
 			dev.PeriodDownloadBytes = dev.DownloadBytes
 			dev.PeriodUploadBytes = dev.UploadBytes
+			dev.PeriodWanDownloadBytes = dev.InternetDownloadBytes
+			dev.PeriodWanUploadBytes = dev.InternetUploadBytes
+			dev.PeriodLanDownloadBytes = dev.LanDownloadBytes
+			dev.PeriodLanUploadBytes = dev.LanUploadBytes
 		}
 
 		devices = append(devices, dev)

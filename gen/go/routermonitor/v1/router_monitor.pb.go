@@ -359,6 +359,10 @@ type ArpDevice struct {
 	CurrentLanUploadPacketsPerSec   float64                `protobuf:"fixed64,34,opt,name=current_lan_upload_packets_per_sec,json=currentLanUploadPacketsPerSec,proto3" json:"current_lan_upload_packets_per_sec,omitempty"`
 	PeriodDownloadBytes             uint64                 `protobuf:"varint,35,opt,name=period_download_bytes,json=periodDownloadBytes,proto3" json:"period_download_bytes,omitempty"`
 	PeriodUploadBytes               uint64                 `protobuf:"varint,36,opt,name=period_upload_bytes,json=periodUploadBytes,proto3" json:"period_upload_bytes,omitempty"`
+	PeriodWanDownloadBytes          uint64                 `protobuf:"varint,37,opt,name=period_wan_download_bytes,json=periodWanDownloadBytes,proto3" json:"period_wan_download_bytes,omitempty"`
+	PeriodWanUploadBytes            uint64                 `protobuf:"varint,38,opt,name=period_wan_upload_bytes,json=periodWanUploadBytes,proto3" json:"period_wan_upload_bytes,omitempty"`
+	PeriodLanDownloadBytes          uint64                 `protobuf:"varint,39,opt,name=period_lan_download_bytes,json=periodLanDownloadBytes,proto3" json:"period_lan_download_bytes,omitempty"`
+	PeriodLanUploadBytes            uint64                 `protobuf:"varint,40,opt,name=period_lan_upload_bytes,json=periodLanUploadBytes,proto3" json:"period_lan_upload_bytes,omitempty"`
 	unknownFields                   protoimpl.UnknownFields
 	sizeCache                       protoimpl.SizeCache
 }
@@ -641,6 +645,34 @@ func (x *ArpDevice) GetPeriodDownloadBytes() uint64 {
 func (x *ArpDevice) GetPeriodUploadBytes() uint64 {
 	if x != nil {
 		return x.PeriodUploadBytes
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetPeriodWanDownloadBytes() uint64 {
+	if x != nil {
+		return x.PeriodWanDownloadBytes
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetPeriodWanUploadBytes() uint64 {
+	if x != nil {
+		return x.PeriodWanUploadBytes
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetPeriodLanDownloadBytes() uint64 {
+	if x != nil {
+		return x.PeriodLanDownloadBytes
+	}
+	return 0
+}
+
+func (x *ArpDevice) GetPeriodLanUploadBytes() uint64 {
+	if x != nil {
+		return x.PeriodLanUploadBytes
 	}
 	return 0
 }
@@ -1573,7 +1605,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	" current_lan_upload_bytes_per_sec\x18\x16 \x01(\x01R\x1bcurrentLanUploadBytesPerSec\"J\n" +
 	"\x12ListDevicesRequest\x12\x1b\n" +
 	"\tfrom_unix\x18\x01 \x01(\x03R\bfromUnix\x12\x17\n" +
-	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"\xc4\x0e\n" +
+	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"\xa8\x10\n" +
 	"\tArpDevice\x12\x17\n" +
 	"\aip_addr\x18\x01 \x01(\tR\x06ipAddr\x12\x17\n" +
 	"\ahw_addr\x18\x02 \x01(\tR\x06hwAddr\x12\x1a\n" +
@@ -1611,7 +1643,11 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"$current_lan_download_packets_per_sec\x18! \x01(\x01R\x1fcurrentLanDownloadPacketsPerSec\x12I\n" +
 	"\"current_lan_upload_packets_per_sec\x18\" \x01(\x01R\x1dcurrentLanUploadPacketsPerSec\x122\n" +
 	"\x15period_download_bytes\x18# \x01(\x04R\x13periodDownloadBytes\x12.\n" +
-	"\x13period_upload_bytes\x18$ \x01(\x04R\x11periodUploadBytes\"L\n" +
+	"\x13period_upload_bytes\x18$ \x01(\x04R\x11periodUploadBytes\x129\n" +
+	"\x19period_wan_download_bytes\x18% \x01(\x04R\x16periodWanDownloadBytes\x125\n" +
+	"\x17period_wan_upload_bytes\x18& \x01(\x04R\x14periodWanUploadBytes\x129\n" +
+	"\x19period_lan_download_bytes\x18' \x01(\x04R\x16periodLanDownloadBytes\x125\n" +
+	"\x17period_lan_upload_bytes\x18( \x01(\x04R\x14periodLanUploadBytes\"L\n" +
 	"\x13ListDevicesResponse\x125\n" +
 	"\adevices\x18\x01 \x03(\v2\x1b.routermonitor.v1.ArpDeviceR\adevices\".\n" +
 	"\x16GetTrafficFlowsRequest\x12\x14\n" +

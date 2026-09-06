@@ -104,6 +104,10 @@ message ArpDevice {
 
   uint64 period_download_bytes = 35;
   uint64 period_upload_bytes = 36;
+  uint64 period_wan_download_bytes = 37;
+  uint64 period_wan_upload_bytes = 38;
+  uint64 period_lan_download_bytes = 39;
+  uint64 period_lan_upload_bytes = 40;
 }
 
 message ListDevicesResponse {

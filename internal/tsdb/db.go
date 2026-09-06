@@ -323,17 +323,21 @@ func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to t
 }
 
 type DevicePeriodUsage struct {
-	DownloadBytes uint64
-	UploadBytes   uint64
+	DownloadBytes    uint64
+	UploadBytes      uint64
+	WanDownloadBytes uint64
+	WanUploadBytes   uint64
+	LanDownloadBytes uint64
+	LanUploadBytes   uint64
 }
 
-// GetDeviceUsageByPeriod aggregates device_traffic_bytes_rate samples over [fromUnix, toUnix]
+// GetDeviceUsageByPeriod aggregates device traffic samples over [fromUnix, toUnix]
 func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DevicePeriodUsage, error) {
 	q := `
-	SELECT s.labels_json, COALESCE(SUM(sp.value * 5), 0)
+	SELECT s.name, s.labels_json, COALESCE(SUM(sp.value * 5), 0)
 	FROM samples sp
 	JOIN series s ON sp.series_id = s.id
-	WHERE s.name = 'device_traffic_bytes_rate'
+	WHERE s.name IN ('device_traffic_bytes_rate', 'device_wan_bytes_rate', 'device_lan_bytes_rate')
 	  AND sp.timestamp >= ? AND sp.timestamp <= ?
 	GROUP BY s.id
 	`
@@ -345,9 +349,9 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 
 	usage := make(map[string]*DevicePeriodUsage)
 	for rows.Next() {
-		var labelsJSON string
+		var metricName, labelsJSON string
 		var totalBytes float64
-		if err := rows.Scan(&labelsJSON, &totalBytes); err != nil {
+		if err := rows.Scan(&metricName, &labelsJSON, &totalBytes); err != nil {
 			continue
 		}
 		var parsed map[string]string
@@ -364,10 +368,26 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 			u = &DevicePeriodUsage{}
 			usage[ip] = u
 		}
-		if direction == "ingress" {
-			u.DownloadBytes = uint64(totalBytes)
-		} else if direction == "egress" {
-			u.UploadBytes = uint64(totalBytes)
+		b := uint64(totalBytes)
+		switch metricName {
+		case "device_traffic_bytes_rate":
+			if direction == "ingress" {
+				u.DownloadBytes = b
+			} else if direction == "egress" {
+				u.UploadBytes = b
+			}
+		case "device_wan_bytes_rate":
+			if direction == "ingress" {
+				u.WanDownloadBytes = b
+			} else if direction == "egress" {
+				u.WanUploadBytes = b
+			}
+		case "device_lan_bytes_rate":
+			if direction == "ingress" {
+				u.LanDownloadBytes = b
+			} else if direction == "egress" {
+				u.LanUploadBytes = b
+			}
 		}
 	}
 	return usage, nil
