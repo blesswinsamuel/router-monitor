@@ -86,7 +86,7 @@ func (s *RouterMonitorService) GetOverview(
 		to = time.Now().Unix()
 	}
 	if from <= 0 {
-		from = to - 3600
+		from = to - 86400
 	}
 
 	if ovUsage, err := s.tsdbDB.GetOverviewUsageByPeriod(from, to); err == nil && ovUsage != nil {
@@ -138,14 +138,14 @@ func (s *RouterMonitorService) ListDevices(
 		}
 	}
 
-	// 2. Query period usage from SQLite TSDB (default to last 1 hour if not specified)
+	// 2. Query period usage from SQLite TSDB (default to last 24 hours if not specified)
 	from := req.Msg.FromUnix
 	to := req.Msg.ToUnix
 	if to <= 0 {
 		to = time.Now().Unix()
 	}
 	if from <= 0 {
-		from = to - 3600
+		from = to - 86400
 	}
 	periodUsage, _ := s.tsdbDB.GetDeviceUsageByPeriod(from, to)
 
@@ -506,7 +506,7 @@ func (s *RouterMonitorService) QueryTimeSeries(
 		to = time.Now()
 	}
 	if req.Msg.FromUnix <= 0 {
-		from = to.Add(-1 * time.Hour)
+		from = to.Add(-24 * time.Hour)
 	}
 
 	results, err := s.tsdbDB.QueryRange(req.Msg.MetricName, req.Msg.MatchLabels, from, to, int(req.Msg.StepSeconds))

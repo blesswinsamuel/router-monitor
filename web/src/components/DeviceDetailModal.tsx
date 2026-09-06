@@ -54,7 +54,7 @@ interface DeviceDetailModalProps {
 }
 
 export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailModalProps) {
-  const [timeRange, setTimeRange] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
+  const [timeRange, setTimeRange] = useState<'15m' | '1h' | '6h' | '24h'>('24h')
   const [loading, setLoading] = useState(false)
   const [historyData, setHistoryData] = useState<{ time: string; download: number; upload: number }[]>([])
   const [updatedTraffic, setUpdatedTraffic] = useState<{

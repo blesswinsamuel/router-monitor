@@ -13,10 +13,10 @@ export function getPeriodRange(period: Period): { fromUnix: number; toUnix: numb
       return { fromUnix: now - 900, toUnix: now, stepSeconds: 5 }
     case '6h':
       return { fromUnix: now - 21600, toUnix: now, stepSeconds: 60 }
-    case '24h':
-      return { fromUnix: now - 86400, toUnix: now, stepSeconds: 300 }
     case '1h':
-    default:
       return { fromUnix: now - 3600, toUnix: now, stepSeconds: 15 }
+    case '24h':
+    default:
+      return { fromUnix: now - 86400, toUnix: now, stepSeconds: 300 }
   }
 }
