@@ -34,6 +34,8 @@ import {
   type ChartConfig,
 } from './ui/chart'
 
+import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
+
 const deviceChartConfig = {
   download: {
     label: 'Download',
@@ -46,7 +48,7 @@ const deviceChartConfig = {
 } satisfies ChartConfig
 
 interface DeviceDetailModalProps {
-  device: any | null
+  device: Device | null
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -62,6 +64,7 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
       return
     }
 
+    const deviceIp = device.ipAddr
     let active = true
 
     async function fetchDeviceHistory() {
@@ -84,14 +87,14 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
         const [dlRes, ulRes] = await Promise.all([
           rpcClient.queryTimeSeries({
             metricName: 'device_traffic_bytes_rate',
-            matchLabels: { ip: device.ipAddr, direction: 'ingress' },
+            matchLabels: { ip: deviceIp, direction: 'ingress' },
             fromUnix: BigInt(from),
             toUnix: BigInt(now),
             stepSeconds: step,
           }),
           rpcClient.queryTimeSeries({
             metricName: 'device_traffic_bytes_rate',
-            matchLabels: { ip: device.ipAddr, direction: 'egress' },
+            matchLabels: { ip: deviceIp, direction: 'egress' },
             fromUnix: BigInt(from),
             toUnix: BigInt(now),
             stepSeconds: step,
@@ -145,21 +148,38 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
 
   if (!device) return null
 
-  const status = device.status || (device.isValid ? 'active' : 'unreachable')
+  const status = device.status || (device.arp?.isValid ? 'active' : 'unreachable')
   const isOnline = status === 'active' || status === 'static'
-  const dlRate = Number(device.currentDownloadBytesPerSec || 0)
-  const ulRate = Number(device.currentUploadBytesPerSec || 0)
-  const wanDlRate = Number(device.currentWanDownloadBytesPerSec || 0)
-  const wanUlRate = Number(device.currentWanUploadBytesPerSec || 0)
-  const lanDlRate = Number(device.currentLanDownloadBytesPerSec || 0)
-  const lanUlRate = Number(device.currentLanUploadBytesPerSec || 0)
 
-  const internetDl = Number(device.internetDownloadBytes || 0)
-  const internetUl = Number(device.internetUploadBytes || 0)
-  const lanDl = Number(device.lanDownloadBytes || 0)
-  const lanUl = Number(device.lanUploadBytes || 0)
-  const totalDl = Number(device.downloadBytes || (internetDl + lanDl))
-  const totalUl = Number(device.uploadBytes || (internetUl + lanUl))
+  const dlRate = Number(device.currentRates?.downloadBytesPerSec || 0)
+  const ulRate = Number(device.currentRates?.uploadBytesPerSec || 0)
+  const dlPktsRate = Number(device.currentRates?.downloadPacketsPerSec || 0)
+  const ulPktsRate = Number(device.currentRates?.uploadPacketsPerSec || 0)
+
+  const wanDlRate = Number(device.currentRates?.wanDownloadBytesPerSec || 0)
+  const wanUlRate = Number(device.currentRates?.wanUploadBytesPerSec || 0)
+  const wanDlPktsRate = Number(device.currentRates?.wanDownloadPacketsPerSec || 0)
+  const wanUlPktsRate = Number(device.currentRates?.wanUploadPacketsPerSec || 0)
+
+  const lanDlRate = Number(device.currentRates?.lanDownloadBytesPerSec || 0)
+  const lanUlRate = Number(device.currentRates?.lanUploadBytesPerSec || 0)
+  const lanDlPktsRate = Number(device.currentRates?.lanDownloadPacketsPerSec || 0)
+  const lanUlPktsRate = Number(device.currentRates?.lanUploadPacketsPerSec || 0)
+
+  const internetDl = Number(device.sessionUsage?.wanDownloadBytes || 0)
+  const internetUl = Number(device.sessionUsage?.wanUploadBytes || 0)
+  const internetDlPkts = Number(device.sessionUsage?.wanDownloadPackets || 0)
+  const internetUlPkts = Number(device.sessionUsage?.wanUploadPackets || 0)
+
+  const lanDl = Number(device.sessionUsage?.lanDownloadBytes || 0)
+  const lanUl = Number(device.sessionUsage?.lanUploadBytes || 0)
+  const lanDlPkts = Number(device.sessionUsage?.lanDownloadPackets || 0)
+  const lanUlPkts = Number(device.sessionUsage?.lanUploadPackets || 0)
+
+  const totalDl = Number(device.sessionUsage?.downloadBytes || (internetDl + lanDl))
+  const totalUl = Number(device.sessionUsage?.uploadBytes || (internetUl + lanUl))
+  const totalDlPkts = Number(device.sessionUsage?.downloadPackets || (internetDlPkts + lanDlPkts))
+  const totalUlPkts = Number(device.sessionUsage?.uploadPackets || (internetUlPkts + lanUlPkts))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -192,8 +212,11 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                 </DialogTitle>
                 <DialogDescription className="font-mono text-xs flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                   <span>IP: <strong className="text-foreground">{device.ipAddr}</strong></span>
-                  <span>MAC: <strong className="text-foreground">{device.hwAddr}</strong></span>
-                  <span>Interface: <strong className="text-foreground">{device.device || 'lan'}</strong></span>
+                  <span>MAC: <strong className="text-foreground">{device.macAddr}</strong></span>
+                  <span>Interface: <strong className="text-foreground">{device.interface || device.arp?.interface || 'lan'}</strong></span>
+                  {device.arp && (
+                    <span>ARP Flags: <strong className="text-foreground">0x{Number(device.arp.flags).toString(16)}</strong></span>
+                  )}
                 </DialogDescription>
               </div>
             </div>
@@ -243,20 +266,20 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   <span className="text-muted-foreground text-[11px] block">Download</span>
                   <span className="font-semibold text-emerald-500 text-sm">{formatBytes(internetDl)}</span>
                   <span className="text-[10px] text-muted-foreground block">
-                    {formatRate(wanDlRate)} ({formatPacketsRate(device.currentWanDownloadPacketsPerSec)})
+                    {formatRate(wanDlRate)} ({formatPacketsRate(wanDlPktsRate)})
                   </span>
                   <span className="text-[10px] text-muted-foreground/80 block">
-                    {formatPackets(device.internetDownloadPackets)} pkts
+                    {formatPackets(internetDlPkts)} pkts
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Upload</span>
                   <span className="font-semibold text-sky-500 text-sm">{formatBytes(internetUl)}</span>
                   <span className="text-[10px] text-muted-foreground block">
-                    {formatRate(wanUlRate)} ({formatPacketsRate(device.currentWanUploadPacketsPerSec)})
+                    {formatRate(wanUlRate)} ({formatPacketsRate(wanUlPktsRate)})
                   </span>
                   <span className="text-[10px] text-muted-foreground/80 block">
-                    {formatPackets(device.internetUploadPackets)} pkts
+                    {formatPackets(internetUlPkts)} pkts
                   </span>
                 </div>
               </div>
@@ -286,20 +309,20 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   <span className="text-muted-foreground text-[11px] block">Download</span>
                   <span className="font-semibold text-emerald-500 text-sm">{formatBytes(lanDl)}</span>
                   <span className="text-[10px] text-muted-foreground block">
-                    {formatRate(lanDlRate)} ({formatPacketsRate(device.currentLanDownloadPacketsPerSec)})
+                    {formatRate(lanDlRate)} ({formatPacketsRate(lanDlPktsRate)})
                   </span>
                   <span className="text-[10px] text-muted-foreground/80 block">
-                    {formatPackets(device.lanDownloadPackets)} pkts
+                    {formatPackets(lanDlPkts)} pkts
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Upload</span>
                   <span className="font-semibold text-sky-500 text-sm">{formatBytes(lanUl)}</span>
                   <span className="text-[10px] text-muted-foreground block">
-                    {formatRate(lanUlRate)} ({formatPacketsRate(device.currentLanUploadPacketsPerSec)})
+                    {formatRate(lanUlRate)} ({formatPacketsRate(lanUlPktsRate)})
                   </span>
                   <span className="text-[10px] text-muted-foreground/80 block">
-                    {formatPackets(device.lanUploadPackets)} pkts
+                    {formatPackets(lanUlPkts)} pkts
                   </span>
                 </div>
               </div>
@@ -329,26 +352,26 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                   <span className="text-muted-foreground text-[11px] block">Total In</span>
                   <span className="font-semibold text-emerald-500 text-sm">{formatBytes(totalDl)}</span>
                   <span className="text-[10px] text-muted-foreground block">
-                    {formatRate(dlRate)} ({formatPacketsRate(device.currentDownloadPacketsPerSec)})
+                    {formatRate(dlRate)} ({formatPacketsRate(dlPktsRate)})
                   </span>
                   <span className="text-[10px] text-muted-foreground/80 block">
-                    {formatPackets(device.downloadPackets)} pkts
+                    {formatPackets(totalDlPkts)} pkts
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-[11px] block">Total Out</span>
                   <span className="font-semibold text-sky-500 text-sm">{formatBytes(totalUl)}</span>
                   <span className="text-[10px] text-muted-foreground block">
-                    {formatRate(ulRate)} ({formatPacketsRate(device.currentUploadPacketsPerSec)})
+                    {formatRate(ulRate)} ({formatPacketsRate(ulPktsRate)})
                   </span>
                   <span className="text-[10px] text-muted-foreground/80 block">
-                    {formatPackets(device.uploadPackets)} pkts
+                    {formatPackets(totalUlPkts)} pkts
                   </span>
                 </div>
               </div>
               <div className="text-[11px] text-muted-foreground pt-1.5 border-t border-border/50 flex items-center justify-between">
                 <span>Last seen:</span>
-                <strong className="text-foreground">{formatRelativeTime(device.lastSeenUnix)}</strong>
+                <strong className="text-foreground">{formatRelativeTime(Number(device.lastSeenUnix))}</strong>
               </div>
             </CardContent>
           </Card>

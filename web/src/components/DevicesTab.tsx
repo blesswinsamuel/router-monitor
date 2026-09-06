@@ -24,10 +24,11 @@ import {
   formatRelativeTime,
 } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
+import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
 import { DeviceDetailModal } from './DeviceDetailModal'
 
 interface DevicesTabProps {
-  devices: any[]
+  devices: Device[]
 }
 
 export function DevicesTab({ devices }: DevicesTabProps) {
@@ -36,9 +37,9 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
   const [period, setPeriod] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
-  const [selectedDevice, setSelectedDevice] = useState<any | null>(null)
+  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
 
-  const [periodDevices, setPeriodDevices] = useState<any[] | null>(null)
+  const [periodDevices, setPeriodDevices] = useState<Device[] | null>(null)
   const [periodLoading, setPeriodLoading] = useState(false)
 
   // Fetch period-aggregated device usage from TSDB every 5 seconds
@@ -81,7 +82,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const interfaces = useMemo(() => {
     const set = new Set<string>()
     for (const d of activeDeviceList) {
-      set.add(d.device || 'lan')
+      set.add(d.interface || d.arp?.interface || 'lan')
     }
     return Array.from(set).sort()
   }, [activeDeviceList])
@@ -90,7 +91,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const interfaceCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const d of activeDeviceList) {
-      const iface = d.device || 'lan'
+      const iface = d.interface || d.arp?.interface || 'lan'
       counts[iface] = (counts[iface] || 0) + 1
     }
     return counts
@@ -101,7 +102,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     let active = 0
     let offline = 0
     for (const d of activeDeviceList) {
-      const s = d.status || (d.isValid ? 'active' : 'unreachable')
+      const s = d.status || (d.arp?.isValid ? 'active' : 'unreachable')
       if (s === 'active' || s === 'static') {
         active++
       } else if (s === 'offline') {
@@ -119,12 +120,12 @@ export function DevicesTab({ devices }: DevicesTabProps) {
 
   const filtered = useMemo(() => {
     return activeDeviceList.filter((d) => {
-      const iface = d.device || 'lan'
+      const iface = d.interface || d.arp?.interface || 'lan'
       if (currentInterface !== 'all' && iface !== currentInterface) {
         return false
       }
 
-      const s = d.status || (d.isValid ? 'active' : 'unreachable')
+      const s = d.status || (d.arp?.isValid ? 'active' : 'unreachable')
       if (statusFilter === 'active' && s !== 'active' && s !== 'static') {
         return false
       }
@@ -137,16 +138,17 @@ export function DevicesTab({ devices }: DevicesTabProps) {
       return (
         d.hostname?.toLowerCase().includes(q) ||
         d.ipAddr?.toLowerCase().includes(q) ||
-        d.hwAddr?.toLowerCase().includes(q) ||
-        d.device?.toLowerCase().includes(q)
+        d.macAddr?.toLowerCase().includes(q) ||
+        d.interface?.toLowerCase().includes(q) ||
+        d.arp?.interface?.toLowerCase().includes(q)
       )
     })
   }, [activeDeviceList, currentInterface, statusFilter, search])
 
-  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodDownloadBytes || 0), 0)
-  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodUploadBytes || 0), 0)
-  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.periodDownloadBytes || 0), 0)
-  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.periodUploadBytes || 0), 0)
+  const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodUsage?.downloadBytes || 0), 0)
+  const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.periodUsage?.uploadBytes || 0), 0)
+  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.periodUsage?.downloadBytes || 0), 0)
+  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.periodUsage?.uploadBytes || 0), 0)
 
   return (
     <>
@@ -355,32 +357,32 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   </TableRow>
                 ) : (
                   filtered.map((device, idx) => {
-                    const status = device.status || (device.isValid ? 'active' : 'unreachable')
+                    const status = device.status || (device.arp?.isValid ? 'active' : 'unreachable')
                     const isOnline = status === 'active' || status === 'static'
 
                     // Rate metrics
-                    const totalDlRate = Number(device.currentDownloadBytesPerSec || 0)
-                    const totalUlRate = Number(device.currentUploadBytesPerSec || 0)
-                    const totalDlPktsRate = Number(device.currentDownloadPacketsPerSec || 0)
-                    const totalUlPktsRate = Number(device.currentUploadPacketsPerSec || 0)
+                    const totalDlRate = Number(device.currentRates?.downloadBytesPerSec || 0)
+                    const totalUlRate = Number(device.currentRates?.uploadBytesPerSec || 0)
+                    const totalDlPktsRate = Number(device.currentRates?.downloadPacketsPerSec || 0)
+                    const totalUlPktsRate = Number(device.currentRates?.uploadPacketsPerSec || 0)
 
-                    const wanDlRate = Number(device.currentWanDownloadBytesPerSec || 0)
-                    const wanUlRate = Number(device.currentWanUploadBytesPerSec || 0)
-                    const wanDlPktsRate = Number(device.currentWanDownloadPacketsPerSec || 0)
-                    const wanUlPktsRate = Number(device.currentWanUploadPacketsPerSec || 0)
+                    const wanDlRate = Number(device.currentRates?.wanDownloadBytesPerSec || 0)
+                    const wanUlRate = Number(device.currentRates?.wanUploadBytesPerSec || 0)
+                    const wanDlPktsRate = Number(device.currentRates?.wanDownloadPacketsPerSec || 0)
+                    const wanUlPktsRate = Number(device.currentRates?.wanUploadPacketsPerSec || 0)
 
-                    const lanDlRate = Number(device.currentLanDownloadBytesPerSec || 0)
-                    const lanUlRate = Number(device.currentLanUploadBytesPerSec || 0)
-                    const lanDlPktsRate = Number(device.currentLanDownloadPacketsPerSec || 0)
-                    const lanUlPktsRate = Number(device.currentLanUploadPacketsPerSec || 0)
+                    const lanDlRate = Number(device.currentRates?.lanDownloadBytesPerSec || 0)
+                    const lanUlRate = Number(device.currentRates?.lanUploadBytesPerSec || 0)
+                    const lanDlPktsRate = Number(device.currentRates?.lanDownloadPacketsPerSec || 0)
+                    const lanUlPktsRate = Number(device.currentRates?.lanUploadPacketsPerSec || 0)
 
                     // Period volume metrics (queried from TSDB samples for the selected period)
-                    const periodDlBytes = Number(device.periodDownloadBytes || 0)
-                    const periodUlBytes = Number(device.periodUploadBytes || 0)
-                    const periodWanDlBytes = Number(device.periodWanDownloadBytes || 0)
-                    const periodWanUlBytes = Number(device.periodWanUploadBytes || 0)
-                    const periodLanDlBytes = Number(device.periodLanDownloadBytes || 0)
-                    const periodLanUlBytes = Number(device.periodLanUploadBytes || 0)
+                    const periodDlBytes = Number(device.periodUsage?.downloadBytes || 0)
+                    const periodUlBytes = Number(device.periodUsage?.uploadBytes || 0)
+                    const periodWanDlBytes = Number(device.periodUsage?.wanDownloadBytes || 0)
+                    const periodWanUlBytes = Number(device.periodUsage?.wanUploadBytes || 0)
+                    const periodLanDlBytes = Number(device.periodUsage?.lanDownloadBytes || 0)
+                    const periodLanUlBytes = Number(device.periodUsage?.lanUploadBytes || 0)
 
                     // Active metrics for scoped view
                     let activeDlRate = totalDlRate
@@ -426,10 +428,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-xs">{device.ipAddr}</TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">{device.hwAddr}</TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">{device.macAddr}</TableCell>
                         {trafficScope !== 'split' && (
                           <TableCell className="font-mono text-xs">
-                            <Badge variant="outline">{device.device || 'lan'}</Badge>
+                            <Badge variant="outline">{device.interface || device.arp?.interface || 'lan'}</Badge>
                           </TableCell>
                         )}
                         <TableCell>
@@ -470,9 +472,9 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                 Offline
                               </Badge>
                             )}
-                            {status === 'offline' && device.lastSeenUnix > 0 && (
+                            {status === 'offline' && Number(device.lastSeenUnix) > 0 && (
                               <span className="text-[10px] text-muted-foreground">
-                                {formatRelativeTime(device.lastSeenUnix)}
+                                {formatRelativeTime(Number(device.lastSeenUnix))}
                               </span>
                             )}
                           </div>
