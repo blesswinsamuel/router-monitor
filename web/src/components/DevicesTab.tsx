@@ -18,6 +18,7 @@ import { Input } from './ui/input'
 import { Badge } from './ui/badge'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { cn } from '@/lib/utils'
 import { DeviceTrafficCharts } from './DeviceTrafficCharts'
 import {
@@ -25,6 +26,7 @@ import {
   formatRate,
   formatPacketsRate,
   formatRelativeTime,
+  formatDateTime,
 } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { getDeviceCategory } from '@/lib/device-icons'
@@ -340,6 +342,9 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   filtered.map((device, idx) => {
                     const status = device.status || (device.arp?.isValid ? 'active' : 'unreachable')
                     const isOnline = status === 'active' || status === 'static'
+                    const firstSeen = Number(device.firstSeenUnix || 0)
+                    const lastSeen = Number(device.lastSeenUnix || 0)
+                    const hasSeenInfo = lastSeen > 0 || firstSeen > 0 || status === 'unreachable'
 
                     const activeTraffic = trafficScope === 'wan' ? device.wan : trafficScope === 'lan' ? device.lan : device.total
                     const activeDlRate = Number(activeTraffic?.downloadBytesPerSec || 0)
@@ -406,49 +411,80 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                           </TableCell>
                         )}
                         <TableCell>
-                          <div className="flex flex-col items-start gap-1">
-                            {status === 'active' && (
-                              <Badge
-                                variant="outline"
-                                className="text-[11px] border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                              >
-                                Active
-                              </Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex flex-col items-start gap-1 cursor-default">
+                                {status === 'active' && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[11px] border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                  >
+                                    Active
+                                  </Badge>
+                                )}
+                                {status === 'static' && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[11px] border-sky-500/20 bg-sky-500/15 text-sky-600 dark:text-sky-400"
+                                  >
+                                    Static
+                                  </Badge>
+                                )}
+                                {status === 'unreachable' && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[11px] border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      Unreachable
+                                      <HelpCircle className="w-2.5 h-2.5 opacity-60" />
+                                    </span>
+                                  </Badge>
+                                )}
+                                {status === 'offline' && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-[11px] text-muted-foreground bg-muted"
+                                  >
+                                    Offline
+                                  </Badge>
+                                )}
+                                {(status === 'active' || status === 'static') && firstSeen > 0 && (
+                                  <span className="text-[10px] text-muted-foreground font-mono">
+                                    First seen {formatRelativeTime(firstSeen)}
+                                  </span>
+                                )}
+                                {(status === 'offline' || status === 'unreachable') && lastSeen > 0 && (
+                                  <span className="text-[10px] text-muted-foreground font-mono">
+                                    Last seen {formatRelativeTime(lastSeen)}
+                                  </span>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            {hasSeenInfo && (
+                              <TooltipContent side="top" className="text-xs flex flex-col gap-1 py-1.5 px-2.5 shadow-md">
+                                {status === 'unreachable' && (
+                                  <span className="text-[11px] text-background/80 pb-0.5 border-b border-background/20">
+                                    ARP probe sent, but no response received
+                                  </span>
+                                )}
+                                {lastSeen > 0 && (
+                                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                                    <span className="text-background/70 font-sans">Last seen:</span>
+                                    <span className="font-semibold">{formatRelativeTime(lastSeen)}</span>
+                                    <span className="text-background/60 text-[10px]">({formatDateTime(lastSeen)})</span>
+                                  </div>
+                                )}
+                                {firstSeen > 0 && (
+                                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                                    <span className="text-background/70 font-sans">First seen:</span>
+                                    <span className="font-semibold">{formatRelativeTime(firstSeen)}</span>
+                                    <span className="text-background/60 text-[10px]">({formatDateTime(firstSeen)})</span>
+                                  </div>
+                                )}
+                              </TooltipContent>
                             )}
-                            {status === 'static' && (
-                              <Badge
-                                variant="outline"
-                                className="text-[11px] border-sky-500/20 bg-sky-500/15 text-sky-600 dark:text-sky-400"
-                              >
-                                Static
-                              </Badge>
-                            )}
-                            {status === 'unreachable' && (
-                              <Badge
-                                variant="secondary"
-                                className="text-[11px] border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400 cursor-help"
-                                title="ARP probe was sent, but no response was received from this IP"
-                              >
-                                <span className="flex items-center gap-1">
-                                  Unreachable
-                                  <HelpCircle className="w-2.5 h-2.5 opacity-60" />
-                                </span>
-                              </Badge>
-                            )}
-                            {status === 'offline' && (
-                              <Badge
-                                variant="secondary"
-                                className="text-[11px] text-muted-foreground bg-muted"
-                              >
-                                Offline
-                              </Badge>
-                            )}
-                            {status === 'offline' && Number(device.lastSeenUnix) > 0 && (
-                              <span className="text-[10px] text-muted-foreground font-mono">
-                                {formatRelativeTime(Number(device.lastSeenUnix))}
-                              </span>
-                            )}
-                          </div>
+                          </Tooltip>
                         </TableCell>
 
                         {trafficScope !== 'split' ? (

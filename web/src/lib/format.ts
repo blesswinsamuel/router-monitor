@@ -47,6 +47,14 @@ export function formatRelativeTime(unixSeconds: number | bigint | undefined | nu
   const days = Math.floor(hr / 24)
   return `${days}d ago`
 }
+
+export function formatDateTime(unixSeconds: number | bigint | undefined | null): string {
+  if (!unixSeconds) return "--"
+  const sec = Number(unixSeconds)
+  if (sec <= 0) return "--"
+  return new Date(sec * 1000).toLocaleString()
+}
+
 export function formatDuration(sec: number | undefined | null): string {
   if (!sec || sec <= 0) return "0s"
   const s = Math.round(sec)
