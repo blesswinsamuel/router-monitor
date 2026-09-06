@@ -17,6 +17,9 @@ import {
   Zap,
   AlertTriangle,
   RefreshCw,
+  Info,
+  Calendar,
+  Hash,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -31,7 +34,7 @@ import {
 } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { useRootOutletContext } from '@/components/RootLayout'
-import { getDeviceCategory } from '@/lib/device-icons'
+import { getDeviceCategory, isLocallyAdministeredMac } from '@/lib/device-icons'
 import type { Device, PingDeviceResponse, ProtocolTraffic, PeerTraffic } from '@/gen/routermonitor/v1/router_monitor_pb'
 import {
   AreaChart,
@@ -44,16 +47,18 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
   type ChartConfig,
 } from '@/components/ui/chart'
 
 const deviceChartConfig = {
   download: {
-    label: 'Download',
+    label: 'Download (Ingress)',
     color: '#10b981',
   },
   upload: {
-    label: 'Upload',
+    label: 'Upload (Egress)',
     color: '#0ea5e9',
   },
 } satisfies ChartConfig
@@ -91,6 +96,10 @@ export function DeviceDetailPage() {
   }, [devices, ip])
 
   const device = fetchedDevice || contextDevice
+
+  const isRandomized = useMemo(() => {
+    return isLocallyAdministeredMac(device?.macAddr)
+  }, [device?.macAddr])
 
   const { icon: DeviceIcon, label: categoryLabel } = useMemo(() => {
     return getDeviceCategory(device?.hostname, device?.vendor)
@@ -276,6 +285,8 @@ export function DeviceDetailPage() {
 
   const totalDl = Number(totalTraffic?.downloadBytes || (internetDl + lanDl))
   const totalUl = Number(totalTraffic?.uploadBytes || (internetUl + lanUl))
+  const totalDlPkts = Number(totalTraffic?.downloadPackets || 0)
+  const totalUlPkts = Number(totalTraffic?.uploadPackets || 0)
 
   // Protocol traffic calculation
   const protocols = device?.protocols || []
@@ -390,11 +401,25 @@ export function DeviceDetailPage() {
                     {categoryLabel}
                   </Badge>
 
-                  {/* Hardware Vendor Badge */}
-                  {device?.vendor && (
+                  {/* Hardware Vendor or MAC Classification Badge */}
+                  {device?.vendor ? (
                     <Badge variant="outline" className="text-xs border-primary/25 bg-primary/5 text-primary font-medium">
                       {device.vendor}
                     </Badge>
+                  ) : isRandomized ? (
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium cursor-help"
+                      title="Locally Administered Address (Private / Randomized Wi-Fi MAC used by iOS, Android, or Windows for privacy)"
+                    >
+                      Randomized / Private MAC
+                    </Badge>
+                  ) : (
+                    device?.macAddr && device.macAddr !== '00:00:00:00:00:00' && (
+                      <Badge variant="outline" className="text-xs text-muted-foreground bg-muted/40 font-normal">
+                        Unregistered OUI
+                      </Badge>
+                    )
                   )}
                 </div>
 
@@ -409,7 +434,7 @@ export function DeviceDetailPage() {
                     <span>First seen: <strong className="text-foreground">{formatRelativeTime(Number(device.firstSeenUnix))}</strong></span>
                   )}
                   {Number(device?.lastSeenUnix) > 0 && (
-                    <span>Last seen: <strong className="text-foreground">{formatRelativeTime(Number(device?.lastSeenUnix))}</strong></span>
+                    <span>Last seen: <strong className="text-foreground">{formatRelativeTime(Number(device.lastSeenUnix))}</strong></span>
                   )}
                 </CardDescription>
               </div>
@@ -438,129 +463,6 @@ export function DeviceDetailPage() {
             )}
           </div>
         </CardHeader>
-      </Card>
-
-      {/* LAN Ping Diagnostics Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="space-y-0.5">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Radio className="w-4 h-4 text-primary" />
-                LAN Connection Quality & Ping Diagnostics
-              </CardTitle>
-              <CardDescription className="text-xs">
-                On-demand ICMP round-trip probe directly from the router to verify latency, jitter, and packet loss.
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1.5 self-start sm:self-auto"
-              onClick={handleRunPing}
-              disabled={pingLoading}
-            >
-              {pingLoading ? (
-                <RefreshCw className="w-3 h-3 animate-spin text-primary" />
-              ) : (
-                <Zap className="w-3 h-3 text-amber-500" />
-              )}
-              <span>{pingLoading ? 'Testing...' : pingResult ? 'Re-run Ping' : 'Run Ping Test'}</span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {pingError && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-xs">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{pingError}</span>
-            </div>
-          )}
-
-          {!pingResult && !pingLoading && !pingError && (
-            <div className="py-6 flex flex-col items-center justify-center text-muted-foreground text-xs text-center">
-              <Radio className="w-8 h-8 opacity-25 mb-2" />
-              <span>No ping test executed yet for this device.</span>
-              <span className="text-[11px] opacity-75 mt-0.5">Click "Run Ping Test" to measure live packet latency and packet loss.</span>
-            </div>
-          )}
-
-          {pingLoading && !pingResult && (
-            <div className="py-6 flex flex-col items-center justify-center text-muted-foreground text-xs text-center animate-pulse">
-              <RefreshCw className="w-8 h-8 opacity-40 mb-2 animate-spin text-primary" />
-              <span>Sending 4 ICMP Echo packets to {ip}...</span>
-            </div>
-          )}
-
-          {pingResult && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
-                  <span className="text-[11px] text-muted-foreground block">Connection Quality</span>
-                  {pingQuality && (
-                    <Badge variant="outline" className={cn("text-xs font-semibold", pingQuality.badgeBg)}>
-                      {pingQuality.label}
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
-                  <span className="text-[11px] text-muted-foreground block">Packet Loss</span>
-                  <div className="font-mono text-base font-semibold">
-                    <span className={cn(pingResult.packetLossRatio > 0 ? "text-destructive" : "text-emerald-500")}>
-                      {(pingResult.packetLossRatio * 100).toFixed(0)}%
-                    </span>
-                    <span className="text-[10px] text-muted-foreground ml-1">
-                      ({Math.round((1 - pingResult.packetLossRatio) * 4)}/4 received)
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
-                  <span className="text-[11px] text-muted-foreground block">Average RTT</span>
-                  <div className="font-mono text-base font-semibold text-foreground">
-                    {pingResult.isReachable ? `${(pingResult.avgLatencySeconds * 1000).toFixed(2)} ms` : '—'}
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
-                  <span className="text-[11px] text-muted-foreground block">Jitter / Variance</span>
-                  <div className="font-mono text-base font-semibold text-foreground">
-                    {pingResult.isReachable ? `${(pingResult.jitterSeconds * 1000).toFixed(2)} ms` : '—'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Individual Packet Results */}
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[11px] font-medium text-muted-foreground">Individual ICMP Probe Packets:</span>
-                <div className="flex flex-wrap gap-2">
-                  {pingResult.roundTripTimesMs.map((rtt, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "px-2.5 py-1 rounded-md text-xs font-mono flex items-center gap-1.5 border",
-                        rtt >= 0
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                          : "bg-destructive/10 border-destructive/20 text-destructive"
-                      )}
-                    >
-                      <span className="text-[10px] opacity-75">Packet #{idx + 1}:</span>
-                      <strong>{rtt >= 0 ? `${rtt.toFixed(2)} ms` : 'Timeout'}</strong>
-                    </div>
-                  ))}
-                  {pingResult.isReachable && (
-                    <div className="px-2.5 py-1 rounded-md text-xs font-mono bg-muted/50 border text-muted-foreground flex items-center gap-1.5">
-                      <span>Min: <strong className="text-foreground">{(pingResult.minLatencySeconds * 1000).toFixed(2)} ms</strong></span>
-                      <span>•</span>
-                      <span>Max: <strong className="text-foreground">{(pingResult.maxLatencySeconds * 1000).toFixed(2)} ms</strong></span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
       </Card>
 
       {/* Traffic Breakdown Cards (WAN, LAN, Total) */}
@@ -683,6 +585,104 @@ export function DeviceDetailPage() {
         </Card>
       </div>
 
+      {/* Historical Bandwidth Chart with Legend & Scope Selector */}
+      <Card>
+        <CardHeader className="space-y-2 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                Bandwidth History & Activity
+              </CardTitle>
+              <CardDescription>
+                Historical ingress and egress data sampled from embedded SQLite TSDB
+              </CardDescription>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Chart Scope Selector */}
+              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
+                {(['total', 'wan', 'lan'] as const).map((scope) => (
+                  <Button
+                    key={scope}
+                    variant={chartScope === scope ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 text-xs px-2.5 capitalize font-medium"
+                    onClick={() => setChartScope(scope)}
+                  >
+                    {scope === 'total' ? 'Total' : scope === 'wan' ? 'WAN (Internet)' : 'LAN (Local)'}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Time Range Selector */}
+              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
+                {(['15m', '1h', '6h', '24h'] as const).map((r) => (
+                  <Button
+                    key={r}
+                    variant={timeRange === r ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 text-xs px-2.5 font-mono"
+                    onClick={() => setTimeRange(r)}
+                  >
+                    {r}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border bg-card p-4">
+            {historyData.length === 0 ? (
+              <div className="h-64 flex flex-col items-center justify-center text-muted-foreground text-xs text-center px-4">
+                <Activity className="w-8 h-8 opacity-25 mb-2" />
+                <span>No historical time series samples recorded for this device in the last {timeRange}.</span>
+                <span className="text-[11px] opacity-75 mt-1">Data begins recording as soon as the device transmits network traffic.</span>
+              </div>
+            ) : (
+              <ChartContainer config={deviceChartConfig} className="h-64 w-full">
+                <AreaChart data={historyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="dev-detail-dl-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="dev-detail-ul-grad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} className="text-[10px] font-mono" />
+                  <YAxis tickLine={false} axisLine={false} tickFormatter={(val) => formatRate(val)} className="text-[10px] font-mono" />
+                  <ChartTooltip content={<ChartTooltipContent formatter={(val) => <span className="font-mono">{formatRate(Number(val))}</span>} />} />
+                  <Area
+                    type="monotone"
+                    dataKey="download"
+                    name="download"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#dev-detail-dl-grad)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="upload"
+                    name="upload"
+                    stroke="#0ea5e9"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#dev-detail-ul-grad)"
+                  />
+                  <ChartLegend content={<ChartLegendContent className="text-xs pt-3" />} />
+                </AreaChart>
+              </ChartContainer>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Transport Protocol Distribution Card */}
       {protocols.length > 0 && (
         <Card>
@@ -765,103 +765,6 @@ export function DeviceDetailPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Historical Bandwidth Chart */}
-      <Card>
-        <CardHeader className="space-y-2 pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                Bandwidth History & Activity
-              </CardTitle>
-              <CardDescription>
-                Historical ingress and egress data sampled from embedded SQLite TSDB
-              </CardDescription>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Chart Scope Selector */}
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
-                {(['total', 'wan', 'lan'] as const).map((scope) => (
-                  <Button
-                    key={scope}
-                    variant={chartScope === scope ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-7 text-xs px-2.5 capitalize font-medium"
-                    onClick={() => setChartScope(scope)}
-                  >
-                    {scope === 'total' ? 'Total' : scope === 'wan' ? 'WAN (Internet)' : 'LAN (Local)'}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Time Range Selector */}
-              <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
-                {(['15m', '1h', '6h', '24h'] as const).map((r) => (
-                  <Button
-                    key={r}
-                    variant={timeRange === r ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-7 text-xs px-2.5 font-mono"
-                    onClick={() => setTimeRange(r)}
-                  >
-                    {r}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border bg-card p-4">
-            {historyData.length === 0 ? (
-              <div className="h-64 flex flex-col items-center justify-center text-muted-foreground text-xs text-center px-4">
-                <Activity className="w-8 h-8 opacity-25 mb-2" />
-                <span>No historical time series samples recorded for this device in the last {timeRange}.</span>
-                <span className="text-[11px] opacity-75 mt-1">Data begins recording as soon as the device transmits network traffic.</span>
-              </div>
-            ) : (
-              <ChartContainer config={deviceChartConfig} className="h-64 w-full">
-                <AreaChart data={historyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="dev-detail-dl-grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="dev-detail-ul-grad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={32} className="text-[10px] font-mono" />
-                  <YAxis tickLine={false} axisLine={false} tickFormatter={(val) => formatRate(val)} className="text-[10px] font-mono" />
-                  <ChartTooltip content={<ChartTooltipContent formatter={(val) => <span className="font-mono">{formatRate(Number(val))}</span>} />} />
-                  <Area
-                    type="monotone"
-                    dataKey="download"
-                    name="Download"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#dev-detail-dl-grad)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="upload"
-                    name="Upload"
-                    stroke="#0ea5e9"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#dev-detail-ul-grad)"
-                  />
-                </AreaChart>
-              </ChartContainer>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Local LAN Peers Card */}
       {peers.length > 0 && (
@@ -951,37 +854,285 @@ export function DeviceDetailPage() {
         </Card>
       )}
 
-      {/* ARP & Network Diagnostics Card */}
-      {device?.arp && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" />
-              ARP & Layer 2 Discovery Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-              <div>
-                <span className="text-muted-foreground block text-[11px]">Hardware Type</span>
-                <span className="font-mono font-medium">Ethernet (0x{Number(device.arp.flags !== undefined ? 1 : 0).toString(16)})</span>
+      {/* LAN Connection Quality & Ping Diagnostics (Moved here per user request) */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="space-y-0.5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Radio className="w-4 h-4 text-primary" />
+                LAN Connection Quality & Ping Diagnostics
+              </CardTitle>
+              <CardDescription className="text-xs">
+                On-demand ICMP round-trip probe directly from the router to verify latency, jitter, and packet loss.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5 self-start sm:self-auto"
+              onClick={handleRunPing}
+              disabled={pingLoading}
+            >
+              {pingLoading ? (
+                <RefreshCw className="w-3 h-3 animate-spin text-primary" />
+              ) : (
+                <Zap className="w-3 h-3 text-amber-500" />
+              )}
+              <span>{pingLoading ? 'Testing...' : pingResult ? 'Re-run Ping' : 'Run Ping Test'}</span>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {pingError && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-xs">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{pingError}</span>
+            </div>
+          )}
+
+          {!pingResult && !pingLoading && !pingError && (
+            <div className="py-6 flex flex-col items-center justify-center text-muted-foreground text-xs text-center">
+              <Radio className="w-8 h-8 opacity-25 mb-2" />
+              <span>No ping test executed yet for this device.</span>
+              <span className="text-[11px] opacity-75 mt-0.5">Click "Run Ping Test" to measure live packet latency and packet loss.</span>
+            </div>
+          )}
+
+          {pingLoading && !pingResult && (
+            <div className="py-6 flex flex-col items-center justify-center text-muted-foreground text-xs text-center animate-pulse">
+              <RefreshCw className="w-8 h-8 opacity-40 mb-2 animate-spin text-primary" />
+              <span>Sending 4 ICMP Echo packets to {ip}...</span>
+            </div>
+          )}
+
+          {pingResult && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                  <span className="text-[11px] text-muted-foreground block">Connection Quality</span>
+                  {pingQuality && (
+                    <Badge variant="outline" className={cn("text-xs font-semibold", pingQuality.badgeBg)}>
+                      {pingQuality.label}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                  <span className="text-[11px] text-muted-foreground block">Packet Loss</span>
+                  <div className="font-mono text-base font-semibold">
+                    <span className={cn(pingResult.packetLossRatio > 0 ? "text-destructive" : "text-emerald-500")}>
+                      {(pingResult.packetLossRatio * 100).toFixed(0)}%
+                    </span>
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      ({Math.round((1 - pingResult.packetLossRatio) * 4)}/4 received)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                  <span className="text-[11px] text-muted-foreground block">Average RTT</span>
+                  <div className="font-mono text-base font-semibold text-foreground">
+                    {pingResult.isReachable ? `${(pingResult.avgLatencySeconds * 1000).toFixed(2)} ms` : '—'}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                  <span className="text-[11px] text-muted-foreground block">Jitter / Variance</span>
+                  <div className="font-mono text-base font-semibold text-foreground">
+                    {pingResult.isReachable ? `${(pingResult.jitterSeconds * 1000).toFixed(2)} ms` : '—'}
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="text-muted-foreground block text-[11px]">ARP Device Interface</span>
-                <span className="font-mono font-medium">{device.arp.interface || 'lan'}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground block text-[11px]">ARP Table State</span>
-                <span className="font-mono font-medium">{device.arp.isValid ? 'Valid (Resolved)' : 'Incomplete / Unresolved'}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground block text-[11px]">Kernel Flags</span>
-                <span className="font-mono font-medium">0x{Number(device.arp.flags).toString(16)}</span>
+
+              {/* Individual Packet Results */}
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] font-medium text-muted-foreground">Individual ICMP Probe Packets:</span>
+                <div className="flex flex-wrap gap-2">
+                  {pingResult.roundTripTimesMs.map((rtt, idx) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "px-2.5 py-1 rounded-md text-xs font-mono flex items-center gap-1.5 border",
+                        rtt >= 0
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                          : "bg-destructive/10 border-destructive/20 text-destructive"
+                      )}
+                    >
+                      <span className="text-[10px] opacity-75">Packet #{idx + 1}:</span>
+                      <strong>{rtt >= 0 ? `${rtt.toFixed(2)} ms` : 'Timeout'}</strong>
+                    </div>
+                  ))}
+                  {pingResult.isReachable && (
+                    <div className="px-2.5 py-1 rounded-md text-xs font-mono bg-muted/50 border text-muted-foreground flex items-center gap-1.5">
+                      <span>Min: <strong className="text-foreground">{(pingResult.minLatencySeconds * 1000).toFixed(2)} ms</strong></span>
+                      <span>•</span>
+                      <span>Max: <strong className="text-foreground">{(pingResult.maxLatencySeconds * 1000).toFixed(2)} ms</strong></span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Improved ARP & Layer 2 Discovery Details Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Shield className="w-4 h-4 text-primary" />
+              ARP & Layer 2 Network Discovery
+            </CardTitle>
+            <Badge variant="outline" className="text-[10px] font-mono">
+              RFC 826 • IEEE 802
+            </Badge>
+          </div>
+          <CardDescription className="text-xs">
+            Link layer address resolution, MAC hardware classification, and kernel neighbor cache diagnostics.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            {/* MAC Architecture */}
+            <div className="p-3.5 rounded-lg border bg-card/60 space-y-2">
+              <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                <HardDrive className="w-3.5 h-3.5 text-primary" />
+                <span>MAC Architecture</span>
+              </div>
+              <div className="space-y-1 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Address:</span>
+                  <strong className="text-foreground">{device?.macAddr || 'Unknown'}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Scope:</span>
+                  <span className={cn("font-medium", isRandomized ? "text-amber-500" : "text-foreground")}>
+                    {isRandomized ? 'Locally Administered' : 'Globally Unique'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">OUI Prefix:</span>
+                  <span className="text-foreground font-mono">
+                    {device?.macAddr && device.macAddr.length >= 8 ? device.macAddr.slice(0, 8).toUpperCase() : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Vendor:</span>
+                  <span className="text-foreground truncate max-w-[130px]" title={device?.vendor || (isRandomized ? 'Randomized by Client OS' : 'Unknown')}>
+                    {device?.vendor || (isRandomized ? 'Private / Randomized' : 'Unregistered')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ARP Protocol State */}
+            <div className="p-3.5 rounded-lg border bg-card/60 space-y-2">
+              <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                <span>ARP Cache State</span>
+              </div>
+              <div className="space-y-1 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Resolution:</span>
+                  <span className={cn("font-medium", device?.arp?.isValid ? "text-emerald-500" : "text-amber-500")}>
+                    {device?.arp?.isValid ? 'Resolved (Neighbor Reachable)' : 'Incomplete / Unresolved'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Kernel Flags:</span>
+                  <strong className="text-foreground">0x{Number(device?.arp?.flags ?? 0).toString(16)}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Entry Type:</span>
+                  <span className="text-foreground">
+                    {Number(device?.arp?.flags ?? 0) & 4 ? 'Static (Permanent)' : 'Dynamic (Learned)'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Interface:</span>
+                  <strong className="text-foreground">{device?.interface || device?.arp?.interface || 'lan'}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Network Lifespan & Timeline */}
+            <div className="p-3.5 rounded-lg border bg-card/60 space-y-2">
+              <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                <Calendar className="w-3.5 h-3.5 text-sky-500" />
+                <span>Device Timeline</span>
+              </div>
+              <div className="space-y-1 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">First Seen:</span>
+                  <span className="text-foreground" title={Number(device?.firstSeenUnix) > 0 ? new Date(Number(device?.firstSeenUnix) * 1000).toLocaleString() : ''}>
+                    {Number(device?.firstSeenUnix) > 0 ? formatRelativeTime(Number(device.firstSeenUnix)) : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Last Active:</span>
+                  <span className="text-foreground" title={Number(device?.lastSeenUnix) > 0 ? new Date(Number(device?.lastSeenUnix) * 1000).toLocaleString() : ''}>
+                    {Number(device?.lastSeenUnix) > 0 ? formatRelativeTime(Number(device.lastSeenUnix)) : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Current Status:</span>
+                  <span className={cn("capitalize font-semibold", isOnline ? "text-emerald-500" : "text-muted-foreground")}>
+                    {status}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Protocol:</span>
+                  <span className="text-foreground">Ethernet (IPv4)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Frame & Traffic Efficiency */}
+            <div className="p-3.5 rounded-lg border bg-card/60 space-y-2">
+              <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                <Hash className="w-3.5 h-3.5 text-amber-500" />
+                <span>Frame & Packet Metrics</span>
+              </div>
+              <div className="space-y-1 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Frames In:</span>
+                  <span className="text-emerald-500">{totalDlPkts.toLocaleString()} pkts</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Frames Out:</span>
+                  <span className="text-sky-500">{totalUlPkts.toLocaleString()} pkts</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Avg Packet Size:</span>
+                  <span className="text-foreground">
+                    {totalDlPkts + totalUlPkts > 0
+                      ? formatBytes((totalDl + totalUl) / (totalDlPkts + totalUlPkts))
+                      : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">DL/UL Ratio:</span>
+                  <span className="text-foreground">
+                    {totalUl > 0 ? `${(totalDl / totalUl).toFixed(1)} : 1` : '—'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Educational Note about MAC Randomization if present */}
+          {isRandomized && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Private Wi-Fi Address Detected:</strong> This device is using a randomized MAC address (standard privacy feature in iOS 14+, Android 10+, and Windows 11). Because the hardware address is generated dynamically by the operating system, it does not match a factory manufacturer OUI prefix in the IEEE registry.
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
