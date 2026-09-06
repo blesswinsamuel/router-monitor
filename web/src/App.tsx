@@ -79,14 +79,9 @@ export function App() {
             // Update live rates on overview
             setOverview((prev: any) => ({
               ...prev,
-              currentDownloadBytesPerSec: res.downloadBytesPerSec,
-              currentUploadBytesPerSec: res.uploadBytesPerSec,
-              currentDownloadPacketsPerSec: res.downloadPacketsPerSec,
-              currentUploadPacketsPerSec: res.uploadPacketsPerSec,
-              currentWanDownloadBytesPerSec: res.wanDownloadBytesPerSec,
-              currentWanUploadBytesPerSec: res.wanUploadBytesPerSec,
-              currentLanDownloadBytesPerSec: res.lanDownloadBytesPerSec,
-              currentLanUploadBytesPerSec: res.lanUploadBytesPerSec,
+              total: res.total,
+              wan: res.wan,
+              lan: res.lan,
               internetIsUp: res.internetIsUp,
               internetLatencySeconds: res.internetLatencySeconds,
               connectedDevicesCount: res.connectedDevicesCount,
@@ -97,7 +92,14 @@ export function App() {
             const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
             setLiveHistory((prev) => {
-              const next = [...prev, { time: timeStr, download: res.downloadBytesPerSec, upload: res.uploadBytesPerSec }]
+              const next = [
+                ...prev,
+                {
+                  time: timeStr,
+                  download: Number(res.total?.downloadBytesPerSec || 0),
+                  upload: Number(res.total?.uploadBytesPerSec || 0),
+                },
+              ]
               if (next.length > 60) return next.slice(next.length - 60)
               return next
             })

@@ -24,47 +24,6 @@ service RouterMonitorService {
   rpc QueryTimeSeries(QueryTimeSeriesRequest) returns (QueryTimeSeriesResponse);
 }
 
-message GetOverviewRequest {}
-
-message GetOverviewResponse {
-  string interface_name = 1;
-  string lan_subnet_cidr = 2;
-  bool internet_is_up = 3;
-  double internet_latency_seconds = 4;
-  int32 connected_devices_count = 5;
-
-  uint64 total_download_bytes = 6;
-  uint64 total_upload_bytes = 7;
-  uint64 total_download_packets = 8;
-  uint64 total_upload_packets = 9;
-
-  double current_download_bytes_per_sec = 10;
-  double current_upload_bytes_per_sec = 11;
-  double current_download_packets_per_sec = 12;
-  double current_upload_packets_per_sec = 13;
-
-  uint64 total_wan_download_bytes = 14;
-  uint64 total_wan_upload_bytes = 15;
-  uint64 total_lan_download_bytes = 16;
-  uint64 total_lan_upload_bytes = 17;
-
-  double current_wan_download_bytes_per_sec = 18;
-  double current_wan_upload_bytes_per_sec = 19;
-  double current_lan_download_bytes_per_sec = 20;
-  double current_lan_upload_bytes_per_sec = 21;
-}
-
-message ListDevicesRequest {
-  int64 from_unix = 1;
-  int64 to_unix = 2;
-}
-
-message ArpInfo {
-  int64 flags = 1; // ARP flags: e.g. 2 for dynamic/complete, 6 for static
-  bool is_valid = 2;
-  string interface = 3;
-}
-
 message DirectionalTraffic {
   // Volume over selected period
   uint64 download_bytes = 1;
@@ -77,6 +36,31 @@ message DirectionalTraffic {
   double upload_bytes_per_sec = 6;
   double download_packets_per_sec = 7;
   double upload_packets_per_sec = 8;
+}
+
+message GetOverviewRequest {}
+
+message GetOverviewResponse {
+  string interface_name = 1;
+  string lan_subnet_cidr = 2;
+  bool internet_is_up = 3;
+  double internet_latency_seconds = 4;
+  int32 connected_devices_count = 5;
+
+  DirectionalTraffic total = 6;
+  DirectionalTraffic wan = 7;
+  DirectionalTraffic lan = 8;
+}
+
+message ListDevicesRequest {
+  int64 from_unix = 1;
+  int64 to_unix = 2;
+}
+
+message ArpInfo {
+  int64 flags = 1; // ARP flags: e.g. 2 for dynamic/complete, 6 for static
+  bool is_valid = 2;
+  string interface = 3;
 }
 
 message Device {
@@ -146,18 +130,13 @@ message StreamLiveStatsRequest {
 
 message LiveStatsResponse {
   int64 timestamp_unix = 1;
-  double download_bytes_per_sec = 2;
-  double upload_bytes_per_sec = 3;
-  double download_packets_per_sec = 4;
-  double upload_packets_per_sec = 5;
-  bool internet_is_up = 6;
-  double internet_latency_seconds = 7;
-  int32 connected_devices_count = 8;
+  bool internet_is_up = 2;
+  double internet_latency_seconds = 3;
+  int32 connected_devices_count = 4;
 
-  double wan_download_bytes_per_sec = 9;
-  double wan_upload_bytes_per_sec = 10;
-  double lan_download_bytes_per_sec = 11;
-  double lan_upload_bytes_per_sec = 12;
+  DirectionalTraffic total = 5;
+  DirectionalTraffic wan = 6;
+  DirectionalTraffic lan = 7;
 }
 
 message QueryTimeSeriesRequest {

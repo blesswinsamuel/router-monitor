@@ -21,358 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetOverviewRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetOverviewRequest) Reset() {
-	*x = GetOverviewRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetOverviewRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetOverviewRequest) ProtoMessage() {}
-
-func (x *GetOverviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetOverviewRequest.ProtoReflect.Descriptor instead.
-func (*GetOverviewRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{0}
-}
-
-type GetOverviewResponse struct {
-	state                         protoimpl.MessageState `protogen:"open.v1"`
-	InterfaceName                 string                 `protobuf:"bytes,1,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
-	LanSubnetCidr                 string                 `protobuf:"bytes,2,opt,name=lan_subnet_cidr,json=lanSubnetCidr,proto3" json:"lan_subnet_cidr,omitempty"`
-	InternetIsUp                  bool                   `protobuf:"varint,3,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
-	InternetLatencySeconds        float64                `protobuf:"fixed64,4,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
-	ConnectedDevicesCount         int32                  `protobuf:"varint,5,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
-	TotalDownloadBytes            uint64                 `protobuf:"varint,6,opt,name=total_download_bytes,json=totalDownloadBytes,proto3" json:"total_download_bytes,omitempty"`
-	TotalUploadBytes              uint64                 `protobuf:"varint,7,opt,name=total_upload_bytes,json=totalUploadBytes,proto3" json:"total_upload_bytes,omitempty"`
-	TotalDownloadPackets          uint64                 `protobuf:"varint,8,opt,name=total_download_packets,json=totalDownloadPackets,proto3" json:"total_download_packets,omitempty"`
-	TotalUploadPackets            uint64                 `protobuf:"varint,9,opt,name=total_upload_packets,json=totalUploadPackets,proto3" json:"total_upload_packets,omitempty"`
-	CurrentDownloadBytesPerSec    float64                `protobuf:"fixed64,10,opt,name=current_download_bytes_per_sec,json=currentDownloadBytesPerSec,proto3" json:"current_download_bytes_per_sec,omitempty"`
-	CurrentUploadBytesPerSec      float64                `protobuf:"fixed64,11,opt,name=current_upload_bytes_per_sec,json=currentUploadBytesPerSec,proto3" json:"current_upload_bytes_per_sec,omitempty"`
-	CurrentDownloadPacketsPerSec  float64                `protobuf:"fixed64,12,opt,name=current_download_packets_per_sec,json=currentDownloadPacketsPerSec,proto3" json:"current_download_packets_per_sec,omitempty"`
-	CurrentUploadPacketsPerSec    float64                `protobuf:"fixed64,13,opt,name=current_upload_packets_per_sec,json=currentUploadPacketsPerSec,proto3" json:"current_upload_packets_per_sec,omitempty"`
-	TotalWanDownloadBytes         uint64                 `protobuf:"varint,14,opt,name=total_wan_download_bytes,json=totalWanDownloadBytes,proto3" json:"total_wan_download_bytes,omitempty"`
-	TotalWanUploadBytes           uint64                 `protobuf:"varint,15,opt,name=total_wan_upload_bytes,json=totalWanUploadBytes,proto3" json:"total_wan_upload_bytes,omitempty"`
-	TotalLanDownloadBytes         uint64                 `protobuf:"varint,16,opt,name=total_lan_download_bytes,json=totalLanDownloadBytes,proto3" json:"total_lan_download_bytes,omitempty"`
-	TotalLanUploadBytes           uint64                 `protobuf:"varint,17,opt,name=total_lan_upload_bytes,json=totalLanUploadBytes,proto3" json:"total_lan_upload_bytes,omitempty"`
-	CurrentWanDownloadBytesPerSec float64                `protobuf:"fixed64,18,opt,name=current_wan_download_bytes_per_sec,json=currentWanDownloadBytesPerSec,proto3" json:"current_wan_download_bytes_per_sec,omitempty"`
-	CurrentWanUploadBytesPerSec   float64                `protobuf:"fixed64,19,opt,name=current_wan_upload_bytes_per_sec,json=currentWanUploadBytesPerSec,proto3" json:"current_wan_upload_bytes_per_sec,omitempty"`
-	CurrentLanDownloadBytesPerSec float64                `protobuf:"fixed64,20,opt,name=current_lan_download_bytes_per_sec,json=currentLanDownloadBytesPerSec,proto3" json:"current_lan_download_bytes_per_sec,omitempty"`
-	CurrentLanUploadBytesPerSec   float64                `protobuf:"fixed64,21,opt,name=current_lan_upload_bytes_per_sec,json=currentLanUploadBytesPerSec,proto3" json:"current_lan_upload_bytes_per_sec,omitempty"`
-	unknownFields                 protoimpl.UnknownFields
-	sizeCache                     protoimpl.SizeCache
-}
-
-func (x *GetOverviewResponse) Reset() {
-	*x = GetOverviewResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetOverviewResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetOverviewResponse) ProtoMessage() {}
-
-func (x *GetOverviewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetOverviewResponse.ProtoReflect.Descriptor instead.
-func (*GetOverviewResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetOverviewResponse) GetInterfaceName() string {
-	if x != nil {
-		return x.InterfaceName
-	}
-	return ""
-}
-
-func (x *GetOverviewResponse) GetLanSubnetCidr() string {
-	if x != nil {
-		return x.LanSubnetCidr
-	}
-	return ""
-}
-
-func (x *GetOverviewResponse) GetInternetIsUp() bool {
-	if x != nil {
-		return x.InternetIsUp
-	}
-	return false
-}
-
-func (x *GetOverviewResponse) GetInternetLatencySeconds() float64 {
-	if x != nil {
-		return x.InternetLatencySeconds
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetConnectedDevicesCount() int32 {
-	if x != nil {
-		return x.ConnectedDevicesCount
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalDownloadBytes() uint64 {
-	if x != nil {
-		return x.TotalDownloadBytes
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalUploadBytes() uint64 {
-	if x != nil {
-		return x.TotalUploadBytes
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalDownloadPackets() uint64 {
-	if x != nil {
-		return x.TotalDownloadPackets
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalUploadPackets() uint64 {
-	if x != nil {
-		return x.TotalUploadPackets
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentDownloadBytesPerSec() float64 {
-	if x != nil {
-		return x.CurrentDownloadBytesPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentUploadBytesPerSec() float64 {
-	if x != nil {
-		return x.CurrentUploadBytesPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentDownloadPacketsPerSec() float64 {
-	if x != nil {
-		return x.CurrentDownloadPacketsPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentUploadPacketsPerSec() float64 {
-	if x != nil {
-		return x.CurrentUploadPacketsPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalWanDownloadBytes() uint64 {
-	if x != nil {
-		return x.TotalWanDownloadBytes
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalWanUploadBytes() uint64 {
-	if x != nil {
-		return x.TotalWanUploadBytes
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalLanDownloadBytes() uint64 {
-	if x != nil {
-		return x.TotalLanDownloadBytes
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetTotalLanUploadBytes() uint64 {
-	if x != nil {
-		return x.TotalLanUploadBytes
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentWanDownloadBytesPerSec() float64 {
-	if x != nil {
-		return x.CurrentWanDownloadBytesPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentWanUploadBytesPerSec() float64 {
-	if x != nil {
-		return x.CurrentWanUploadBytesPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentLanDownloadBytesPerSec() float64 {
-	if x != nil {
-		return x.CurrentLanDownloadBytesPerSec
-	}
-	return 0
-}
-
-func (x *GetOverviewResponse) GetCurrentLanUploadBytesPerSec() float64 {
-	if x != nil {
-		return x.CurrentLanUploadBytesPerSec
-	}
-	return 0
-}
-
-type ListDevicesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FromUnix      int64                  `protobuf:"varint,1,opt,name=from_unix,json=fromUnix,proto3" json:"from_unix,omitempty"`
-	ToUnix        int64                  `protobuf:"varint,2,opt,name=to_unix,json=toUnix,proto3" json:"to_unix,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListDevicesRequest) Reset() {
-	*x = ListDevicesRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListDevicesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListDevicesRequest) ProtoMessage() {}
-
-func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
-func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *ListDevicesRequest) GetFromUnix() int64 {
-	if x != nil {
-		return x.FromUnix
-	}
-	return 0
-}
-
-func (x *ListDevicesRequest) GetToUnix() int64 {
-	if x != nil {
-		return x.ToUnix
-	}
-	return 0
-}
-
-type ArpInfo struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Flags         int64                  `protobuf:"varint,1,opt,name=flags,proto3" json:"flags,omitempty"` // ARP flags: e.g. 2 for dynamic/complete, 6 for static
-	IsValid       bool                   `protobuf:"varint,2,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
-	Interface     string                 `protobuf:"bytes,3,opt,name=interface,proto3" json:"interface,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ArpInfo) Reset() {
-	*x = ArpInfo{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ArpInfo) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ArpInfo) ProtoMessage() {}
-
-func (x *ArpInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ArpInfo.ProtoReflect.Descriptor instead.
-func (*ArpInfo) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ArpInfo) GetFlags() int64 {
-	if x != nil {
-		return x.Flags
-	}
-	return 0
-}
-
-func (x *ArpInfo) GetIsValid() bool {
-	if x != nil {
-		return x.IsValid
-	}
-	return false
-}
-
-func (x *ArpInfo) GetInterface() string {
-	if x != nil {
-		return x.Interface
-	}
-	return ""
-}
-
 type DirectionalTraffic struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Volume over selected period
@@ -391,7 +39,7 @@ type DirectionalTraffic struct {
 
 func (x *DirectionalTraffic) Reset() {
 	*x = DirectionalTraffic{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[4]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -403,7 +51,7 @@ func (x *DirectionalTraffic) String() string {
 func (*DirectionalTraffic) ProtoMessage() {}
 
 func (x *DirectionalTraffic) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[4]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -416,7 +64,7 @@ func (x *DirectionalTraffic) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DirectionalTraffic.ProtoReflect.Descriptor instead.
 func (*DirectionalTraffic) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{4}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *DirectionalTraffic) GetDownloadBytes() uint64 {
@@ -473,6 +121,254 @@ func (x *DirectionalTraffic) GetUploadPacketsPerSec() float64 {
 		return x.UploadPacketsPerSec
 	}
 	return 0
+}
+
+type GetOverviewRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOverviewRequest) Reset() {
+	*x = GetOverviewRequest{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOverviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOverviewRequest) ProtoMessage() {}
+
+func (x *GetOverviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOverviewRequest.ProtoReflect.Descriptor instead.
+func (*GetOverviewRequest) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{1}
+}
+
+type GetOverviewResponse struct {
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	InterfaceName          string                 `protobuf:"bytes,1,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
+	LanSubnetCidr          string                 `protobuf:"bytes,2,opt,name=lan_subnet_cidr,json=lanSubnetCidr,proto3" json:"lan_subnet_cidr,omitempty"`
+	InternetIsUp           bool                   `protobuf:"varint,3,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
+	InternetLatencySeconds float64                `protobuf:"fixed64,4,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
+	ConnectedDevicesCount  int32                  `protobuf:"varint,5,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
+	Total                  *DirectionalTraffic    `protobuf:"bytes,6,opt,name=total,proto3" json:"total,omitempty"`
+	Wan                    *DirectionalTraffic    `protobuf:"bytes,7,opt,name=wan,proto3" json:"wan,omitempty"`
+	Lan                    *DirectionalTraffic    `protobuf:"bytes,8,opt,name=lan,proto3" json:"lan,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *GetOverviewResponse) Reset() {
+	*x = GetOverviewResponse{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOverviewResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOverviewResponse) ProtoMessage() {}
+
+func (x *GetOverviewResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOverviewResponse.ProtoReflect.Descriptor instead.
+func (*GetOverviewResponse) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetOverviewResponse) GetInterfaceName() string {
+	if x != nil {
+		return x.InterfaceName
+	}
+	return ""
+}
+
+func (x *GetOverviewResponse) GetLanSubnetCidr() string {
+	if x != nil {
+		return x.LanSubnetCidr
+	}
+	return ""
+}
+
+func (x *GetOverviewResponse) GetInternetIsUp() bool {
+	if x != nil {
+		return x.InternetIsUp
+	}
+	return false
+}
+
+func (x *GetOverviewResponse) GetInternetLatencySeconds() float64 {
+	if x != nil {
+		return x.InternetLatencySeconds
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetConnectedDevicesCount() int32 {
+	if x != nil {
+		return x.ConnectedDevicesCount
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetTotal() *DirectionalTraffic {
+	if x != nil {
+		return x.Total
+	}
+	return nil
+}
+
+func (x *GetOverviewResponse) GetWan() *DirectionalTraffic {
+	if x != nil {
+		return x.Wan
+	}
+	return nil
+}
+
+func (x *GetOverviewResponse) GetLan() *DirectionalTraffic {
+	if x != nil {
+		return x.Lan
+	}
+	return nil
+}
+
+type ListDevicesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromUnix      int64                  `protobuf:"varint,1,opt,name=from_unix,json=fromUnix,proto3" json:"from_unix,omitempty"`
+	ToUnix        int64                  `protobuf:"varint,2,opt,name=to_unix,json=toUnix,proto3" json:"to_unix,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDevicesRequest) Reset() {
+	*x = ListDevicesRequest{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDevicesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDevicesRequest) ProtoMessage() {}
+
+func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
+func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ListDevicesRequest) GetFromUnix() int64 {
+	if x != nil {
+		return x.FromUnix
+	}
+	return 0
+}
+
+func (x *ListDevicesRequest) GetToUnix() int64 {
+	if x != nil {
+		return x.ToUnix
+	}
+	return 0
+}
+
+type ArpInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Flags         int64                  `protobuf:"varint,1,opt,name=flags,proto3" json:"flags,omitempty"` // ARP flags: e.g. 2 for dynamic/complete, 6 for static
+	IsValid       bool                   `protobuf:"varint,2,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
+	Interface     string                 `protobuf:"bytes,3,opt,name=interface,proto3" json:"interface,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArpInfo) Reset() {
+	*x = ArpInfo{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArpInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArpInfo) ProtoMessage() {}
+
+func (x *ArpInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArpInfo.ProtoReflect.Descriptor instead.
+func (*ArpInfo) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ArpInfo) GetFlags() int64 {
+	if x != nil {
+		return x.Flags
+	}
+	return 0
+}
+
+func (x *ArpInfo) GetIsValid() bool {
+	if x != nil {
+		return x.IsValid
+	}
+	return false
+}
+
+func (x *ArpInfo) GetInterface() string {
+	if x != nil {
+		return x.Interface
+	}
+	return ""
 }
 
 type Device struct {
@@ -1110,17 +1006,12 @@ func (x *StreamLiveStatsRequest) GetIntervalSeconds() int32 {
 type LiveStatsResponse struct {
 	state                  protoimpl.MessageState `protogen:"open.v1"`
 	TimestampUnix          int64                  `protobuf:"varint,1,opt,name=timestamp_unix,json=timestampUnix,proto3" json:"timestamp_unix,omitempty"`
-	DownloadBytesPerSec    float64                `protobuf:"fixed64,2,opt,name=download_bytes_per_sec,json=downloadBytesPerSec,proto3" json:"download_bytes_per_sec,omitempty"`
-	UploadBytesPerSec      float64                `protobuf:"fixed64,3,opt,name=upload_bytes_per_sec,json=uploadBytesPerSec,proto3" json:"upload_bytes_per_sec,omitempty"`
-	DownloadPacketsPerSec  float64                `protobuf:"fixed64,4,opt,name=download_packets_per_sec,json=downloadPacketsPerSec,proto3" json:"download_packets_per_sec,omitempty"`
-	UploadPacketsPerSec    float64                `protobuf:"fixed64,5,opt,name=upload_packets_per_sec,json=uploadPacketsPerSec,proto3" json:"upload_packets_per_sec,omitempty"`
-	InternetIsUp           bool                   `protobuf:"varint,6,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
-	InternetLatencySeconds float64                `protobuf:"fixed64,7,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
-	ConnectedDevicesCount  int32                  `protobuf:"varint,8,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
-	WanDownloadBytesPerSec float64                `protobuf:"fixed64,9,opt,name=wan_download_bytes_per_sec,json=wanDownloadBytesPerSec,proto3" json:"wan_download_bytes_per_sec,omitempty"`
-	WanUploadBytesPerSec   float64                `protobuf:"fixed64,10,opt,name=wan_upload_bytes_per_sec,json=wanUploadBytesPerSec,proto3" json:"wan_upload_bytes_per_sec,omitempty"`
-	LanDownloadBytesPerSec float64                `protobuf:"fixed64,11,opt,name=lan_download_bytes_per_sec,json=lanDownloadBytesPerSec,proto3" json:"lan_download_bytes_per_sec,omitempty"`
-	LanUploadBytesPerSec   float64                `protobuf:"fixed64,12,opt,name=lan_upload_bytes_per_sec,json=lanUploadBytesPerSec,proto3" json:"lan_upload_bytes_per_sec,omitempty"`
+	InternetIsUp           bool                   `protobuf:"varint,2,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
+	InternetLatencySeconds float64                `protobuf:"fixed64,3,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
+	ConnectedDevicesCount  int32                  `protobuf:"varint,4,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
+	Total                  *DirectionalTraffic    `protobuf:"bytes,5,opt,name=total,proto3" json:"total,omitempty"`
+	Wan                    *DirectionalTraffic    `protobuf:"bytes,6,opt,name=wan,proto3" json:"wan,omitempty"`
+	Lan                    *DirectionalTraffic    `protobuf:"bytes,7,opt,name=lan,proto3" json:"lan,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -1162,34 +1053,6 @@ func (x *LiveStatsResponse) GetTimestampUnix() int64 {
 	return 0
 }
 
-func (x *LiveStatsResponse) GetDownloadBytesPerSec() float64 {
-	if x != nil {
-		return x.DownloadBytesPerSec
-	}
-	return 0
-}
-
-func (x *LiveStatsResponse) GetUploadBytesPerSec() float64 {
-	if x != nil {
-		return x.UploadBytesPerSec
-	}
-	return 0
-}
-
-func (x *LiveStatsResponse) GetDownloadPacketsPerSec() float64 {
-	if x != nil {
-		return x.DownloadPacketsPerSec
-	}
-	return 0
-}
-
-func (x *LiveStatsResponse) GetUploadPacketsPerSec() float64 {
-	if x != nil {
-		return x.UploadPacketsPerSec
-	}
-	return 0
-}
-
 func (x *LiveStatsResponse) GetInternetIsUp() bool {
 	if x != nil {
 		return x.InternetIsUp
@@ -1211,32 +1074,25 @@ func (x *LiveStatsResponse) GetConnectedDevicesCount() int32 {
 	return 0
 }
 
-func (x *LiveStatsResponse) GetWanDownloadBytesPerSec() float64 {
+func (x *LiveStatsResponse) GetTotal() *DirectionalTraffic {
 	if x != nil {
-		return x.WanDownloadBytesPerSec
+		return x.Total
 	}
-	return 0
+	return nil
 }
 
-func (x *LiveStatsResponse) GetWanUploadBytesPerSec() float64 {
+func (x *LiveStatsResponse) GetWan() *DirectionalTraffic {
 	if x != nil {
-		return x.WanUploadBytesPerSec
+		return x.Wan
 	}
-	return 0
+	return nil
 }
 
-func (x *LiveStatsResponse) GetLanDownloadBytesPerSec() float64 {
+func (x *LiveStatsResponse) GetLan() *DirectionalTraffic {
 	if x != nil {
-		return x.LanDownloadBytesPerSec
+		return x.Lan
 	}
-	return 0
-}
-
-func (x *LiveStatsResponse) GetLanUploadBytesPerSec() float64 {
-	if x != nil {
-		return x.LanUploadBytesPerSec
-	}
-	return 0
+	return nil
 }
 
 type QueryTimeSeriesRequest struct {
@@ -1491,38 +1347,7 @@ var File_routermonitor_v1_router_monitor_proto protoreflect.FileDescriptor
 
 const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\n" +
-	"%routermonitor/v1/router_monitor.proto\x12\x10routermonitor.v1\"\x14\n" +
-	"\x12GetOverviewRequest\"\xd4\t\n" +
-	"\x13GetOverviewResponse\x12%\n" +
-	"\x0einterface_name\x18\x01 \x01(\tR\rinterfaceName\x12&\n" +
-	"\x0flan_subnet_cidr\x18\x02 \x01(\tR\rlanSubnetCidr\x12$\n" +
-	"\x0einternet_is_up\x18\x03 \x01(\bR\finternetIsUp\x128\n" +
-	"\x18internet_latency_seconds\x18\x04 \x01(\x01R\x16internetLatencySeconds\x126\n" +
-	"\x17connected_devices_count\x18\x05 \x01(\x05R\x15connectedDevicesCount\x120\n" +
-	"\x14total_download_bytes\x18\x06 \x01(\x04R\x12totalDownloadBytes\x12,\n" +
-	"\x12total_upload_bytes\x18\a \x01(\x04R\x10totalUploadBytes\x124\n" +
-	"\x16total_download_packets\x18\b \x01(\x04R\x14totalDownloadPackets\x120\n" +
-	"\x14total_upload_packets\x18\t \x01(\x04R\x12totalUploadPackets\x12B\n" +
-	"\x1ecurrent_download_bytes_per_sec\x18\n" +
-	" \x01(\x01R\x1acurrentDownloadBytesPerSec\x12>\n" +
-	"\x1ccurrent_upload_bytes_per_sec\x18\v \x01(\x01R\x18currentUploadBytesPerSec\x12F\n" +
-	" current_download_packets_per_sec\x18\f \x01(\x01R\x1ccurrentDownloadPacketsPerSec\x12B\n" +
-	"\x1ecurrent_upload_packets_per_sec\x18\r \x01(\x01R\x1acurrentUploadPacketsPerSec\x127\n" +
-	"\x18total_wan_download_bytes\x18\x0e \x01(\x04R\x15totalWanDownloadBytes\x123\n" +
-	"\x16total_wan_upload_bytes\x18\x0f \x01(\x04R\x13totalWanUploadBytes\x127\n" +
-	"\x18total_lan_download_bytes\x18\x10 \x01(\x04R\x15totalLanDownloadBytes\x123\n" +
-	"\x16total_lan_upload_bytes\x18\x11 \x01(\x04R\x13totalLanUploadBytes\x12I\n" +
-	"\"current_wan_download_bytes_per_sec\x18\x12 \x01(\x01R\x1dcurrentWanDownloadBytesPerSec\x12E\n" +
-	" current_wan_upload_bytes_per_sec\x18\x13 \x01(\x01R\x1bcurrentWanUploadBytesPerSec\x12I\n" +
-	"\"current_lan_download_bytes_per_sec\x18\x14 \x01(\x01R\x1dcurrentLanDownloadBytesPerSec\x12E\n" +
-	" current_lan_upload_bytes_per_sec\x18\x15 \x01(\x01R\x1bcurrentLanUploadBytesPerSec\"J\n" +
-	"\x12ListDevicesRequest\x12\x1b\n" +
-	"\tfrom_unix\x18\x01 \x01(\x03R\bfromUnix\x12\x17\n" +
-	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"X\n" +
-	"\aArpInfo\x12\x14\n" +
-	"\x05flags\x18\x01 \x01(\x03R\x05flags\x12\x19\n" +
-	"\bis_valid\x18\x02 \x01(\bR\aisValid\x12\x1c\n" +
-	"\tinterface\x18\x03 \x01(\tR\tinterface\"\x84\x03\n" +
+	"%routermonitor/v1/router_monitor.proto\x12\x10routermonitor.v1\"\x84\x03\n" +
 	"\x12DirectionalTraffic\x12%\n" +
 	"\x0edownload_bytes\x18\x01 \x01(\x04R\rdownloadBytes\x12!\n" +
 	"\fupload_bytes\x18\x02 \x01(\x04R\vuploadBytes\x12)\n" +
@@ -1531,7 +1356,24 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x16download_bytes_per_sec\x18\x05 \x01(\x01R\x13downloadBytesPerSec\x12/\n" +
 	"\x14upload_bytes_per_sec\x18\x06 \x01(\x01R\x11uploadBytesPerSec\x127\n" +
 	"\x18download_packets_per_sec\x18\a \x01(\x01R\x15downloadPacketsPerSec\x123\n" +
-	"\x16upload_packets_per_sec\x18\b \x01(\x01R\x13uploadPacketsPerSec\"\xb5\x03\n" +
+	"\x16upload_packets_per_sec\x18\b \x01(\x01R\x13uploadPacketsPerSec\"\x14\n" +
+	"\x12GetOverviewRequest\"\xa8\x03\n" +
+	"\x13GetOverviewResponse\x12%\n" +
+	"\x0einterface_name\x18\x01 \x01(\tR\rinterfaceName\x12&\n" +
+	"\x0flan_subnet_cidr\x18\x02 \x01(\tR\rlanSubnetCidr\x12$\n" +
+	"\x0einternet_is_up\x18\x03 \x01(\bR\finternetIsUp\x128\n" +
+	"\x18internet_latency_seconds\x18\x04 \x01(\x01R\x16internetLatencySeconds\x126\n" +
+	"\x17connected_devices_count\x18\x05 \x01(\x05R\x15connectedDevicesCount\x12:\n" +
+	"\x05total\x18\x06 \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x05total\x126\n" +
+	"\x03wan\x18\a \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03wan\x126\n" +
+	"\x03lan\x18\b \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03lan\"J\n" +
+	"\x12ListDevicesRequest\x12\x1b\n" +
+	"\tfrom_unix\x18\x01 \x01(\x03R\bfromUnix\x12\x17\n" +
+	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"X\n" +
+	"\aArpInfo\x12\x14\n" +
+	"\x05flags\x18\x01 \x01(\x03R\x05flags\x12\x19\n" +
+	"\bis_valid\x18\x02 \x01(\bR\aisValid\x12\x1c\n" +
+	"\tinterface\x18\x03 \x01(\tR\tinterface\"\xb5\x03\n" +
 	"\x06Device\x12\x17\n" +
 	"\aip_addr\x18\x01 \x01(\tR\x06ipAddr\x12\x19\n" +
 	"\bmac_addr\x18\x02 \x01(\tR\amacAddr\x12\x1a\n" +
@@ -1577,21 +1419,15 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\roverall_is_up\x18\x01 \x01(\bR\voverallIsUp\x12<\n" +
 	"\atargets\x18\x02 \x03(\v2\".routermonitor.v1.PingTargetStatusR\atargets\"C\n" +
 	"\x16StreamLiveStatsRequest\x12)\n" +
-	"\x10interval_seconds\x18\x01 \x01(\x05R\x0fintervalSeconds\"\x8e\x05\n" +
+	"\x10interval_seconds\x18\x01 \x01(\x05R\x0fintervalSeconds\"\xfe\x02\n" +
 	"\x11LiveStatsResponse\x12%\n" +
-	"\x0etimestamp_unix\x18\x01 \x01(\x03R\rtimestampUnix\x123\n" +
-	"\x16download_bytes_per_sec\x18\x02 \x01(\x01R\x13downloadBytesPerSec\x12/\n" +
-	"\x14upload_bytes_per_sec\x18\x03 \x01(\x01R\x11uploadBytesPerSec\x127\n" +
-	"\x18download_packets_per_sec\x18\x04 \x01(\x01R\x15downloadPacketsPerSec\x123\n" +
-	"\x16upload_packets_per_sec\x18\x05 \x01(\x01R\x13uploadPacketsPerSec\x12$\n" +
-	"\x0einternet_is_up\x18\x06 \x01(\bR\finternetIsUp\x128\n" +
-	"\x18internet_latency_seconds\x18\a \x01(\x01R\x16internetLatencySeconds\x126\n" +
-	"\x17connected_devices_count\x18\b \x01(\x05R\x15connectedDevicesCount\x12:\n" +
-	"\x1awan_download_bytes_per_sec\x18\t \x01(\x01R\x16wanDownloadBytesPerSec\x126\n" +
-	"\x18wan_upload_bytes_per_sec\x18\n" +
-	" \x01(\x01R\x14wanUploadBytesPerSec\x12:\n" +
-	"\x1alan_download_bytes_per_sec\x18\v \x01(\x01R\x16lanDownloadBytesPerSec\x126\n" +
-	"\x18lan_upload_bytes_per_sec\x18\f \x01(\x01R\x14lanUploadBytesPerSec\"\xb0\x02\n" +
+	"\x0etimestamp_unix\x18\x01 \x01(\x03R\rtimestampUnix\x12$\n" +
+	"\x0einternet_is_up\x18\x02 \x01(\bR\finternetIsUp\x128\n" +
+	"\x18internet_latency_seconds\x18\x03 \x01(\x01R\x16internetLatencySeconds\x126\n" +
+	"\x17connected_devices_count\x18\x04 \x01(\x05R\x15connectedDevicesCount\x12:\n" +
+	"\x05total\x18\x05 \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x05total\x126\n" +
+	"\x03wan\x18\x06 \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03wan\x126\n" +
+	"\x03lan\x18\a \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03lan\"\xb0\x02\n" +
 	"\x16QueryTimeSeriesRequest\x12\x1f\n" +
 	"\vmetric_name\x18\x01 \x01(\tR\n" +
 	"metricName\x12\\\n" +
@@ -1640,11 +1476,11 @@ func file_routermonitor_v1_router_monitor_proto_rawDescGZIP() []byte {
 
 var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
-	(*GetOverviewRequest)(nil),        // 0: routermonitor.v1.GetOverviewRequest
-	(*GetOverviewResponse)(nil),       // 1: routermonitor.v1.GetOverviewResponse
-	(*ListDevicesRequest)(nil),        // 2: routermonitor.v1.ListDevicesRequest
-	(*ArpInfo)(nil),                   // 3: routermonitor.v1.ArpInfo
-	(*DirectionalTraffic)(nil),        // 4: routermonitor.v1.DirectionalTraffic
+	(*DirectionalTraffic)(nil),        // 0: routermonitor.v1.DirectionalTraffic
+	(*GetOverviewRequest)(nil),        // 1: routermonitor.v1.GetOverviewRequest
+	(*GetOverviewResponse)(nil),       // 2: routermonitor.v1.GetOverviewResponse
+	(*ListDevicesRequest)(nil),        // 3: routermonitor.v1.ListDevicesRequest
+	(*ArpInfo)(nil),                   // 4: routermonitor.v1.ArpInfo
 	(*Device)(nil),                    // 5: routermonitor.v1.Device
 	(*ListDevicesResponse)(nil),       // 6: routermonitor.v1.ListDevicesResponse
 	(*GetTrafficFlowsRequest)(nil),    // 7: routermonitor.v1.GetTrafficFlowsRequest
@@ -1664,35 +1500,41 @@ var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	nil,                               // 21: routermonitor.v1.TimeSeries.LabelsEntry
 }
 var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
-	3,  // 0: routermonitor.v1.Device.arp:type_name -> routermonitor.v1.ArpInfo
-	4,  // 1: routermonitor.v1.Device.total:type_name -> routermonitor.v1.DirectionalTraffic
-	4,  // 2: routermonitor.v1.Device.wan:type_name -> routermonitor.v1.DirectionalTraffic
-	4,  // 3: routermonitor.v1.Device.lan:type_name -> routermonitor.v1.DirectionalTraffic
-	5,  // 4: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
-	8,  // 5: routermonitor.v1.GetTrafficFlowsResponse.flows:type_name -> routermonitor.v1.TrafficFlow
-	9,  // 6: routermonitor.v1.GetTrafficFlowsResponse.protocols:type_name -> routermonitor.v1.ProtocolStats
-	12, // 7: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.PingTargetStatus
-	20, // 8: routermonitor.v1.QueryTimeSeriesRequest.match_labels:type_name -> routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
-	21, // 9: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
-	17, // 10: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
-	18, // 11: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
-	0,  // 12: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
-	2,  // 13: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
-	7,  // 14: routermonitor.v1.RouterMonitorService.GetTrafficFlows:input_type -> routermonitor.v1.GetTrafficFlowsRequest
-	11, // 15: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
-	14, // 16: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
-	16, // 17: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
-	1,  // 18: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
-	6,  // 19: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
-	10, // 20: routermonitor.v1.RouterMonitorService.GetTrafficFlows:output_type -> routermonitor.v1.GetTrafficFlowsResponse
-	13, // 21: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
-	15, // 22: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
-	19, // 23: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
-	18, // [18:24] is the sub-list for method output_type
-	12, // [12:18] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	0,  // 0: routermonitor.v1.GetOverviewResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 1: routermonitor.v1.GetOverviewResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 2: routermonitor.v1.GetOverviewResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
+	4,  // 3: routermonitor.v1.Device.arp:type_name -> routermonitor.v1.ArpInfo
+	0,  // 4: routermonitor.v1.Device.total:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 5: routermonitor.v1.Device.wan:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 6: routermonitor.v1.Device.lan:type_name -> routermonitor.v1.DirectionalTraffic
+	5,  // 7: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
+	8,  // 8: routermonitor.v1.GetTrafficFlowsResponse.flows:type_name -> routermonitor.v1.TrafficFlow
+	9,  // 9: routermonitor.v1.GetTrafficFlowsResponse.protocols:type_name -> routermonitor.v1.ProtocolStats
+	12, // 10: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.PingTargetStatus
+	0,  // 11: routermonitor.v1.LiveStatsResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 12: routermonitor.v1.LiveStatsResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 13: routermonitor.v1.LiveStatsResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
+	20, // 14: routermonitor.v1.QueryTimeSeriesRequest.match_labels:type_name -> routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
+	21, // 15: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
+	17, // 16: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
+	18, // 17: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
+	1,  // 18: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
+	3,  // 19: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
+	7,  // 20: routermonitor.v1.RouterMonitorService.GetTrafficFlows:input_type -> routermonitor.v1.GetTrafficFlowsRequest
+	11, // 21: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
+	14, // 22: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
+	16, // 23: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
+	2,  // 24: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
+	6,  // 25: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
+	10, // 26: routermonitor.v1.RouterMonitorService.GetTrafficFlows:output_type -> routermonitor.v1.GetTrafficFlowsResponse
+	13, // 27: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
+	15, // 28: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
+	19, // 29: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
+	24, // [24:30] is the sub-list for method output_type
+	18, // [18:24] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_routermonitor_v1_router_monitor_proto_init() }
