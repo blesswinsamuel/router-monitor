@@ -30,10 +30,13 @@ type LiveRates struct {
 	TotalLanDownloadBytes uint64
 	TotalLanUploadBytes   uint64
 
-	InternetIsUp           bool
-	InternetLatencySeconds float64
-	ConnectedDevicesCount  int32
-	LastSampleTime         time.Time
+	InternetIsUp            bool
+	InternetStatus          string
+	InternetLatencySeconds  float64
+	InternetPacketLossRatio float64
+	InternetJitterSeconds   float64
+	ConnectedDevicesCount   int32
+	LastSampleTime          time.Time
 }
 
 type DeviceRate struct {
@@ -370,32 +373,7 @@ func (s *Sampler) SampleOnce() {
 	samples = append(samples, devSamples...)
 
 	// 2. Gather Internet Check Stats
-	targets := s.internetChecker.GetStatus()
-	anyUp := false
-	var latencySum float64
-	var latencyCount int
-
-	for _, t := range targets {
-		if t.IsUp {
-			anyUp = true
-		}
-		isUpVal := 0.0
-		if t.IsUp {
-			isUpVal = 1.0
-		}
-		samples = append(samples,
-			Sample{Metric: "internet_is_up", Labels: map[string]string{"target": t.Addr}, Timestamp: now, Value: isUpVal},
-			Sample{Metric: "internet_latency_seconds", Labels: map[string]string{"target": t.Addr}, Timestamp: now, Value: t.LastLatencySec},
-		)
-		if t.LastLatencySec > 0 {
-			latencySum += t.LastLatencySec
-			latencyCount++
-		}
-	}
-	avgLatency := 0.0
-	if latencyCount > 0 {
-		avgLatency = latencySum / float64(latencyCount)
-	}
+	health := s.internetChecker.GetOverallHealth()
 
 	// 3. Gather Devices
 	devices := s.arpCollector.GetDevices()
@@ -438,16 +416,19 @@ func (s *Sampler) SampleOnce() {
 	// Update LiveRates cache
 	s.mu.Lock()
 	s.liveRates = LiveRates{
-		DownloadBytesPerSec:    dlBytesRate,
-		UploadBytesPerSec:      ulBytesRate,
-		DownloadPacketsPerSec:  dlPktsRate,
-		UploadPacketsPerSec:    ulPktsRate,
-		TotalDownloadBytes:     curIngressBytes,
-		TotalUploadBytes:       curEgressBytes,
-		InternetIsUp:           anyUp,
-		InternetLatencySeconds: avgLatency,
-		ConnectedDevicesCount:  validDevices,
-		LastSampleTime:         now,
+		DownloadBytesPerSec:     dlBytesRate,
+		UploadBytesPerSec:       ulBytesRate,
+		DownloadPacketsPerSec:   dlPktsRate,
+		UploadPacketsPerSec:     ulPktsRate,
+		TotalDownloadBytes:      curIngressBytes,
+		TotalUploadBytes:        curEgressBytes,
+		InternetIsUp:            health.IsUp,
+		InternetStatus:          health.Status,
+		InternetLatencySeconds:  health.LatencySeconds,
+		InternetPacketLossRatio: health.PacketLossRatio,
+		InternetJitterSeconds:   health.JitterSeconds,
+		ConnectedDevicesCount:   validDevices,
+		LastSampleTime:          now,
 
 		WanDownloadBytesPerSec: wanDlRate,
 		WanUploadBytesPerSec:   wanUlRate,

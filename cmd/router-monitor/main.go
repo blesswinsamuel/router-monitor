@@ -25,34 +25,7 @@ import (
 	"github.com/rs/cors"
 )
 
-var defaultPingAddrs = []string{"1.1.1.1:53", "8.8.8.8:53"}
-
 const defaultLANSubnetCIDR = "10.100.0.0/16"
-
-func parsePingAddrs(raw string) ([]string, error) {
-	if strings.TrimSpace(raw) == "" {
-		return append([]string(nil), defaultPingAddrs...), nil
-	}
-
-	parts := strings.Split(raw, ",")
-	addrs := make([]string, 0, len(parts))
-	for _, part := range parts {
-		addr := strings.TrimSpace(part)
-		if addr == "" {
-			continue
-		}
-		if _, _, err := net.SplitHostPort(addr); err != nil {
-			return nil, fmt.Errorf("invalid ping address %q: %w", addr, err)
-		}
-		addrs = append(addrs, addr)
-	}
-
-	if len(addrs) == 0 {
-		return nil, errors.New("no valid ping addresses configured")
-	}
-
-	return addrs, nil
-}
 
 func parseLANSubnet(raw string) (uint32, uint32, error) {
 	cidr := strings.TrimSpace(raw)
@@ -103,9 +76,14 @@ func main() {
 		log.Fatalf("lookup network iface %q: %s", ifaceName, err)
 	}
 
-	pingAddrs, err := parsePingAddrs(os.Getenv("INTERNET_CONNECTION_CHECK_PING_ADDRS"))
+	checkTargets, err := routermonitor.ParseTargetConfigs(os.Getenv("INTERNET_CHECK_TARGETS"))
 	if err != nil {
-		log.Fatalf("invalid INTERNET_CONNECTION_CHECK_PING_ADDRS: %v", err)
+		log.Fatalf("invalid INTERNET_CHECK_TARGETS: %v", err)
+	}
+
+	checkInterval, err := parseDurationWithDefault(os.Getenv("INTERNET_CHECK_INTERVAL"), 5*time.Second)
+	if err != nil {
+		log.Fatalf("invalid INTERNET_CHECK_INTERVAL: %v", err)
 	}
 
 	lanSubnetIP, lanSubnetMask, err := parseLANSubnet(os.Getenv("LAN_SUBNET_CIDR"))
@@ -131,16 +109,8 @@ func main() {
 	log.Printf("Attached program to iface %q (index %d)", iface.Name, iface.Index)
 	log.Printf("Press Ctrl-C to exit and remove the program")
 
-	arpCollector := routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX"), arpCacheTTL)
-	internetChecker := routermonitor.NewInternetChecker(10*time.Second, pingAddrs)
-
-	prometheus.MustRegister(ebpfFirewallCollector)
-	prometheus.MustRegister(arpCollector)
-	internetChecker.Register(prometheus.DefaultRegisterer)
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	go internetChecker.Start(ctx)
 
 	// Initialize SQLite TSDB
 	dbPath := os.Getenv("DB_PATH")
@@ -160,6 +130,27 @@ func main() {
 	}
 	defer tsdbDB.Close()
 	tsdbDB.StartRetentionWorker(ctx, 1*time.Hour, 7*24*time.Hour)
+
+	arpCollector := routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX"), arpCacheTTL)
+	internetChecker := routermonitor.NewInternetChecker(checkInterval, checkTargets, tsdbDB)
+	internetChecker.SetSampleSink(func(samples []routermonitor.MetricSample) {
+		dbSamples := make([]tsdb.Sample, len(samples))
+		for i, s := range samples {
+			dbSamples[i] = tsdb.Sample{
+				Metric:    s.Metric,
+				Labels:    s.Labels,
+				Timestamp: s.Timestamp,
+				Value:     s.Value,
+			}
+		}
+		_ = tsdbDB.InsertSamples(dbSamples)
+	})
+
+	prometheus.MustRegister(ebpfFirewallCollector)
+	prometheus.MustRegister(arpCollector)
+	internetChecker.Register(prometheus.DefaultRegisterer)
+
+	go internetChecker.Start(ctx)
 
 	sampleInterval, err := parseDurationWithDefault(os.Getenv("SAMPLE_INTERVAL"), 15*time.Second)
 	if err != nil {

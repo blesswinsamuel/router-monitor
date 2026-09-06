@@ -74,6 +74,8 @@ Taskfile.yaml                 # Task runner commands
 
 ## Conventions
 
+- **Target & Testing Environment**: There is no local testing; testing and deployment are done directly on the Linux router (`task deploy-dev`, `ssh root@router`). Target Linux environments directly (processes run with capabilities `CAP_NET_ADMIN CAP_NET_RAW CAP_BPF CAP_PERFMON`). Do not write mock fallbacks or bypasses for non-root local dev environments unless explicitly requested.
+- **No Backwards Compatibility**: When refactoring or redesigning features, do not maintain legacy backwards compatibility, obsolete proto fields, deprecated metric aliases, or old environment variables. Build clean, modern implementations directly.
 - Run tests (`go test ./...`) and web build (`cd web && bun run build`) before committing.
 - Follow conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Check `git status` after changes and maintain a clean commit history.

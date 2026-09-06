@@ -7,39 +7,6 @@ import (
 	"time"
 )
 
-func TestParsePingAddrs_DefaultsWhenEmpty(t *testing.T) {
-	got, err := parsePingAddrs("")
-	if err != nil {
-		t.Fatalf("parsePingAddrs returned error: %v", err)
-	}
-	if len(got) != len(defaultPingAddrs) {
-		t.Fatalf("expected %d defaults, got %d", len(defaultPingAddrs), len(got))
-	}
-	for i := range defaultPingAddrs {
-		if got[i] != defaultPingAddrs[i] {
-			t.Fatalf("default index %d mismatch: got %q want %q", i, got[i], defaultPingAddrs[i])
-		}
-	}
-}
-
-func TestParsePingAddrs_ValidList(t *testing.T) {
-	got, err := parsePingAddrs(" 1.1.1.1:53,8.8.8.8:53 ")
-	if err != nil {
-		t.Fatalf("parsePingAddrs returned error: %v", err)
-	}
-	if len(got) != 2 {
-		t.Fatalf("expected 2 addrs, got %d", len(got))
-	}
-	if got[0] != "1.1.1.1:53" || got[1] != "8.8.8.8:53" {
-		t.Fatalf("unexpected parsed addrs: %#v", got)
-	}
-}
-
-func TestParsePingAddrs_Invalid(t *testing.T) {
-	if _, err := parsePingAddrs("not-an-addr"); err == nil {
-		t.Fatal("expected error for invalid address")
-	}
-}
 
 func TestParseLANSubnet_DefaultsWhenEmpty(t *testing.T) {
 	gotIP, gotMask, err := parseLANSubnet("")

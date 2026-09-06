@@ -50,6 +50,10 @@ message GetOverviewResponse {
   DirectionalTraffic total = 6;
   DirectionalTraffic wan = 7;
   DirectionalTraffic lan = 8;
+
+  string internet_status = 9; // "operational", "degraded", "down"
+  double internet_packet_loss_ratio = 10;
+  double internet_jitter_seconds = 11;
 }
 
 message ListDevicesRequest {
@@ -112,16 +116,38 @@ message GetTrafficFlowsResponse {
 
 message GetInternetHealthRequest {}
 
-message PingTargetStatus {
-  string addr = 1;
-  bool is_up = 2;
-  double last_latency_seconds = 3;
-  double avg_latency_seconds = 4;
+message TargetHealth {
+  string name = 1;
+  string target = 2;
+  string probe_type = 3; // "icmp", "dns", "http", "tcp"
+  bool is_up = 4;
+  double latency_seconds = 5;
+  double min_latency_seconds = 6;
+  double max_latency_seconds = 7;
+  double avg_latency_seconds = 8;
+  double jitter_seconds = 9;
+  double packet_loss_ratio = 10;
+  string last_error = 11;
+  int64 last_checked_unix = 12;
+}
+
+message OutageRecord {
+  int64 id = 1;
+  int64 start_unix = 2;
+  int64 end_unix = 3;
+  double duration_seconds = 4;
+  string status = 5; // "degraded", "down"
+  string reason = 6;
 }
 
 message GetInternetHealthResponse {
-  bool overall_is_up = 1;
-  repeated PingTargetStatus targets = 2;
+  string overall_status = 1; // "operational", "degraded", "down"
+  bool overall_is_up = 2;
+  double overall_latency_seconds = 3;
+  double overall_packet_loss_ratio = 4;
+  double overall_jitter_seconds = 5;
+  repeated TargetHealth targets = 6;
+  repeated OutageRecord recent_outages = 7;
 }
 
 message StreamLiveStatsRequest {
@@ -137,6 +163,10 @@ message LiveStatsResponse {
   DirectionalTraffic total = 5;
   DirectionalTraffic wan = 6;
   DirectionalTraffic lan = 7;
+
+  string internet_status = 8; // "operational", "degraded", "down"
+  double internet_packet_loss_ratio = 9;
+  double internet_jitter_seconds = 10;
 }
 
 message QueryTimeSeriesRequest {

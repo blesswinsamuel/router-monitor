@@ -47,4 +47,19 @@ export function formatRelativeTime(unixSeconds: number | bigint | undefined | nu
   const days = Math.floor(hr / 24)
   return `${days}d ago`
 }
+export function formatDuration(sec: number | undefined | null): string {
+  if (!sec || sec <= 0) return "0s"
+  const s = Math.round(sec)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const remS = s % 60
+  if (m < 60) return remS > 0 ? `${m}m ${remS}s` : `${m}m`
+  const h = Math.floor(m / 60)
+  const remM = m % 60
+  return remM > 0 ? `${h}h ${remM}m` : `${h}h`
+}
 
+export function formatPercent(ratio: number | undefined | null): string {
+  if (ratio === undefined || ratio === null || isNaN(ratio)) return "0.0%"
+  return `${(ratio * 100).toFixed(1)}%`
+}

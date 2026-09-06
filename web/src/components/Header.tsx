@@ -9,6 +9,7 @@ interface HeaderProps {
   lanSubnet: string
   isLive: boolean
   internetIsUp: boolean
+  internetStatus?: string
   onRefresh: () => void
   isRefreshing: boolean
 }
@@ -18,6 +19,7 @@ export function Header({
   lanSubnet,
   isLive,
   internetIsUp,
+  internetStatus,
   onRefresh,
   isRefreshing,
 }: HeaderProps) {
@@ -33,6 +35,9 @@ export function Header({
       setIsDark(true)
     }
   }
+
+  const isDegraded = internetStatus === 'degraded'
+  const isDown = !internetIsUp || internetStatus === 'down'
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -68,11 +73,15 @@ export function Header({
 
         <div className="flex items-center space-x-2">
           <Badge
-            variant={internetIsUp ? "outline" : "destructive"}
-            className={cn("gap-1.5 hidden sm:flex text-xs font-normal", internetIsUp && "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400")}
+            variant={isDown ? "destructive" : "outline"}
+            className={cn(
+              "gap-1.5 hidden sm:flex text-xs font-normal",
+              isDegraded && "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+              !isDown && !isDegraded && "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            )}
           >
             <Radio className="w-3 h-3" />
-            {internetIsUp ? "Internet Online" : "Internet Offline"}
+            {isDegraded ? "Internet Degraded" : isDown ? "Internet Offline" : "Internet Online"}
           </Badge>
 
           <Button

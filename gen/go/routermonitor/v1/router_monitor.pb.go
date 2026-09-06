@@ -160,17 +160,20 @@ func (*GetOverviewRequest) Descriptor() ([]byte, []int) {
 }
 
 type GetOverviewResponse struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	InterfaceName          string                 `protobuf:"bytes,1,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
-	LanSubnetCidr          string                 `protobuf:"bytes,2,opt,name=lan_subnet_cidr,json=lanSubnetCidr,proto3" json:"lan_subnet_cidr,omitempty"`
-	InternetIsUp           bool                   `protobuf:"varint,3,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
-	InternetLatencySeconds float64                `protobuf:"fixed64,4,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
-	ConnectedDevicesCount  int32                  `protobuf:"varint,5,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
-	Total                  *DirectionalTraffic    `protobuf:"bytes,6,opt,name=total,proto3" json:"total,omitempty"`
-	Wan                    *DirectionalTraffic    `protobuf:"bytes,7,opt,name=wan,proto3" json:"wan,omitempty"`
-	Lan                    *DirectionalTraffic    `protobuf:"bytes,8,opt,name=lan,proto3" json:"lan,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	InterfaceName           string                 `protobuf:"bytes,1,opt,name=interface_name,json=interfaceName,proto3" json:"interface_name,omitempty"`
+	LanSubnetCidr           string                 `protobuf:"bytes,2,opt,name=lan_subnet_cidr,json=lanSubnetCidr,proto3" json:"lan_subnet_cidr,omitempty"`
+	InternetIsUp            bool                   `protobuf:"varint,3,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
+	InternetLatencySeconds  float64                `protobuf:"fixed64,4,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
+	ConnectedDevicesCount   int32                  `protobuf:"varint,5,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
+	Total                   *DirectionalTraffic    `protobuf:"bytes,6,opt,name=total,proto3" json:"total,omitempty"`
+	Wan                     *DirectionalTraffic    `protobuf:"bytes,7,opt,name=wan,proto3" json:"wan,omitempty"`
+	Lan                     *DirectionalTraffic    `protobuf:"bytes,8,opt,name=lan,proto3" json:"lan,omitempty"`
+	InternetStatus          string                 `protobuf:"bytes,9,opt,name=internet_status,json=internetStatus,proto3" json:"internet_status,omitempty"` // "operational", "degraded", "down"
+	InternetPacketLossRatio float64                `protobuf:"fixed64,10,opt,name=internet_packet_loss_ratio,json=internetPacketLossRatio,proto3" json:"internet_packet_loss_ratio,omitempty"`
+	InternetJitterSeconds   float64                `protobuf:"fixed64,11,opt,name=internet_jitter_seconds,json=internetJitterSeconds,proto3" json:"internet_jitter_seconds,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *GetOverviewResponse) Reset() {
@@ -257,6 +260,27 @@ func (x *GetOverviewResponse) GetLan() *DirectionalTraffic {
 		return x.Lan
 	}
 	return nil
+}
+
+func (x *GetOverviewResponse) GetInternetStatus() string {
+	if x != nil {
+		return x.InternetStatus
+	}
+	return ""
+}
+
+func (x *GetOverviewResponse) GetInternetPacketLossRatio() float64 {
+	if x != nil {
+		return x.InternetPacketLossRatio
+	}
+	return 0
+}
+
+func (x *GetOverviewResponse) GetInternetJitterSeconds() float64 {
+	if x != nil {
+		return x.InternetJitterSeconds
+	}
+	return 0
 }
 
 type ListDevicesRequest struct {
@@ -839,30 +863,38 @@ func (*GetInternetHealthRequest) Descriptor() ([]byte, []int) {
 	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{11}
 }
 
-type PingTargetStatus struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Addr               string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
-	IsUp               bool                   `protobuf:"varint,2,opt,name=is_up,json=isUp,proto3" json:"is_up,omitempty"`
-	LastLatencySeconds float64                `protobuf:"fixed64,3,opt,name=last_latency_seconds,json=lastLatencySeconds,proto3" json:"last_latency_seconds,omitempty"`
-	AvgLatencySeconds  float64                `protobuf:"fixed64,4,opt,name=avg_latency_seconds,json=avgLatencySeconds,proto3" json:"avg_latency_seconds,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+type TargetHealth struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Target            string                 `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
+	ProbeType         string                 `protobuf:"bytes,3,opt,name=probe_type,json=probeType,proto3" json:"probe_type,omitempty"` // "icmp", "dns", "http", "tcp"
+	IsUp              bool                   `protobuf:"varint,4,opt,name=is_up,json=isUp,proto3" json:"is_up,omitempty"`
+	LatencySeconds    float64                `protobuf:"fixed64,5,opt,name=latency_seconds,json=latencySeconds,proto3" json:"latency_seconds,omitempty"`
+	MinLatencySeconds float64                `protobuf:"fixed64,6,opt,name=min_latency_seconds,json=minLatencySeconds,proto3" json:"min_latency_seconds,omitempty"`
+	MaxLatencySeconds float64                `protobuf:"fixed64,7,opt,name=max_latency_seconds,json=maxLatencySeconds,proto3" json:"max_latency_seconds,omitempty"`
+	AvgLatencySeconds float64                `protobuf:"fixed64,8,opt,name=avg_latency_seconds,json=avgLatencySeconds,proto3" json:"avg_latency_seconds,omitempty"`
+	JitterSeconds     float64                `protobuf:"fixed64,9,opt,name=jitter_seconds,json=jitterSeconds,proto3" json:"jitter_seconds,omitempty"`
+	PacketLossRatio   float64                `protobuf:"fixed64,10,opt,name=packet_loss_ratio,json=packetLossRatio,proto3" json:"packet_loss_ratio,omitempty"`
+	LastError         string                 `protobuf:"bytes,11,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	LastCheckedUnix   int64                  `protobuf:"varint,12,opt,name=last_checked_unix,json=lastCheckedUnix,proto3" json:"last_checked_unix,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
-func (x *PingTargetStatus) Reset() {
-	*x = PingTargetStatus{}
+func (x *TargetHealth) Reset() {
+	*x = TargetHealth{}
 	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PingTargetStatus) String() string {
+func (x *TargetHealth) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PingTargetStatus) ProtoMessage() {}
+func (*TargetHealth) ProtoMessage() {}
 
-func (x *PingTargetStatus) ProtoReflect() protoreflect.Message {
+func (x *TargetHealth) ProtoReflect() protoreflect.Message {
 	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -874,50 +906,195 @@ func (x *PingTargetStatus) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PingTargetStatus.ProtoReflect.Descriptor instead.
-func (*PingTargetStatus) Descriptor() ([]byte, []int) {
+// Deprecated: Use TargetHealth.ProtoReflect.Descriptor instead.
+func (*TargetHealth) Descriptor() ([]byte, []int) {
 	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *PingTargetStatus) GetAddr() string {
+func (x *TargetHealth) GetName() string {
 	if x != nil {
-		return x.Addr
+		return x.Name
 	}
 	return ""
 }
 
-func (x *PingTargetStatus) GetIsUp() bool {
+func (x *TargetHealth) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *TargetHealth) GetProbeType() string {
+	if x != nil {
+		return x.ProbeType
+	}
+	return ""
+}
+
+func (x *TargetHealth) GetIsUp() bool {
 	if x != nil {
 		return x.IsUp
 	}
 	return false
 }
 
-func (x *PingTargetStatus) GetLastLatencySeconds() float64 {
+func (x *TargetHealth) GetLatencySeconds() float64 {
 	if x != nil {
-		return x.LastLatencySeconds
+		return x.LatencySeconds
 	}
 	return 0
 }
 
-func (x *PingTargetStatus) GetAvgLatencySeconds() float64 {
+func (x *TargetHealth) GetMinLatencySeconds() float64 {
+	if x != nil {
+		return x.MinLatencySeconds
+	}
+	return 0
+}
+
+func (x *TargetHealth) GetMaxLatencySeconds() float64 {
+	if x != nil {
+		return x.MaxLatencySeconds
+	}
+	return 0
+}
+
+func (x *TargetHealth) GetAvgLatencySeconds() float64 {
 	if x != nil {
 		return x.AvgLatencySeconds
 	}
 	return 0
 }
 
+func (x *TargetHealth) GetJitterSeconds() float64 {
+	if x != nil {
+		return x.JitterSeconds
+	}
+	return 0
+}
+
+func (x *TargetHealth) GetPacketLossRatio() float64 {
+	if x != nil {
+		return x.PacketLossRatio
+	}
+	return 0
+}
+
+func (x *TargetHealth) GetLastError() string {
+	if x != nil {
+		return x.LastError
+	}
+	return ""
+}
+
+func (x *TargetHealth) GetLastCheckedUnix() int64 {
+	if x != nil {
+		return x.LastCheckedUnix
+	}
+	return 0
+}
+
+type OutageRecord struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	StartUnix       int64                  `protobuf:"varint,2,opt,name=start_unix,json=startUnix,proto3" json:"start_unix,omitempty"`
+	EndUnix         int64                  `protobuf:"varint,3,opt,name=end_unix,json=endUnix,proto3" json:"end_unix,omitempty"`
+	DurationSeconds float64                `protobuf:"fixed64,4,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
+	Status          string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"` // "degraded", "down"
+	Reason          string                 `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *OutageRecord) Reset() {
+	*x = OutageRecord{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OutageRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutageRecord) ProtoMessage() {}
+
+func (x *OutageRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutageRecord.ProtoReflect.Descriptor instead.
+func (*OutageRecord) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *OutageRecord) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *OutageRecord) GetStartUnix() int64 {
+	if x != nil {
+		return x.StartUnix
+	}
+	return 0
+}
+
+func (x *OutageRecord) GetEndUnix() int64 {
+	if x != nil {
+		return x.EndUnix
+	}
+	return 0
+}
+
+func (x *OutageRecord) GetDurationSeconds() float64 {
+	if x != nil {
+		return x.DurationSeconds
+	}
+	return 0
+}
+
+func (x *OutageRecord) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *OutageRecord) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 type GetInternetHealthResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	OverallIsUp   bool                   `protobuf:"varint,1,opt,name=overall_is_up,json=overallIsUp,proto3" json:"overall_is_up,omitempty"`
-	Targets       []*PingTargetStatus    `protobuf:"bytes,2,rep,name=targets,proto3" json:"targets,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"open.v1"`
+	OverallStatus          string                 `protobuf:"bytes,1,opt,name=overall_status,json=overallStatus,proto3" json:"overall_status,omitempty"` // "operational", "degraded", "down"
+	OverallIsUp            bool                   `protobuf:"varint,2,opt,name=overall_is_up,json=overallIsUp,proto3" json:"overall_is_up,omitempty"`
+	OverallLatencySeconds  float64                `protobuf:"fixed64,3,opt,name=overall_latency_seconds,json=overallLatencySeconds,proto3" json:"overall_latency_seconds,omitempty"`
+	OverallPacketLossRatio float64                `protobuf:"fixed64,4,opt,name=overall_packet_loss_ratio,json=overallPacketLossRatio,proto3" json:"overall_packet_loss_ratio,omitempty"`
+	OverallJitterSeconds   float64                `protobuf:"fixed64,5,opt,name=overall_jitter_seconds,json=overallJitterSeconds,proto3" json:"overall_jitter_seconds,omitempty"`
+	Targets                []*TargetHealth        `protobuf:"bytes,6,rep,name=targets,proto3" json:"targets,omitempty"`
+	RecentOutages          []*OutageRecord        `protobuf:"bytes,7,rep,name=recent_outages,json=recentOutages,proto3" json:"recent_outages,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *GetInternetHealthResponse) Reset() {
 	*x = GetInternetHealthResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -929,7 +1106,7 @@ func (x *GetInternetHealthResponse) String() string {
 func (*GetInternetHealthResponse) ProtoMessage() {}
 
 func (x *GetInternetHealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -942,7 +1119,14 @@ func (x *GetInternetHealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInternetHealthResponse.ProtoReflect.Descriptor instead.
 func (*GetInternetHealthResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{13}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetInternetHealthResponse) GetOverallStatus() string {
+	if x != nil {
+		return x.OverallStatus
+	}
+	return ""
 }
 
 func (x *GetInternetHealthResponse) GetOverallIsUp() bool {
@@ -952,9 +1136,37 @@ func (x *GetInternetHealthResponse) GetOverallIsUp() bool {
 	return false
 }
 
-func (x *GetInternetHealthResponse) GetTargets() []*PingTargetStatus {
+func (x *GetInternetHealthResponse) GetOverallLatencySeconds() float64 {
+	if x != nil {
+		return x.OverallLatencySeconds
+	}
+	return 0
+}
+
+func (x *GetInternetHealthResponse) GetOverallPacketLossRatio() float64 {
+	if x != nil {
+		return x.OverallPacketLossRatio
+	}
+	return 0
+}
+
+func (x *GetInternetHealthResponse) GetOverallJitterSeconds() float64 {
+	if x != nil {
+		return x.OverallJitterSeconds
+	}
+	return 0
+}
+
+func (x *GetInternetHealthResponse) GetTargets() []*TargetHealth {
 	if x != nil {
 		return x.Targets
+	}
+	return nil
+}
+
+func (x *GetInternetHealthResponse) GetRecentOutages() []*OutageRecord {
+	if x != nil {
+		return x.RecentOutages
 	}
 	return nil
 }
@@ -968,7 +1180,7 @@ type StreamLiveStatsRequest struct {
 
 func (x *StreamLiveStatsRequest) Reset() {
 	*x = StreamLiveStatsRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -980,7 +1192,7 @@ func (x *StreamLiveStatsRequest) String() string {
 func (*StreamLiveStatsRequest) ProtoMessage() {}
 
 func (x *StreamLiveStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -993,7 +1205,7 @@ func (x *StreamLiveStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamLiveStatsRequest.ProtoReflect.Descriptor instead.
 func (*StreamLiveStatsRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{14}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *StreamLiveStatsRequest) GetIntervalSeconds() int32 {
@@ -1004,21 +1216,24 @@ func (x *StreamLiveStatsRequest) GetIntervalSeconds() int32 {
 }
 
 type LiveStatsResponse struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	TimestampUnix          int64                  `protobuf:"varint,1,opt,name=timestamp_unix,json=timestampUnix,proto3" json:"timestamp_unix,omitempty"`
-	InternetIsUp           bool                   `protobuf:"varint,2,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
-	InternetLatencySeconds float64                `protobuf:"fixed64,3,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
-	ConnectedDevicesCount  int32                  `protobuf:"varint,4,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
-	Total                  *DirectionalTraffic    `protobuf:"bytes,5,opt,name=total,proto3" json:"total,omitempty"`
-	Wan                    *DirectionalTraffic    `protobuf:"bytes,6,opt,name=wan,proto3" json:"wan,omitempty"`
-	Lan                    *DirectionalTraffic    `protobuf:"bytes,7,opt,name=lan,proto3" json:"lan,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	TimestampUnix           int64                  `protobuf:"varint,1,opt,name=timestamp_unix,json=timestampUnix,proto3" json:"timestamp_unix,omitempty"`
+	InternetIsUp            bool                   `protobuf:"varint,2,opt,name=internet_is_up,json=internetIsUp,proto3" json:"internet_is_up,omitempty"`
+	InternetLatencySeconds  float64                `protobuf:"fixed64,3,opt,name=internet_latency_seconds,json=internetLatencySeconds,proto3" json:"internet_latency_seconds,omitempty"`
+	ConnectedDevicesCount   int32                  `protobuf:"varint,4,opt,name=connected_devices_count,json=connectedDevicesCount,proto3" json:"connected_devices_count,omitempty"`
+	Total                   *DirectionalTraffic    `protobuf:"bytes,5,opt,name=total,proto3" json:"total,omitempty"`
+	Wan                     *DirectionalTraffic    `protobuf:"bytes,6,opt,name=wan,proto3" json:"wan,omitempty"`
+	Lan                     *DirectionalTraffic    `protobuf:"bytes,7,opt,name=lan,proto3" json:"lan,omitempty"`
+	InternetStatus          string                 `protobuf:"bytes,8,opt,name=internet_status,json=internetStatus,proto3" json:"internet_status,omitempty"` // "operational", "degraded", "down"
+	InternetPacketLossRatio float64                `protobuf:"fixed64,9,opt,name=internet_packet_loss_ratio,json=internetPacketLossRatio,proto3" json:"internet_packet_loss_ratio,omitempty"`
+	InternetJitterSeconds   float64                `protobuf:"fixed64,10,opt,name=internet_jitter_seconds,json=internetJitterSeconds,proto3" json:"internet_jitter_seconds,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *LiveStatsResponse) Reset() {
 	*x = LiveStatsResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1030,7 +1245,7 @@ func (x *LiveStatsResponse) String() string {
 func (*LiveStatsResponse) ProtoMessage() {}
 
 func (x *LiveStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1043,7 +1258,7 @@ func (x *LiveStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveStatsResponse.ProtoReflect.Descriptor instead.
 func (*LiveStatsResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{15}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *LiveStatsResponse) GetTimestampUnix() int64 {
@@ -1095,6 +1310,27 @@ func (x *LiveStatsResponse) GetLan() *DirectionalTraffic {
 	return nil
 }
 
+func (x *LiveStatsResponse) GetInternetStatus() string {
+	if x != nil {
+		return x.InternetStatus
+	}
+	return ""
+}
+
+func (x *LiveStatsResponse) GetInternetPacketLossRatio() float64 {
+	if x != nil {
+		return x.InternetPacketLossRatio
+	}
+	return 0
+}
+
+func (x *LiveStatsResponse) GetInternetJitterSeconds() float64 {
+	if x != nil {
+		return x.InternetJitterSeconds
+	}
+	return 0
+}
+
 type QueryTimeSeriesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MetricName    string                 `protobuf:"bytes,1,opt,name=metric_name,json=metricName,proto3" json:"metric_name,omitempty"`                                                                              // e.g. "traffic_bytes_rate", "internet_latency_seconds"
@@ -1108,7 +1344,7 @@ type QueryTimeSeriesRequest struct {
 
 func (x *QueryTimeSeriesRequest) Reset() {
 	*x = QueryTimeSeriesRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1120,7 +1356,7 @@ func (x *QueryTimeSeriesRequest) String() string {
 func (*QueryTimeSeriesRequest) ProtoMessage() {}
 
 func (x *QueryTimeSeriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1133,7 +1369,7 @@ func (x *QueryTimeSeriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryTimeSeriesRequest.ProtoReflect.Descriptor instead.
 func (*QueryTimeSeriesRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{16}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *QueryTimeSeriesRequest) GetMetricName() string {
@@ -1183,7 +1419,7 @@ type TimeSeriesPoint struct {
 
 func (x *TimeSeriesPoint) Reset() {
 	*x = TimeSeriesPoint{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1195,7 +1431,7 @@ func (x *TimeSeriesPoint) String() string {
 func (*TimeSeriesPoint) ProtoMessage() {}
 
 func (x *TimeSeriesPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1208,7 +1444,7 @@ func (x *TimeSeriesPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeSeriesPoint.ProtoReflect.Descriptor instead.
 func (*TimeSeriesPoint) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{17}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *TimeSeriesPoint) GetTimestampUnix() int64 {
@@ -1250,7 +1486,7 @@ type TimeSeries struct {
 
 func (x *TimeSeries) Reset() {
 	*x = TimeSeries{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1262,7 +1498,7 @@ func (x *TimeSeries) String() string {
 func (*TimeSeries) ProtoMessage() {}
 
 func (x *TimeSeries) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1275,7 +1511,7 @@ func (x *TimeSeries) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeSeries.ProtoReflect.Descriptor instead.
 func (*TimeSeries) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{18}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *TimeSeries) GetMetricName() string {
@@ -1308,7 +1544,7 @@ type QueryTimeSeriesResponse struct {
 
 func (x *QueryTimeSeriesResponse) Reset() {
 	*x = QueryTimeSeriesResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1320,7 +1556,7 @@ func (x *QueryTimeSeriesResponse) String() string {
 func (*QueryTimeSeriesResponse) ProtoMessage() {}
 
 func (x *QueryTimeSeriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1333,7 +1569,7 @@ func (x *QueryTimeSeriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryTimeSeriesResponse.ProtoReflect.Descriptor instead.
 func (*QueryTimeSeriesResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{19}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *QueryTimeSeriesResponse) GetSeries() []*TimeSeries {
@@ -1357,7 +1593,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x14upload_bytes_per_sec\x18\x06 \x01(\x01R\x11uploadBytesPerSec\x127\n" +
 	"\x18download_packets_per_sec\x18\a \x01(\x01R\x15downloadPacketsPerSec\x123\n" +
 	"\x16upload_packets_per_sec\x18\b \x01(\x01R\x13uploadPacketsPerSec\"\x14\n" +
-	"\x12GetOverviewRequest\"\xa8\x03\n" +
+	"\x12GetOverviewRequest\"\xc6\x04\n" +
 	"\x13GetOverviewResponse\x12%\n" +
 	"\x0einterface_name\x18\x01 \x01(\tR\rinterfaceName\x12&\n" +
 	"\x0flan_subnet_cidr\x18\x02 \x01(\tR\rlanSubnetCidr\x12$\n" +
@@ -1366,7 +1602,11 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x17connected_devices_count\x18\x05 \x01(\x05R\x15connectedDevicesCount\x12:\n" +
 	"\x05total\x18\x06 \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x05total\x126\n" +
 	"\x03wan\x18\a \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03wan\x126\n" +
-	"\x03lan\x18\b \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03lan\"J\n" +
+	"\x03lan\x18\b \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03lan\x12'\n" +
+	"\x0finternet_status\x18\t \x01(\tR\x0einternetStatus\x12;\n" +
+	"\x1ainternet_packet_loss_ratio\x18\n" +
+	" \x01(\x01R\x17internetPacketLossRatio\x126\n" +
+	"\x17internet_jitter_seconds\x18\v \x01(\x01R\x15internetJitterSeconds\"J\n" +
 	"\x12ListDevicesRequest\x12\x1b\n" +
 	"\tfrom_unix\x18\x01 \x01(\x03R\bfromUnix\x12\x17\n" +
 	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"X\n" +
@@ -1409,17 +1649,41 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\vtotal_bytes\x18\x03 \x01(\x04R\n" +
 	"totalBytes\x12#\n" +
 	"\rtotal_packets\x18\x04 \x01(\x04R\ftotalPackets\"\x1a\n" +
-	"\x18GetInternetHealthRequest\"\x9d\x01\n" +
-	"\x10PingTargetStatus\x12\x12\n" +
-	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x13\n" +
-	"\x05is_up\x18\x02 \x01(\bR\x04isUp\x120\n" +
-	"\x14last_latency_seconds\x18\x03 \x01(\x01R\x12lastLatencySeconds\x12.\n" +
-	"\x13avg_latency_seconds\x18\x04 \x01(\x01R\x11avgLatencySeconds\"}\n" +
-	"\x19GetInternetHealthResponse\x12\"\n" +
-	"\roverall_is_up\x18\x01 \x01(\bR\voverallIsUp\x12<\n" +
-	"\atargets\x18\x02 \x03(\v2\".routermonitor.v1.PingTargetStatusR\atargets\"C\n" +
+	"\x18GetInternetHealthRequest\"\xc5\x03\n" +
+	"\fTargetHealth\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
+	"\x06target\x18\x02 \x01(\tR\x06target\x12\x1d\n" +
+	"\n" +
+	"probe_type\x18\x03 \x01(\tR\tprobeType\x12\x13\n" +
+	"\x05is_up\x18\x04 \x01(\bR\x04isUp\x12'\n" +
+	"\x0flatency_seconds\x18\x05 \x01(\x01R\x0elatencySeconds\x12.\n" +
+	"\x13min_latency_seconds\x18\x06 \x01(\x01R\x11minLatencySeconds\x12.\n" +
+	"\x13max_latency_seconds\x18\a \x01(\x01R\x11maxLatencySeconds\x12.\n" +
+	"\x13avg_latency_seconds\x18\b \x01(\x01R\x11avgLatencySeconds\x12%\n" +
+	"\x0ejitter_seconds\x18\t \x01(\x01R\rjitterSeconds\x12*\n" +
+	"\x11packet_loss_ratio\x18\n" +
+	" \x01(\x01R\x0fpacketLossRatio\x12\x1d\n" +
+	"\n" +
+	"last_error\x18\v \x01(\tR\tlastError\x12*\n" +
+	"\x11last_checked_unix\x18\f \x01(\x03R\x0flastCheckedUnix\"\xb3\x01\n" +
+	"\fOutageRecord\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"start_unix\x18\x02 \x01(\x03R\tstartUnix\x12\x19\n" +
+	"\bend_unix\x18\x03 \x01(\x03R\aendUnix\x12)\n" +
+	"\x10duration_seconds\x18\x04 \x01(\x01R\x0fdurationSeconds\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x16\n" +
+	"\x06reason\x18\x06 \x01(\tR\x06reason\"\x90\x03\n" +
+	"\x19GetInternetHealthResponse\x12%\n" +
+	"\x0eoverall_status\x18\x01 \x01(\tR\roverallStatus\x12\"\n" +
+	"\roverall_is_up\x18\x02 \x01(\bR\voverallIsUp\x126\n" +
+	"\x17overall_latency_seconds\x18\x03 \x01(\x01R\x15overallLatencySeconds\x129\n" +
+	"\x19overall_packet_loss_ratio\x18\x04 \x01(\x01R\x16overallPacketLossRatio\x124\n" +
+	"\x16overall_jitter_seconds\x18\x05 \x01(\x01R\x14overallJitterSeconds\x128\n" +
+	"\atargets\x18\x06 \x03(\v2\x1e.routermonitor.v1.TargetHealthR\atargets\x12E\n" +
+	"\x0erecent_outages\x18\a \x03(\v2\x1e.routermonitor.v1.OutageRecordR\rrecentOutages\"C\n" +
 	"\x16StreamLiveStatsRequest\x12)\n" +
-	"\x10interval_seconds\x18\x01 \x01(\x05R\x0fintervalSeconds\"\xfe\x02\n" +
+	"\x10interval_seconds\x18\x01 \x01(\x05R\x0fintervalSeconds\"\x9c\x04\n" +
 	"\x11LiveStatsResponse\x12%\n" +
 	"\x0etimestamp_unix\x18\x01 \x01(\x03R\rtimestampUnix\x12$\n" +
 	"\x0einternet_is_up\x18\x02 \x01(\bR\finternetIsUp\x128\n" +
@@ -1427,7 +1691,11 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x17connected_devices_count\x18\x04 \x01(\x05R\x15connectedDevicesCount\x12:\n" +
 	"\x05total\x18\x05 \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x05total\x126\n" +
 	"\x03wan\x18\x06 \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03wan\x126\n" +
-	"\x03lan\x18\a \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03lan\"\xb0\x02\n" +
+	"\x03lan\x18\a \x01(\v2$.routermonitor.v1.DirectionalTrafficR\x03lan\x12'\n" +
+	"\x0finternet_status\x18\b \x01(\tR\x0einternetStatus\x12;\n" +
+	"\x1ainternet_packet_loss_ratio\x18\t \x01(\x01R\x17internetPacketLossRatio\x126\n" +
+	"\x17internet_jitter_seconds\x18\n" +
+	" \x01(\x01R\x15internetJitterSeconds\"\xb0\x02\n" +
 	"\x16QueryTimeSeriesRequest\x12\x1f\n" +
 	"\vmetric_name\x18\x01 \x01(\tR\n" +
 	"metricName\x12\\\n" +
@@ -1474,7 +1742,7 @@ func file_routermonitor_v1_router_monitor_proto_rawDescGZIP() []byte {
 	return file_routermonitor_v1_router_monitor_proto_rawDescData
 }
 
-var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*DirectionalTraffic)(nil),        // 0: routermonitor.v1.DirectionalTraffic
 	(*GetOverviewRequest)(nil),        // 1: routermonitor.v1.GetOverviewRequest
@@ -1488,16 +1756,17 @@ var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*ProtocolStats)(nil),             // 9: routermonitor.v1.ProtocolStats
 	(*GetTrafficFlowsResponse)(nil),   // 10: routermonitor.v1.GetTrafficFlowsResponse
 	(*GetInternetHealthRequest)(nil),  // 11: routermonitor.v1.GetInternetHealthRequest
-	(*PingTargetStatus)(nil),          // 12: routermonitor.v1.PingTargetStatus
-	(*GetInternetHealthResponse)(nil), // 13: routermonitor.v1.GetInternetHealthResponse
-	(*StreamLiveStatsRequest)(nil),    // 14: routermonitor.v1.StreamLiveStatsRequest
-	(*LiveStatsResponse)(nil),         // 15: routermonitor.v1.LiveStatsResponse
-	(*QueryTimeSeriesRequest)(nil),    // 16: routermonitor.v1.QueryTimeSeriesRequest
-	(*TimeSeriesPoint)(nil),           // 17: routermonitor.v1.TimeSeriesPoint
-	(*TimeSeries)(nil),                // 18: routermonitor.v1.TimeSeries
-	(*QueryTimeSeriesResponse)(nil),   // 19: routermonitor.v1.QueryTimeSeriesResponse
-	nil,                               // 20: routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
-	nil,                               // 21: routermonitor.v1.TimeSeries.LabelsEntry
+	(*TargetHealth)(nil),              // 12: routermonitor.v1.TargetHealth
+	(*OutageRecord)(nil),              // 13: routermonitor.v1.OutageRecord
+	(*GetInternetHealthResponse)(nil), // 14: routermonitor.v1.GetInternetHealthResponse
+	(*StreamLiveStatsRequest)(nil),    // 15: routermonitor.v1.StreamLiveStatsRequest
+	(*LiveStatsResponse)(nil),         // 16: routermonitor.v1.LiveStatsResponse
+	(*QueryTimeSeriesRequest)(nil),    // 17: routermonitor.v1.QueryTimeSeriesRequest
+	(*TimeSeriesPoint)(nil),           // 18: routermonitor.v1.TimeSeriesPoint
+	(*TimeSeries)(nil),                // 19: routermonitor.v1.TimeSeries
+	(*QueryTimeSeriesResponse)(nil),   // 20: routermonitor.v1.QueryTimeSeriesResponse
+	nil,                               // 21: routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
+	nil,                               // 22: routermonitor.v1.TimeSeries.LabelsEntry
 }
 var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 0: routermonitor.v1.GetOverviewResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
@@ -1510,31 +1779,32 @@ var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	5,  // 7: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
 	8,  // 8: routermonitor.v1.GetTrafficFlowsResponse.flows:type_name -> routermonitor.v1.TrafficFlow
 	9,  // 9: routermonitor.v1.GetTrafficFlowsResponse.protocols:type_name -> routermonitor.v1.ProtocolStats
-	12, // 10: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.PingTargetStatus
-	0,  // 11: routermonitor.v1.LiveStatsResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
-	0,  // 12: routermonitor.v1.LiveStatsResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
-	0,  // 13: routermonitor.v1.LiveStatsResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
-	20, // 14: routermonitor.v1.QueryTimeSeriesRequest.match_labels:type_name -> routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
-	21, // 15: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
-	17, // 16: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
-	18, // 17: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
-	1,  // 18: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
-	3,  // 19: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
-	7,  // 20: routermonitor.v1.RouterMonitorService.GetTrafficFlows:input_type -> routermonitor.v1.GetTrafficFlowsRequest
-	11, // 21: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
-	14, // 22: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
-	16, // 23: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
-	2,  // 24: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
-	6,  // 25: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
-	10, // 26: routermonitor.v1.RouterMonitorService.GetTrafficFlows:output_type -> routermonitor.v1.GetTrafficFlowsResponse
-	13, // 27: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
-	15, // 28: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
-	19, // 29: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
-	24, // [24:30] is the sub-list for method output_type
-	18, // [18:24] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	12, // 10: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.TargetHealth
+	13, // 11: routermonitor.v1.GetInternetHealthResponse.recent_outages:type_name -> routermonitor.v1.OutageRecord
+	0,  // 12: routermonitor.v1.LiveStatsResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 13: routermonitor.v1.LiveStatsResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
+	0,  // 14: routermonitor.v1.LiveStatsResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
+	21, // 15: routermonitor.v1.QueryTimeSeriesRequest.match_labels:type_name -> routermonitor.v1.QueryTimeSeriesRequest.MatchLabelsEntry
+	22, // 16: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
+	18, // 17: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
+	19, // 18: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
+	1,  // 19: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
+	3,  // 20: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
+	7,  // 21: routermonitor.v1.RouterMonitorService.GetTrafficFlows:input_type -> routermonitor.v1.GetTrafficFlowsRequest
+	11, // 22: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
+	15, // 23: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
+	17, // 24: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
+	2,  // 25: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
+	6,  // 26: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
+	10, // 27: routermonitor.v1.RouterMonitorService.GetTrafficFlows:output_type -> routermonitor.v1.GetTrafficFlowsResponse
+	14, // 28: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
+	16, // 29: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
+	20, // 30: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
+	25, // [25:31] is the sub-list for method output_type
+	19, // [19:25] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_routermonitor_v1_router_monitor_proto_init() }
@@ -1548,7 +1818,7 @@ func file_routermonitor_v1_router_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_routermonitor_v1_router_monitor_proto_rawDesc), len(file_routermonitor_v1_router_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   22,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

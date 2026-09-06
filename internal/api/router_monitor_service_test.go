@@ -25,7 +25,9 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 
 	ebpf := routermonitor.NewEbpfCollector()
 	arp := routermonitor.NewArpCollector("/dev/null", "", 30*time.Minute)
-	checker := routermonitor.NewInternetChecker(10*time.Second, []string{"1.1.1.1:53"})
+	checker := routermonitor.NewInternetChecker(10*time.Second, []routermonitor.TargetConfig{
+		{Name: "Target 1", Target: "1.1.1.1:53", Type: routermonitor.ProbeTCP},
+	}, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
 	svc := NewRouterMonitorService("eth0", "10.100.0.0/16", ebpf, arp, checker, db, sampler)
@@ -106,7 +108,9 @@ func TestRouterMonitorService_DeviceTrafficAndPersistence(t *testing.T) {
 
 	ebpf := routermonitor.NewEbpfCollector()
 	arp := routermonitor.NewArpCollector(arpPath, "", 30*time.Minute)
-	checker := routermonitor.NewInternetChecker(10*time.Second, []string{"1.1.1.1:53"})
+	checker := routermonitor.NewInternetChecker(10*time.Second, []routermonitor.TargetConfig{
+		{Name: "Target 1", Target: "1.1.1.1:53", Type: routermonitor.ProbeTCP},
+	}, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
 	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler)
