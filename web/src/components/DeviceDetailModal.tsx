@@ -237,13 +237,21 @@ export function DeviceDetailModal({ device, open, onOpenChange }: DeviceDetailMo
                     {status === 'unreachable' ? 'Unreachable' : status}
                   </Badge>
                 </DialogTitle>
-                <DialogDescription className="font-mono text-xs flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
-                  <span>IP: <strong className="text-foreground">{device.ipAddr}</strong></span>
-                  <span>MAC: <strong className="text-foreground">{device.macAddr}</strong></span>
-                  <span>Interface: <strong className="text-foreground">{device.interface || device.arp?.interface || 'lan'}</strong></span>
-                  {device.arp && (
-                    <span>ARP Flags: <strong className="text-foreground">0x{Number(device.arp.flags).toString(16)}</strong></span>
-                  )}
+                <DialogDescription asChild>
+                  <div className="flex flex-wrap items-center gap-2 text-xs mt-1.5 font-normal">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/60 font-mono text-[11px] border border-border/50">
+                      <span className="text-[10px] uppercase font-semibold text-muted-foreground font-sans">IP</span>
+                      <strong className="text-foreground font-medium">{device.ipAddr}</strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/60 font-mono text-[11px] border border-border/50">
+                      <span className="text-[10px] uppercase font-semibold text-muted-foreground font-sans">MAC</span>
+                      <strong className="text-foreground font-medium">{device.macAddr}</strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-muted/40 text-muted-foreground text-[11px] border border-border/30">
+                      <span>Interface:</span>
+                      <strong className="text-foreground font-mono font-medium">{device.interface || device.arp?.interface || 'lan'}</strong>
+                    </span>
+                  </div>
                 </DialogDescription>
               </div>
             </div>

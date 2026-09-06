@@ -325,7 +325,7 @@ export function DeviceDetailPage() {
   return (
     <div className="space-y-6">
       {/* Top Header & Actions Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link
             to="/devices"
@@ -334,76 +334,65 @@ export function DeviceDetailPage() {
             <ArrowLeft className="w-4 h-4" /> Devices
           </Link>
           <span>/</span>
-          <span className="font-mono text-foreground font-semibold text-xs sm:text-sm">{ip}</span>
+          <span className="font-mono text-foreground font-semibold text-xs sm:text-sm">
+            {device?.hostname && !device.hostname.startsWith('unknown:')
+              ? device.hostname
+              : ip}
+          </span>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs gap-1.5 font-mono"
-            onClick={() => ip && handleCopy(ip, 'ip')}
-          >
-            {copiedField === 'ip' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>Copy IP</span>
-          </Button>
-
-          {device?.macAddr && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs gap-1.5 font-mono"
-              onClick={() => handleCopy(device.macAddr, 'mac')}
-            >
-              {copiedField === 'mac' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>Copy MAC</span>
-            </Button>
-          )}
-
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-8 text-xs gap-1.5"
-            onClick={handleRunPing}
-            disabled={pingLoading}
-          >
-            <Radio className={cn("w-3.5 h-3.5", pingLoading && "animate-spin text-primary")} />
-            <span>{pingLoading ? 'Pinging...' : 'Ping Device'}</span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 text-xs gap-1.5"
+          onClick={handleRunPing}
+          disabled={pingLoading}
+        >
+          <Radio className={cn("w-3.5 h-3.5", pingLoading && "animate-spin text-primary")} />
+          <span>{pingLoading ? 'Pinging...' : 'Ping Device'}</span>
+        </Button>
       </div>
 
       {/* Main Device Identity Card */}
-      <Card>
-        <CardHeader className="space-y-3 pb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start sm:items-center gap-3">
-              <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0">
+      <Card className="overflow-hidden">
+        <CardHeader className="p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0 border border-primary/15">
                 <DeviceIcon className="w-7 h-7" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-xl font-bold tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
                     {device?.hostname && !device.hostname.startsWith('unknown:')
                       ? device.hostname
-                      : 'Unknown Device'}
+                      : (device?.vendor ? `${device.vendor} Device` : 'Unknown Device')}
                   </h2>
+
                   <Badge
-                    variant={isOnline ? 'outline' : 'secondary'}
+                    variant="outline"
                     className={cn(
-                      'text-xs capitalize',
-                      status === 'active' && 'border-emerald-500/20 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-                      status === 'static' && 'border-sky-500/20 bg-sky-500/15 text-sky-600 dark:text-sky-400',
-                      status === 'unreachable' && 'border-amber-500/20 bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                      'text-xs font-medium gap-1.5 px-2.5 py-0.5 capitalize',
+                      status === 'active' && 'border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                      status === 'static' && 'border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400',
+                      status === 'unreachable' && 'border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400',
                       status === 'offline' && 'border-muted bg-muted text-muted-foreground'
                     )}
                   >
+                    <span
+                      className={cn(
+                        'w-1.5 h-1.5 rounded-full',
+                        status === 'active' && 'bg-emerald-500 animate-pulse',
+                        status === 'static' && 'bg-sky-500',
+                        status === 'unreachable' && 'bg-amber-500',
+                        status === 'offline' && 'bg-muted-foreground'
+                      )}
+                    />
                     {status === 'unreachable' ? 'Unreachable' : status}
                   </Badge>
 
                   {/* Category Pill */}
-                  <Badge variant="outline" className="text-xs bg-muted/40 font-normal">
+                  <Badge variant="secondary" className="text-xs font-normal">
                     {categoryLabel}
                   </Badge>
 
@@ -418,7 +407,7 @@ export function DeviceDetailPage() {
                       className="text-xs border-amber-500/25 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium cursor-help"
                       title="Locally Administered Address (Private / Randomized Wi-Fi MAC used by iOS, Android, or Windows for privacy)"
                     >
-                      Randomized / Private MAC
+                      Randomized MAC
                     </Badge>
                   ) : (
                     device?.macAddr && device.macAddr !== '00:00:00:00:00:00' && (
@@ -429,38 +418,85 @@ export function DeviceDetailPage() {
                   )}
                 </div>
 
-                <CardDescription className="font-mono text-xs flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                  <span>IP: <strong className="text-foreground">{device?.ipAddr || ip}</strong></span>
-                  <span>MAC: <strong className="text-foreground">{device?.macAddr || 'Unknown'}</strong></span>
-                  <span>Interface: <strong className="text-foreground">{device?.interface || device?.arp?.interface || 'lan'}</strong></span>
-                  {device?.arp && (
-                    <span>ARP Flags: <strong className="text-foreground">0x{Number(device.arp.flags).toString(16)}</strong></span>
+                {/* Device Meta Details Chips */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+                  {/* IP Address chip */}
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted/80 border border-border/60 transition-colors">
+                    <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">IP</span>
+                    <span className="font-mono font-medium text-foreground">{device?.ipAddr || ip}</span>
+                    <button
+                      type="button"
+                      onClick={() => ip && handleCopy(ip, 'ip')}
+                      className="text-muted-foreground hover:text-foreground transition-colors ml-0.5 p-0.5 rounded hover:bg-background/80"
+                      title="Copy IP address"
+                    >
+                      {copiedField === 'ip' ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* MAC Address chip */}
+                  {device?.macAddr && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted/80 border border-border/60 transition-colors">
+                      <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">MAC</span>
+                      <span className="font-mono font-medium text-foreground">{device.macAddr}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(device.macAddr, 'mac')}
+                        className="text-muted-foreground hover:text-foreground transition-colors ml-0.5 p-0.5 rounded hover:bg-background/80"
+                        title="Copy MAC address"
+                      >
+                        {copiedField === 'mac' ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Interface chip */}
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/30 border border-border/40 text-muted-foreground">
+                    <Network className="w-3.5 h-3.5 text-primary/70" />
+                    <span>Interface:</span>
+                    <span className="font-mono font-medium text-foreground">{device?.interface || device?.arp?.interface || 'lan'}</span>
+                  </div>
+
+                  {/* Timeline */}
+                  {Number(device?.lastSeenUnix) > 0 && (
+                    <div className="inline-flex items-center gap-1.5 text-muted-foreground pl-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Last seen: <span className="text-foreground font-medium">{formatRelativeTime(Number(device.lastSeenUnix))}</span></span>
+                    </div>
                   )}
                   {Number(device?.firstSeenUnix) > 0 && (
-                    <span>First seen: <strong className="text-foreground">{formatRelativeTime(Number(device.firstSeenUnix))}</strong></span>
+                    <div className="inline-flex items-center gap-1.5 text-muted-foreground pl-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>First seen: <span className="text-foreground font-medium">{formatRelativeTime(Number(device.firstSeenUnix))}</span></span>
+                    </div>
                   )}
-                  {Number(device?.lastSeenUnix) > 0 && (
-                    <span>Last seen: <strong className="text-foreground">{formatRelativeTime(Number(device.lastSeenUnix))}</strong></span>
-                  )}
-                </CardDescription>
+                </div>
               </div>
             </div>
 
             {/* Live Throughput Badge if online */}
             {isOnline && (dlRate > 0 || ulRate > 0) && (
-              <div className="flex flex-wrap items-center gap-2 sm:self-center">
+              <div className="flex flex-wrap lg:flex-col xl:flex-row items-start lg:items-end xl:items-center gap-2 shrink-0 pt-2 lg:pt-0">
                 {(wanDlRate > 0 || wanUlRate > 0) && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 text-xs font-mono">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/20 text-xs font-mono">
                     <Globe className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-muted-foreground text-[10px]">WAN:</span>
+                    <span className="text-muted-foreground text-[10px] uppercase font-sans font-semibold">WAN</span>
                     <span className="text-emerald-500 font-semibold">↓ {formatRate(wanDlRate)}</span>
                     <span className="text-sky-500 font-semibold">↑ {formatRate(wanUlRate)}</span>
                   </div>
                 )}
                 {(lanDlRate > 0 || lanUlRate > 0) && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 text-xs font-mono">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/60 border border-border/60 text-xs font-mono">
                     <Network className="w-3.5 h-3.5 text-sky-500" />
-                    <span className="text-muted-foreground text-[10px]">LAN:</span>
+                    <span className="text-muted-foreground text-[10px] uppercase font-sans font-semibold">LAN</span>
                     <span className="text-emerald-500 font-semibold">↓ {formatRate(lanDlRate)}</span>
                     <span className="text-sky-500 font-semibold">↑ {formatRate(lanUlRate)}</span>
                   </div>
