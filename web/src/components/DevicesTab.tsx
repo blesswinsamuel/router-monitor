@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Search, Laptop, ArrowDown, ArrowUp } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Search, Laptop, ArrowDown, ArrowUp, Network } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
 import { cn } from '@/lib/utils'
 import { formatBytes, formatPackets } from '@/lib/format'
@@ -13,23 +14,59 @@ interface DevicesTabProps {
 
 export function DevicesTab({ devices }: DevicesTabProps) {
   const [search, setSearch] = useState('')
+  const [selectedInterface, setSelectedInterface] = useState<string>('all')
 
-  const filtered = devices.filter((d) => {
-    const q = search.toLowerCase()
-    return (
-      d.hostname?.toLowerCase().includes(q) ||
-      d.ipAddr?.toLowerCase().includes(q) ||
-      d.hwAddr?.toLowerCase().includes(q) ||
-      d.device?.toLowerCase().includes(q)
-    )
-  })
+  // Extract unique interface names
+  const interfaces = useMemo(() => {
+    const set = new Set<string>()
+    for (const d of devices) {
+      set.add(d.device || 'lan')
+    }
+    return Array.from(set).sort()
+  }, [devices])
+
+  // Count devices per interface
+  const interfaceCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const d of devices) {
+      const iface = d.device || 'lan'
+      counts[iface] = (counts[iface] || 0) + 1
+    }
+    return counts
+  }, [devices])
+
+  // Fallback to 'all' if selected interface is no longer present
+  const currentInterface =
+    selectedInterface === 'all' || interfaces.includes(selectedInterface)
+      ? selectedInterface
+      : 'all'
+
+  const filtered = useMemo(() => {
+    return devices.filter((d) => {
+      const iface = d.device || 'lan'
+      if (currentInterface !== 'all' && iface !== currentInterface) {
+        return false
+      }
+      if (!search.trim()) return true
+      const q = search.toLowerCase()
+      return (
+        d.hostname?.toLowerCase().includes(q) ||
+        d.ipAddr?.toLowerCase().includes(q) ||
+        d.hwAddr?.toLowerCase().includes(q) ||
+        d.device?.toLowerCase().includes(q)
+      )
+    })
+  }, [devices, currentInterface, search])
 
   const totalDl = devices.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
   const totalUl = devices.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
 
+  const filteredDl = filtered.reduce((acc, d) => acc + Number(d.downloadBytes || 0), 0)
+  const filteredUl = filtered.reduce((acc, d) => acc + Number(d.uploadBytes || 0), 0)
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -50,6 +87,51 @@ export function DevicesTab({ devices }: DevicesTabProps) {
             />
           </div>
         </div>
+
+        {interfaces.length > 1 && (
+          <div className="flex items-center gap-2 pt-2 border-t overflow-x-auto pb-0.5">
+            <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 shrink-0 mr-1">
+              <Network className="w-3.5 h-3.5" />
+              <span>Interface:</span>
+            </div>
+            <Tabs value={currentInterface} onValueChange={setSelectedInterface} className="shrink-0">
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs px-2.5 py-1 flex items-center gap-1.5">
+                  <span>All</span>
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                      currentInterface === 'all'
+                        ? "bg-primary/15 text-primary font-semibold"
+                        : "bg-muted-foreground/15 text-muted-foreground"
+                    )}
+                  >
+                    {devices.length}
+                  </span>
+                </TabsTrigger>
+                {interfaces.map((iface) => (
+                  <TabsTrigger
+                    key={iface}
+                    value={iface}
+                    className="text-xs px-2.5 py-1 flex items-center gap-1.5"
+                  >
+                    <span>{iface}</span>
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                        currentInterface === iface
+                          ? "bg-primary/15 text-primary font-semibold"
+                          : "bg-muted-foreground/15 text-muted-foreground"
+                      )}
+                    >
+                      {interfaceCounts[iface] || 0}
+                    </span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -77,7 +159,11 @@ export function DevicesTab({ devices }: DevicesTabProps) {
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                    {devices.length === 0 ? "No ARP devices detected yet." : "No devices matching search filter."}
+                    {devices.length === 0
+                      ? "No ARP devices detected yet."
+                      : currentInterface !== 'all' && !search
+                        ? `No devices detected on interface "${currentInterface}".`
+                        : "No devices matching search filter."}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -135,10 +221,22 @@ export function DevicesTab({ devices }: DevicesTabProps) {
             </TableBody>
           </Table>
         </div>
-        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground px-1">
-          <span>Total Devices: {devices.length}</span>
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted-foreground px-1">
           <span>
-            Total Volume: <span className="font-semibold text-foreground">{formatBytes(totalDl + totalUl)}</span>
+            Showing {filtered.length} of {devices.length} {devices.length === 1 ? 'device' : 'devices'}
+            {currentInterface !== 'all' && ` (interface: ${currentInterface})`}
+          </span>
+          <span>
+            {currentInterface !== 'all' ? (
+              <>
+                {currentInterface} Volume: <span className="font-semibold text-foreground">{formatBytes(filteredDl + filteredUl)}</span>
+                <span className="ml-1">({formatBytes(totalDl + totalUl)} total)</span>
+              </>
+            ) : (
+              <>
+                Total Volume: <span className="font-semibold text-foreground">{formatBytes(totalDl + totalUl)}</span>
+              </>
+            )}
           </span>
         </div>
       </CardContent>
