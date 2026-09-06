@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowDownCircle, ArrowUpCircle, Globe, Laptop, Clock, ArrowDown, ArrowUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
@@ -205,39 +206,43 @@ export function OverviewTab({ overview, liveHistory }: OverviewTabProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Internet Health</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl font-bold font-mono tracking-tight">
-                {formatLatency(overview?.internetLatencySeconds)}
-              </span>
-              <Badge
-                variant={overview?.internetIsUp ? "outline" : "destructive"}
-                className={overview?.internetIsUp ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-normal" : "font-normal"}
-              >
-                {overview?.internetIsUp ? "Online" : "Offline"}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Average TCP reachability latency</p>
-          </CardContent>
-        </Card>
+        <Link to="/health" className="block focus:outline-hidden">
+          <Card className="hover:border-primary/50 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Internet Health</CardTitle>
+              <Globe className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl font-bold font-mono tracking-tight">
+                  {formatLatency(overview?.internetLatencySeconds)}
+                </span>
+                <Badge
+                  variant={overview?.internetIsUp ? "outline" : "destructive"}
+                  className={overview?.internetIsUp ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-normal" : "font-normal"}
+                >
+                  {overview?.internetIsUp ? "Online" : "Offline"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Average TCP reachability latency</p>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">Connected Devices</CardTitle>
-            <Laptop className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold font-mono tracking-tight">
-              {overview?.connectedDevicesCount || 0}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Active ARP table entries</p>
-          </CardContent>
-        </Card>
+        <Link to="/devices" className="block focus:outline-hidden">
+          <Card className="hover:border-primary/50 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium">Connected Devices</CardTitle>
+              <Laptop className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold font-mono tracking-tight">
+                {overview?.connectedDevicesCount || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Active ARP table entries</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* WAN & LAN Traffic Cards */}

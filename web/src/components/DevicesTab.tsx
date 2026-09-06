@@ -24,8 +24,8 @@ import {
   formatRelativeTime,
 } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
+import { useNavigate } from 'react-router-dom'
 import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
-import { DeviceDetailModal } from './DeviceDetailModal'
 
 interface DevicesTabProps {
   devices: Device[]
@@ -37,7 +37,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
   const [period, setPeriod] = useState<'15m' | '1h' | '6h' | '24h'>('1h')
-  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
+  const navigate = useNavigate()
 
   const [periodDevices, setPeriodDevices] = useState<Device[] | null>(null)
   const [periodLoading, setPeriodLoading] = useState(false)
@@ -151,8 +151,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const filteredUl = filtered.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
 
   return (
-    <>
-      <Card>
+    <Card>
         <CardHeader className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -387,7 +386,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     return (
                       <TableRow
                         key={`${device.ipAddr}-${idx}`}
-                        onClick={() => setSelectedDevice(device)}
+                        onClick={() => navigate(`/devices/${encodeURIComponent(device.ipAddr)}`)}
                         className="cursor-pointer hover:bg-muted/40 transition-colors group"
                       >
                         <TableCell className="font-medium">
@@ -589,15 +588,5 @@ export function DevicesTab({ devices }: DevicesTabProps) {
           </div>
         </CardContent>
       </Card>
-
-      {/* Device Detail & Time Series Modal */}
-      <DeviceDetailModal
-        device={selectedDevice}
-        open={!!selectedDevice}
-        onOpenChange={(open) => {
-          if (!open) setSelectedDevice(null)
-        }}
-      />
-    </>
   )
 }
