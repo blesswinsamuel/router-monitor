@@ -282,18 +282,41 @@ func probeTCPFallback(ctx context.Context, host string, timeout time.Duration) P
 }
 
 // probeDNS performs domain resolution using net.Resolver.
-func probeDNS(ctx context.Context, domain string, timeout time.Duration) ProbeResult {
+// target format: "domain" or "domain@dns-server:port" (e.g. "cloudflare.com@1.1.1.1:53")
+func probeDNS(ctx context.Context, target string, timeout time.Duration) ProbeResult {
 	now := time.Now()
 	res := ProbeResult{
-		Target:    TargetConfig{Target: domain, Type: ProbeDNS},
+		Target:    TargetConfig{Target: target, Type: ProbeDNS},
 		Timestamp: now,
+	}
+
+	domain := target
+	dnsServer := ""
+	if strings.Contains(target, "@") {
+		parts := strings.SplitN(target, "@", 2)
+		domain = parts[0]
+		dnsServer = parts[1]
+		if !strings.Contains(dnsServer, ":") {
+			dnsServer = net.JoinHostPort(dnsServer, "53")
+		}
 	}
 
 	lookupCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	resolver := net.DefaultResolver
+	if dnsServer != "" {
+		resolver = &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{Timeout: timeout}
+				return d.DialContext(ctx, "udp", dnsServer)
+			},
+		}
+	}
+
 	t0 := time.Now()
-	ips, err := net.DefaultResolver.LookupIP(lookupCtx, "ip4", domain)
+	ips, err := resolver.LookupIP(lookupCtx, "ip4", domain)
 	rtt := time.Since(t0)
 
 	if err != nil || len(ips) == 0 {
