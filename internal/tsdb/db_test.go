@@ -173,3 +173,75 @@ func TestTSDB_OutagePersistence(t *testing.T) {
 		t.Fatalf("expected end time %v, got %v", t2, outages[0].EndTime)
 	}
 }
+
+func TestTSDB_DeviceAndOverviewUsage(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "usage.db")
+
+	db, err := Open(dbPath)
+	if err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	defer db.Close()
+	db.SetSampleInterval(15 * time.Second)
+
+	now := time.Now().Truncate(time.Second)
+	samples := []Sample{
+		{Metric: "traffic_bytes_rate", Labels: map[string]string{"direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 200},
+		{Metric: "traffic_bytes_rate", Labels: map[string]string{"direction": "egress"}, Timestamp: now.Add(-30 * time.Second), Value: 100},
+		{Metric: "wan_traffic_bytes_rate", Labels: map[string]string{"direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 150},
+		{Metric: "wan_traffic_bytes_rate", Labels: map[string]string{"direction": "egress"}, Timestamp: now.Add(-30 * time.Second), Value: 80},
+		{Metric: "lan_traffic_bytes_rate", Labels: map[string]string{"direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 50},
+		{Metric: "lan_traffic_bytes_rate", Labels: map[string]string{"direction": "egress"}, Timestamp: now.Add(-30 * time.Second), Value: 20},
+		{Metric: "device_traffic_bytes_rate", Labels: map[string]string{"ip": "10.100.1.5", "direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 200},
+		{Metric: "device_traffic_bytes_rate", Labels: map[string]string{"ip": "10.100.1.5", "direction": "egress"}, Timestamp: now.Add(-30 * time.Second), Value: 100},
+		{Metric: "device_wan_bytes_rate", Labels: map[string]string{"ip": "10.100.1.5", "direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 150},
+		{Metric: "device_wan_bytes_rate", Labels: map[string]string{"ip": "10.100.1.5", "direction": "egress"}, Timestamp: now.Add(-30 * time.Second), Value: 80},
+		{Metric: "device_protocol_bytes_rate", Labels: map[string]string{"ip": "10.100.1.5", "protocol": "TCP", "direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 120},
+		{Metric: "device_peer_bytes_rate", Labels: map[string]string{"ip": "10.100.1.5", "peer_ip": "10.100.1.1", "direction": "ingress"}, Timestamp: now.Add(-30 * time.Second), Value: 50},
+	}
+
+	if err := db.InsertSamples(samples); err != nil {
+		t.Fatalf("InsertSamples failed: %v", err)
+	}
+
+	fromUnix := now.Add(-60 * time.Second).Unix()
+	toUnix := now.Unix()
+
+	ov, err := db.GetOverviewUsageByPeriod(fromUnix, toUnix)
+	if err != nil {
+		t.Fatalf("GetOverviewUsageByPeriod failed: %v", err)
+	}
+	// Value 200 * 15s = 3000 bytes
+	if ov.TotalDownloadBytes != 3000 || ov.TotalUploadBytes != 1500 {
+		t.Fatalf("unexpected total bytes: dl=%d, ul=%d", ov.TotalDownloadBytes, ov.TotalUploadBytes)
+	}
+	if ov.WanDownloadBytes != 2250 || ov.WanUploadBytes != 1200 {
+		t.Fatalf("unexpected wan bytes: dl=%d, ul=%d", ov.WanDownloadBytes, ov.WanUploadBytes)
+	}
+	if ov.LanDownloadBytes != 750 || ov.LanUploadBytes != 300 {
+		t.Fatalf("unexpected lan bytes: dl=%d, ul=%d", ov.LanDownloadBytes, ov.LanUploadBytes)
+	}
+
+	devs, err := db.GetDeviceUsageByPeriod(fromUnix, toUnix)
+	if err != nil {
+		t.Fatalf("GetDeviceUsageByPeriod failed: %v", err)
+	}
+	d5, ok := devs["10.100.1.5"]
+	if !ok {
+		t.Fatalf("expected usage for 10.100.1.5")
+	}
+	if d5.DownloadBytes != 3000 || d5.UploadBytes != 1500 {
+		t.Fatalf("unexpected device total: dl=%d, ul=%d", d5.DownloadBytes, d5.UploadBytes)
+	}
+	if d5.WanDownloadBytes != 2250 || d5.WanUploadBytes != 1200 {
+		t.Fatalf("unexpected device wan: dl=%d, ul=%d", d5.WanDownloadBytes, d5.WanUploadBytes)
+	}
+	if d5.Protocols == nil || d5.Protocols["TCP"] == nil || d5.Protocols["TCP"].DownloadBytes != 1800 {
+		t.Fatalf("unexpected proto usage: %+v", d5.Protocols)
+	}
+	if d5.Peers == nil || d5.Peers["10.100.1.1"] == nil || d5.Peers["10.100.1.1"].BytesReceived != 750 {
+		t.Fatalf("unexpected peer usage: %+v", d5.Peers)
+	}
+}
+
