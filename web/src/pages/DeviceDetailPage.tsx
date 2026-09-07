@@ -166,17 +166,12 @@ export function DeviceDetailPage() {
           metricName = 'device_lan_bytes_rate'
         }
 
-        const [dlRes, ulRes, devRes] = await Promise.all([
+        const [tsRes, devRes] = await Promise.all([
           rpcClient.queryTimeSeries({
-            metricName,
-            matchLabels: { ip: ip!, direction: 'ingress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-          rpcClient.queryTimeSeries({
-            metricName,
-            matchLabels: { ip: ip!, direction: 'egress' },
+            queries: [{
+              metricName,
+              matchLabels: { ip: ip! },
+            }],
             fromUnix: BigInt(from),
             toUnix: BigInt(now),
             stepSeconds: step,
@@ -194,8 +189,8 @@ export function DeviceDetailPage() {
           setFetchedDevice(updated)
         }
 
-        const dlPoints = dlRes.series[0]?.points || []
-        const ulPoints = ulRes.series[0]?.points || []
+        const dlPoints = tsRes.series.find((s) => s.labels['direction'] === 'ingress')?.points || []
+        const ulPoints = tsRes.series.find((s) => s.labels['direction'] === 'egress')?.points || []
 
         const mergedMap = new Map<number, { time: string; download: number; upload: number }>()
 

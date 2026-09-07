@@ -189,12 +189,16 @@ message LiveStatsResponse {
   double internet_jitter_seconds = 10;
 }
 
+message TimeSeriesQuery {
+  string metric_name = 1;               // e.g. "traffic_bytes_rate", "wan_traffic_bytes_rate"
+  map<string, string> match_labels = 2; // e.g. {"direction": "ingress", "ip": "10.100.0.5"}
+}
+
 message QueryTimeSeriesRequest {
-  string metric_name = 1;               // e.g. "traffic_bytes_rate", "internet_latency_seconds"
-  map<string, string> match_labels = 2; // e.g. {"direction": "ingress"}
-  int64 from_unix = 3;
-  int64 to_unix = 4;
-  int32 step_seconds = 5;               // downsampling bucket (e.g. 5, 60, 300)
+  repeated TimeSeriesQuery queries = 1;
+  int64 from_unix = 2;
+  int64 to_unix = 3;
+  int32 step_seconds = 4;               // downsampling bucket (e.g. 5, 60, 300)
 }
 
 message TimeSeriesPoint {

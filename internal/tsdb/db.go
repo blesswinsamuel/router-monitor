@@ -39,6 +39,11 @@ type TimeSeriesResult struct {
 	Points     []TimeSeriesPoint
 }
 
+type TimeSeriesQuerySpec struct {
+	MetricName  string
+	MatchLabels map[string]string
+}
+
 type PersistedDevice struct {
 	HWAddr    string    `json:"hw_addr"`
 	IPAddr    string    `json:"ip_addr"`
@@ -266,28 +271,59 @@ func (d *DB) InsertSamples(samples []Sample) error {
 	return tx.Commit()
 }
 
-func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to time.Time, stepSeconds int) ([]TimeSeriesResult, error) {
+func normalizeStepSeconds(from, to time.Time, stepSeconds int) int {
 	if stepSeconds <= 0 {
 		span := to.Sub(from)
 		if span <= 15*time.Minute {
-			stepSeconds = 5
+			return 5
 		} else if span <= 1*time.Hour {
-			stepSeconds = 15
+			return 15
 		} else if span <= 6*time.Hour {
-			stepSeconds = 60
+			return 60
 		} else {
-			stepSeconds = 300
+			return 300
 		}
 	}
+	return stepSeconds
+}
 
+func (d *DB) QueryRanges(queries []TimeSeriesQuerySpec, from, to time.Time, stepSeconds int) ([]TimeSeriesResult, error) {
+	if len(queries) == 0 {
+		return nil, nil
+	}
+
+	stepSeconds = normalizeStepSeconds(from, to, stepSeconds)
 	fromUnix := from.Unix()
 	toUnix := to.Unix()
 
-	// Find matching series
-	rows, err := d.db.Query("SELECT id, name, labels_json FROM series WHERE name = ?", metric)
+	metricSet := make(map[string]bool)
+	hasWildcard := false
+	for _, q := range queries {
+		if q.MetricName == "" {
+			hasWildcard = true
+		} else {
+			metricSet[q.MetricName] = true
+		}
+	}
+
+	var seriesQuery string
+	var queryArgs []any
+	if !hasWildcard && len(metricSet) > 0 {
+		placeholders := make([]string, 0, len(metricSet))
+		for m := range metricSet {
+			placeholders = append(placeholders, "?")
+			queryArgs = append(queryArgs, m)
+		}
+		seriesQuery = "SELECT id, name, labels_json FROM series WHERE name IN (" + strings.Join(placeholders, ",") + ")"
+	} else {
+		seriesQuery = "SELECT id, name, labels_json FROM series"
+	}
+
+	rows, err := d.db.Query(seriesQuery, queryArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("query series: %w", err)
 	}
+	defer rows.Close()
 
 	type matchedSeries struct {
 		id     int64
@@ -295,6 +331,7 @@ func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to t
 		labels map[string]string
 	}
 	var matched []matchedSeries
+	seenID := make(map[int64]bool)
 
 	for rows.Next() {
 		var id int64
@@ -307,60 +344,94 @@ func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to t
 			continue
 		}
 
-		matches := true
-		for k, v := range matchLabels {
-			if parsedLabels[k] != v {
-				matches = false
+		matchesAny := false
+		for _, q := range queries {
+			if q.MetricName != "" && q.MetricName != name {
+				continue
+			}
+			match := true
+			for k, v := range q.MatchLabels {
+				if parsedLabels[k] != v {
+					match = false
+					break
+				}
+			}
+			if match {
+				matchesAny = true
 				break
 			}
 		}
-		if matches {
+
+		if matchesAny && !seenID[id] {
+			seenID[id] = true
 			matched = append(matched, matchedSeries{id: id, name: name, labels: parsedLabels})
 		}
 	}
-	rows.Close()
 
 	if len(matched) == 0 {
 		return nil, nil
 	}
 
-	results := make([]TimeSeriesResult, 0, len(matched))
-
-	for _, s := range matched {
-		q := `
-		SELECT (timestamp / ?) * ? AS bucket,
-		       AVG(value),
-		       MIN(value),
-		       MAX(value)
-		FROM samples
-		WHERE series_id = ? AND timestamp >= ? AND timestamp <= ?
-		GROUP BY bucket
-		ORDER BY bucket ASC
-		`
-		sampleRows, err := d.db.Query(q, stepSeconds, stepSeconds, s.id, fromUnix, toUnix)
-		if err != nil {
-			return nil, fmt.Errorf("query samples for series %d: %w", s.id, err)
-		}
-
-		var points []TimeSeriesPoint
-		for sampleRows.Next() {
-			var p TimeSeriesPoint
-			if err := sampleRows.Scan(&p.TimestampUnix, &p.Value, &p.MinValue, &p.MaxValue); err != nil {
-				continue
-			}
-			points = append(points, p)
-		}
-		sampleRows.Close()
-
-		results = append(results, TimeSeriesResult{
+	seriesIDs := make([]any, len(matched))
+	placeholders := make([]string, len(matched))
+	seriesMap := make(map[int64]*TimeSeriesResult, len(matched))
+	for i, s := range matched {
+		seriesIDs[i] = s.id
+		placeholders[i] = "?"
+		res := &TimeSeriesResult{
 			MetricName: s.name,
 			Labels:     s.labels,
-			Points:     points,
-		})
+			Points:     make([]TimeSeriesPoint, 0),
+		}
+		seriesMap[s.id] = res
+	}
+
+	args := make([]any, 0, 4+len(matched))
+	args = append(args, stepSeconds, stepSeconds)
+	args = append(args, seriesIDs...)
+	args = append(args, fromUnix, toUnix)
+
+	q := fmt.Sprintf(`
+	SELECT series_id,
+	       (timestamp / ?) * ? AS bucket,
+	       AVG(value),
+	       MIN(value),
+	       MAX(value)
+	FROM samples
+	WHERE series_id IN (%s) AND timestamp >= ? AND timestamp <= ?
+	GROUP BY series_id, bucket
+	ORDER BY series_id, bucket ASC
+	`, strings.Join(placeholders, ","))
+
+	sampleRows, err := d.db.Query(q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query samples: %w", err)
+	}
+	defer sampleRows.Close()
+
+	for sampleRows.Next() {
+		var sID int64
+		var p TimeSeriesPoint
+		if err := sampleRows.Scan(&sID, &p.TimestampUnix, &p.Value, &p.MinValue, &p.MaxValue); err != nil {
+			continue
+		}
+		if res, ok := seriesMap[sID]; ok {
+			res.Points = append(res.Points, p)
+		}
+	}
+
+	results := make([]TimeSeriesResult, 0, len(matched))
+	for _, s := range matched {
+		results = append(results, *seriesMap[s.id])
 	}
 
 	return results, nil
 }
+
+func (d *DB) QueryRange(metric string, matchLabels map[string]string, from, to time.Time, stepSeconds int) ([]TimeSeriesResult, error) {
+	return d.QueryRanges([]TimeSeriesQuerySpec{{MetricName: metric, MatchLabels: matchLabels}}, from, to, stepSeconds)
+}
+
 
 type ProtocolPeriodUsage struct {
 	DownloadBytes uint64

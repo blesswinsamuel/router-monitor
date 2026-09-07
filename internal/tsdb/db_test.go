@@ -41,6 +41,19 @@ func TestTSDB_InsertAndQuery(t *testing.T) {
 		t.Fatalf("expected points, got 0")
 	}
 
+	// Query multiple metrics using QueryRanges
+	multiResults, err := db.QueryRanges([]TimeSeriesQuerySpec{
+		{MetricName: "traffic_bytes_rate", MatchLabels: map[string]string{"direction": "ingress"}},
+		{MetricName: "traffic_bytes_rate", MatchLabels: map[string]string{"direction": "egress"}},
+		{MetricName: "internet_latency_seconds"},
+	}, now.Add(-30*time.Second), now, 5)
+	if err != nil {
+		t.Fatalf("QueryRanges failed: %v", err)
+	}
+	if len(multiResults) != 3 {
+		t.Fatalf("expected 3 series from batch QueryRanges, got %d", len(multiResults))
+	}
+
 	// Verify purge
 	deleted, err := db.PurgeOlderThan(1 * time.Second)
 	if err != nil {

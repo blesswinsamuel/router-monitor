@@ -140,64 +140,40 @@ export function OverviewTab({
     try {
       const { fromUnix: from, toUnix: now, stepSeconds: step } = getPeriodRange(period)
 
+      const queries: { metricName: string; matchLabels?: Record<string, string> }[] = []
       if (chartScope === 'wan' || chartScope === 'split') {
-        const [dlRes, ulRes] = await Promise.all([
-          rpcClient.queryTimeSeries({
-            metricName: 'wan_traffic_bytes_rate',
-            matchLabels: { direction: 'ingress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-          rpcClient.queryTimeSeries({
-            metricName: 'wan_traffic_bytes_rate',
-            matchLabels: { direction: 'egress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-        ])
-        setWanHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || [], period))
+        queries.push({ metricName: 'wan_traffic_bytes_rate' })
+      }
+      if (chartScope === 'lan' || chartScope === 'split') {
+        queries.push({ metricName: 'lan_traffic_bytes_rate' })
+      }
+      if (chartScope === 'total') {
+        queries.push({ metricName: 'traffic_bytes_rate' })
+      }
+
+      const res = await rpcClient.queryTimeSeries({
+        queries,
+        fromUnix: BigInt(from),
+        toUnix: BigInt(now),
+        stepSeconds: step,
+      })
+
+      if (chartScope === 'wan' || chartScope === 'split') {
+        const dl = res.series.find((s) => s.metricName === 'wan_traffic_bytes_rate' && s.labels.direction === 'ingress')?.points || []
+        const ul = res.series.find((s) => s.metricName === 'wan_traffic_bytes_rate' && s.labels.direction === 'egress')?.points || []
+        setWanHistory(processSeriesPoints(dl, ul, period))
       }
 
       if (chartScope === 'lan' || chartScope === 'split') {
-        const [dlRes, ulRes] = await Promise.all([
-          rpcClient.queryTimeSeries({
-            metricName: 'lan_traffic_bytes_rate',
-            matchLabels: { direction: 'ingress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-          rpcClient.queryTimeSeries({
-            metricName: 'lan_traffic_bytes_rate',
-            matchLabels: { direction: 'egress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-        ])
-        setLanHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || [], period))
+        const dl = res.series.find((s) => s.metricName === 'lan_traffic_bytes_rate' && s.labels.direction === 'ingress')?.points || []
+        const ul = res.series.find((s) => s.metricName === 'lan_traffic_bytes_rate' && s.labels.direction === 'egress')?.points || []
+        setLanHistory(processSeriesPoints(dl, ul, period))
       }
 
       if (chartScope === 'total') {
-        const [dlRes, ulRes] = await Promise.all([
-          rpcClient.queryTimeSeries({
-            metricName: 'traffic_bytes_rate',
-            matchLabels: { direction: 'ingress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-          rpcClient.queryTimeSeries({
-            metricName: 'traffic_bytes_rate',
-            matchLabels: { direction: 'egress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-        ])
-        setTotalHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || [], period))
+        const dl = res.series.find((s) => s.metricName === 'traffic_bytes_rate' && s.labels.direction === 'ingress')?.points || []
+        const ul = res.series.find((s) => s.metricName === 'traffic_bytes_rate' && s.labels.direction === 'egress')?.points || []
+        setTotalHistory(processSeriesPoints(dl, ul, period))
       }
     } catch (err) {
       console.error('Failed to load history from SQLite TSDB:', err)
