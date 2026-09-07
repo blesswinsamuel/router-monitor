@@ -233,7 +233,7 @@ export function OverviewTab({
     const otherWanTotal = otherWanDevices.reduce((acc, d) => acc + d.total, 0)
 
     const wanPieData = topWanDevices.map((d, index) => ({
-      name: d.device.hostname && !d.device.hostname.startsWith('unknown:') ? d.device.hostname : (d.device.vendor || d.device.ipAddr),
+      name: d.device.hostname || (d.device.vendor || d.device.ipAddr),
       ip: d.device.ipAddr,
       value: d.total,
       dl: d.dl,
@@ -281,7 +281,7 @@ export function OverviewTab({
     const otherLanTotal = otherLanDevices.reduce((acc, d) => acc + d.total, 0)
 
     const lanPieData = topLanDevices.map((d, index) => ({
-      name: d.device.hostname && !d.device.hostname.startsWith('unknown:') ? d.device.hostname : (d.device.vendor || d.device.ipAddr),
+      name: d.device.hostname || (d.device.vendor || d.device.ipAddr),
       ip: d.device.ipAddr,
       value: d.total,
       dl: d.dl,
@@ -955,9 +955,7 @@ export function OverviewTab({
                       <div className="space-y-0.5">
                         <span className="text-[11px] text-muted-foreground">Top Consumer:</span>
                         <div className="font-semibold text-foreground truncate max-w-[200px]">
-                          {topWanDevices[0]?.device?.hostname && !topWanDevices[0]?.device?.hostname.startsWith('unknown:')
-                            ? topWanDevices[0]?.device?.hostname
-                            : (topWanDevices[0]?.device?.vendor || topWanDevices[0]?.device?.ipAddr)}
+                          {topWanDevices[0]?.device?.hostname || (topWanDevices[0]?.device?.vendor || topWanDevices[0]?.device?.ipAddr)}
                         </div>
                         <div className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-medium">
                           {formatBytes(topWanDevices[0]?.total)} ({formatPercent(wanPieData[0]?.percent / 100)})
@@ -987,7 +985,7 @@ export function OverviewTab({
                   <div className="space-y-1.5 pt-1">
                     {topWanDevices.map(({ device: d, dl, ul, total, liveDl, liveUl }, index) => {
                       const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
-                      const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
+                      const dName = d.hostname || (d.vendor || d.ipAddr)
                       const liveRate = liveDl + liveUl
                       const color = DEVICE_PALETTE[index % DEVICE_PALETTE.length]
                       const pct = totalWanVolume > 0 ? (total / totalWanVolume) * 100 : 0
@@ -1182,9 +1180,7 @@ export function OverviewTab({
                       <div className="space-y-0.5">
                         <span className="text-[11px] text-muted-foreground">Top Consumer:</span>
                         <div className="font-semibold text-foreground truncate max-w-[200px]">
-                          {topLanDevices[0]?.device?.hostname && !topLanDevices[0]?.device?.hostname.startsWith('unknown:')
-                            ? topLanDevices[0]?.device?.hostname
-                            : (topLanDevices[0]?.device?.vendor || topLanDevices[0]?.device?.ipAddr)}
+                          {topLanDevices[0]?.device?.hostname || (topLanDevices[0]?.device?.vendor || topLanDevices[0]?.device?.ipAddr)}
                         </div>
                         <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400 font-medium">
                           {formatBytes(topLanDevices[0]?.total)} ({formatPercent(lanPieData[0]?.percent / 100)})
@@ -1214,7 +1210,7 @@ export function OverviewTab({
                   <div className="space-y-1.5 pt-1">
                     {topLanDevices.map(({ device: d, dl, ul, total, liveDl, liveUl }, index) => {
                       const { icon: DevIcon } = getDeviceCategory(d.hostname, d.vendor)
-                      const dName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
+                      const dName = d.hostname || (d.vendor || d.ipAddr)
                       const liveRate = liveDl + liveUl
                       const color = DEVICE_PALETTE[index % DEVICE_PALETTE.length]
                       const pct = totalLanVolume > 0 ? (total / totalLanVolume) * 100 : 0

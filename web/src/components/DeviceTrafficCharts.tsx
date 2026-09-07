@@ -106,7 +106,7 @@ export function DeviceTrafficCharts({
         }
 
         const total = dl + ul
-        const rawName = d.hostname && !d.hostname.startsWith('unknown:') ? d.hostname : (d.vendor || d.ipAddr)
+        const rawName = d.hostname || (d.vendor || d.ipAddr)
         return {
           device: d,
           ip: d.ipAddr,

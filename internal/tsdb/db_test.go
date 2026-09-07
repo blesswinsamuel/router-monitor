@@ -83,8 +83,8 @@ func TestTSDB_DevicePersistence(t *testing.T) {
 		t.Fatalf("unexpected timestamps: first=%v, last=%v", devs[0].FirstSeen, devs[0].LastSeen)
 	}
 
-	// 2. Subsequent upsert with unknown hostname should retain existing known hostname
-	if err := db.UpsertDevice("aa:bb:cc:dd:ee:01", "10.100.1.10", "unknown:10.100.1.10", "lan", t2); err != nil {
+	// 2. Subsequent upsert with empty hostname should retain existing known hostname
+	if err := db.UpsertDevice("aa:bb:cc:dd:ee:01", "10.100.1.10", "", "lan", t2); err != nil {
 		t.Fatalf("UpsertDevice second call failed: %v", err)
 	}
 
