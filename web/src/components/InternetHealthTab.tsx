@@ -78,8 +78,10 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
         }
 
         const res = await rpcClient.queryTimeSeries({
-          metricName,
-          matchLabels: {},
+          queries: [{
+            metricName,
+            matchLabels: {},
+          }],
           fromUnix: BigInt(from),
           toUnix: BigInt(now),
           stepSeconds: step,

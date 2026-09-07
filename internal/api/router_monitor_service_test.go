@@ -64,7 +64,9 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 
 	// 4. Test QueryTimeSeries
 	tsRes, err := svc.QueryTimeSeries(ctx, connect.NewRequest(&routermonitorv1.QueryTimeSeriesRequest{
-		MetricName: "traffic_bytes_rate",
+		Queries: []*routermonitorv1.TimeSeriesQuery{
+			{MetricName: "traffic_bytes_rate"},
+		},
 	}))
 	if err != nil {
 		t.Fatalf("QueryTimeSeries failed: %v", err)

@@ -569,7 +569,15 @@ func (s *RouterMonitorService) QueryTimeSeries(
 		from = to.Add(-24 * time.Hour)
 	}
 
-	results, err := s.tsdbDB.QueryRange(req.Msg.MetricName, req.Msg.MatchLabels, from, to, int(req.Msg.StepSeconds))
+	queries := make([]tsdb.TimeSeriesQuerySpec, 0, len(req.Msg.Queries))
+	for _, q := range req.Msg.Queries {
+		queries = append(queries, tsdb.TimeSeriesQuerySpec{
+			MetricName:  q.MetricName,
+			MatchLabels: q.MatchLabels,
+		})
+	}
+
+	results, err := s.tsdbDB.QueryRanges(queries, from, to, int(req.Msg.StepSeconds))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

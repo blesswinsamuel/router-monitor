@@ -180,61 +180,49 @@ export function DeviceTrafficCharts({
         metricName = 'device_lan_bytes_rate'
       }
 
-      // Query ingress & egress rates for all top IPs in parallel
-      const queries = topIps.map(async (ip) => {
-        const [dlRes, ulRes] = await Promise.all([
-          rpcClient.queryTimeSeries({
-            metricName,
-            matchLabels: { ip, direction: 'ingress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-          rpcClient.queryTimeSeries({
-            metricName,
-            matchLabels: { ip, direction: 'egress' },
-            fromUnix: BigInt(from),
-            toUnix: BigInt(now),
-            stepSeconds: step,
-          }),
-        ])
-        return {
-          ip,
-          dlPoints: dlRes.series[0]?.points || [],
-          ulPoints: ulRes.series[0]?.points || [],
-        }
+      // Query ingress & egress rates for all top IPs in a single batch RPC
+      const queries = topIps.map((ip) => ({
+        metricName,
+        matchLabels: { ip },
+      }))
+
+      const res = await rpcClient.queryTimeSeries({
+        queries,
+        fromUnix: BigInt(from),
+        toUnix: BigInt(now),
+        stepSeconds: step,
       })
 
-      const results = await Promise.all(queries)
+      // Map IP -> Map<timestamp, totalRate>
+      const ipMaps = new Map<string, Map<number, number>>()
+      for (const ip of topIps) {
+        ipMaps.set(ip, new Map())
+      }
+
+      for (const s of res.series) {
+        const ip = s.labels['ip']
+        const ipMap = ipMaps.get(ip)
+        if (!ipMap) continue
+        for (const p of s.points) {
+          const ts = Number(p.timestampUnix)
+          ipMap.set(ts, (ipMap.get(ts) || 0) + p.value)
+        }
+      }
 
       const mergedMap = new Map<number, DeviceTimeSeriesEntry>()
-
-      for (const res of results) {
-        // Build map for this IP
-        const ipMap = new Map<number, number>()
-        for (const p of res.dlPoints) {
-          const ts = Number(p.timestampUnix)
-          ipMap.set(ts, (ipMap.get(ts) || 0) + p.value)
-        }
-        for (const p of res.ulPoints) {
-          const ts = Number(p.timestampUnix)
-          ipMap.set(ts, (ipMap.get(ts) || 0) + p.value)
-        }
-
-        // Merge into global map
+      for (const [ip, ipMap] of ipMaps.entries()) {
         for (const [ts, rate] of ipMap.entries()) {
           let entry = mergedMap.get(ts)
           if (!entry) {
             const d = new Date(ts * 1000)
             const timeStr = formatChartTime(d, period)
             entry = { time: timeStr, timestamp: ts }
-            // initialize all top IPs with 0
             for (const otherIp of topIps) {
               entry[otherIp] = 0
             }
             mergedMap.set(ts, entry)
           }
-          entry[res.ip] = rate
+          entry[ip] = rate
         }
       }
 
