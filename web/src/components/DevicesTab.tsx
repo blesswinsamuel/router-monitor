@@ -44,11 +44,17 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [selectedInterface, setSelectedInterface] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
+  const [showUnknownOnly, setShowUnknownOnly] = useState(false)
   const [selectedDeviceIp, setSelectedDeviceIp] = useState<string | null>(null)
   const [showCharts, setShowCharts] = useState(true)
   const navigate = useNavigate()
 
   const activeDeviceList = devices
+
+  // Count unknown devices (devices not verified via reverse DNS)
+  const unknownCount = useMemo(() => {
+    return activeDeviceList.filter((d) => !d.isKnown).length
+  }, [activeDeviceList])
 
   // Extract unique interface names
   const interfaces = useMemo(() => {
@@ -109,17 +115,23 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         return false
       }
 
+      if (showUnknownOnly && d.isKnown) {
+        return false
+      }
+
       if (!search.trim()) return true
       const q = search.toLowerCase()
       return (
         d.hostname?.toLowerCase().includes(q) ||
+        d.dhcpLease?.hostname?.toLowerCase().includes(q) ||
         d.ipAddr?.toLowerCase().includes(q) ||
         d.macAddr?.toLowerCase().includes(q) ||
         d.interface?.toLowerCase().includes(q) ||
-        d.arp?.interface?.toLowerCase().includes(q)
+        d.arp?.interface?.toLowerCase().includes(q) ||
+        d.vendor?.toLowerCase().includes(q)
       )
     })
-  }, [activeDeviceList, currentInterface, statusFilter, search, selectedDeviceIp])
+  }, [activeDeviceList, currentInterface, statusFilter, showUnknownOnly, search, selectedDeviceIp])
 
   const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.downloadBytes || 0), 0)
   const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
@@ -194,6 +206,33 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 </Tabs>
               </div>
 
+              {/* Unknown Only Quick Filter */}
+              <Button
+                variant={showUnknownOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowUnknownOnly((prev) => !prev)}
+                className={cn(
+                  "h-8 text-xs gap-1.5 shrink-0 transition-all",
+                  showUnknownOnly
+                    ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title={showUnknownOnly ? "Showing unknown devices only. Click to show all." : "Show only unknown devices (not in static reverse DNS)"}
+              >
+                <HelpCircle className={cn("w-3.5 h-3.5", showUnknownOnly ? "text-white" : "text-amber-500")} />
+                <span>Unknown Only</span>
+                <span
+                  className={cn(
+                    "px-1.5 py-0.2 rounded-full text-[10px] font-mono",
+                    showUnknownOnly
+                      ? "bg-white/20 text-white font-semibold"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {unknownCount}
+                </span>
+              </Button>
+
               {/* Active Device Filter Chip */}
               {selectedDeviceIp && (
                 <Badge
@@ -203,6 +242,19 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   title="Click to clear device filter"
                 >
                   <span>Device: {selectedDeviceIp}</span>
+                  <XCircle className="w-3.5 h-3.5" />
+                </Badge>
+              )}
+
+              {/* Unknown Filter Active Chip */}
+              {showUnknownOnly && (
+                <Badge
+                  variant="secondary"
+                  className="text-xs gap-1.5 cursor-pointer hover:bg-destructive/15 hover:text-destructive transition-colors py-1 px-2.5 border border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+                  onClick={() => setShowUnknownOnly(false)}
+                  title="Click to show all devices"
+                >
+                  <span>Filter: Unknown Only</span>
                   <XCircle className="w-3.5 h-3.5" />
                 </Badge>
               )}
@@ -384,10 +436,32 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                               <RowIcon className="w-4 h-4" />
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5">
-                                {device.hostname && !device.hostname.startsWith('unknown:')
-                                  ? device.hostname
-                                  : 'Unknown Device'}
+                              <span className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap">
+                                {device.isKnown ? (
+                                  <span>{device.hostname || 'Known Device'}</span>
+                                ) : device.hostname && !device.hostname.startsWith('unknown:') ? (
+                                  <>
+                                    <span>{device.hostname}</span>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0"
+                                      title="Dynamic device not configured in static reverse DNS. Name reported via DHCP lease."
+                                    >
+                                      Unknown • DHCP
+                                    </Badge>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>{device.vendor ? `${device.vendor} Device` : 'Unknown Device'}</span>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0"
+                                      title="Unmanaged device without static DNS entry or DHCP hostname."
+                                    >
+                                      Unknown
+                                    </Badge>
+                                  </>
+                                )}
                               </span>
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
                                 <span>{device.ipAddr}</span>

@@ -32,9 +32,48 @@ type ArpCollector struct {
 	arpDevices *prometheus.Desc
 }
 
+func autoDetectDomainSuffix() string {
+	f, err := os.Open("/etc/resolv.conf")
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && (fields[0] == "domain" || fields[0] == "search") {
+			suffix := strings.TrimPrefix(fields[1], ".")
+			suffix = strings.TrimSuffix(suffix, ".")
+			if suffix != "" {
+				return "." + suffix
+			}
+		}
+	}
+	return ""
+}
+
+func CleanHostname(raw string, domainSuffix string) string {
+	h := strings.TrimSpace(raw)
+	h = strings.TrimSuffix(h, ".")
+	if domainSuffix != "" {
+		s := strings.TrimSpace(domainSuffix)
+		s = strings.TrimSuffix(s, ".")
+		if !strings.HasPrefix(s, ".") {
+			s = "." + s
+		}
+		h = strings.TrimSuffix(h, s)
+	}
+	return h
+}
+
 func NewArpCollector(filename string, stripDomainSuffix string, hostCacheTTL time.Duration) *ArpCollector {
 	if hostCacheTTL <= 0 {
 		hostCacheTTL = 30 * time.Minute
+	}
+	if stripDomainSuffix == "" {
+		stripDomainSuffix = autoDetectDomainSuffix()
 	}
 
 	collector := &ArpCollector{
@@ -153,10 +192,8 @@ func (collector *ArpCollector) lookupLoop() {
 		hosts, err := net.DefaultResolver.LookupAddr(ctx, ipAddr)
 		cancel()
 		if err == nil && len(hosts) > 0 {
-			hostname = hosts[0]
+			hostname = CleanHostname(hosts[0], collector.stripDomainSuffix)
 		}
-
-		hostname = strings.TrimSuffix(hostname, collector.stripDomainSuffix)
 
 		collector.hostCacheMutex.Lock()
 		collector.hostCache[ipAddr] = hostCacheValue{Hostname: hostname, Expiry: time.Now().Add(collector.hostCacheTTL)}
