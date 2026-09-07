@@ -81,7 +81,7 @@ func main() {
 		log.Fatalf("invalid INTERNET_CHECK_TARGETS: %v", err)
 	}
 
-	checkInterval, err := parseDurationWithDefault(os.Getenv("INTERNET_CHECK_INTERVAL"), 5*time.Second)
+	checkInterval, err := parseDurationWithDefault(os.Getenv("INTERNET_CHECK_INTERVAL"), 15*time.Second)
 	if err != nil {
 		log.Fatalf("invalid INTERNET_CHECK_INTERVAL: %v", err)
 	}
