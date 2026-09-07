@@ -98,6 +98,15 @@ message ArpInfo {
   string interface = 3;
 }
 
+message DhcpLeaseInfo {
+  string hostname = 1;
+  string client_id = 2;
+  int64 valid_lifetime_seconds = 3;
+  int64 expire_unix = 4;
+  int64 subnet_id = 5;
+  int64 state = 6;
+}
+
 message Device {
   string ip_addr = 1;
   string mac_addr = 2;
@@ -116,6 +125,9 @@ message Device {
   repeated ProtocolTraffic protocols = 12;
   repeated PeerTraffic peers = 13;
   string vendor = 14;
+
+  bool is_known = 15;
+  DhcpLeaseInfo dhcp_lease = 16;
 }
 
 message ListDevicesResponse {

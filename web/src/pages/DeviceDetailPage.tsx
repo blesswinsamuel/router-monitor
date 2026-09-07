@@ -365,10 +365,31 @@ export function DeviceDetailPage() {
               <div className="space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
-                    {device?.hostname && !device.hostname.startsWith('unknown:')
-                      ? device.hostname
-                      : (device?.vendor ? `${device.vendor} Device` : 'Unknown Device')}
+                    {device?.isKnown
+                      ? device.hostname || ip
+                      : device?.hostname && !device.hostname.startsWith('unknown:')
+                        ? device.hostname
+                        : (device?.vendor ? `${device.vendor} Device` : 'Unknown Device')}
                   </h2>
+
+                  {/* Known / Unknown Classification Badge */}
+                  {device?.isKnown ? (
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium"
+                      title="Verified via static reverse DNS mapping"
+                    >
+                      Known Device
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium"
+                      title="Unmanaged device without static reverse DNS entry"
+                    >
+                      {device?.dhcpLease?.hostname ? 'Unknown • DHCP' : 'Unknown Device'}
+                    </Badge>
+                  )}
 
                   <Badge
                     variant="outline"
@@ -421,6 +442,14 @@ export function DeviceDetailPage() {
 
                 {/* Device Meta Details Chips */}
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+                  {/* DHCP Client Name chip */}
+                  {device?.dhcpLease?.hostname && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 border border-border/60 transition-colors">
+                      <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">DHCP Name</span>
+                      <span className="font-mono font-medium text-foreground">{device.dhcpLease.hostname}</span>
+                    </div>
+                  )}
+
                   {/* IP Address chip */}
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted/80 border border-border/60 transition-colors">
                     <span className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">IP</span>
@@ -1032,7 +1061,7 @@ export function DeviceDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 text-xs">
             {/* MAC Architecture */}
             <div className="p-3.5 rounded-lg border bg-card/60 space-y-2">
               <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
@@ -1092,6 +1121,58 @@ export function DeviceDetailPage() {
                   <span className="text-muted-foreground">Interface:</span>
                   <strong className="text-foreground">{device?.interface || device?.arp?.interface || 'lan'}</strong>
                 </div>
+              </div>
+            </div>
+
+            {/* DHCP Lease & Network Identity */}
+            <div className="p-3.5 rounded-lg border bg-card/60 space-y-2">
+              <div className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                <Network className="w-3.5 h-3.5 text-indigo-500" />
+                <span>DHCP & DNS Identity</span>
+              </div>
+              <div className="space-y-1 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Verification:</span>
+                  <span className={cn("font-medium", device?.isKnown ? "text-emerald-500" : "text-amber-500")}>
+                    {device?.isKnown ? 'Known (Static DNS)' : 'Unknown (Dynamic)'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Reverse DNS:</span>
+                  <span className="text-foreground truncate max-w-[130px]" title={device?.isKnown ? device.hostname : 'No PTR (NXDOMAIN)'}>
+                    {device?.isKnown ? device.hostname : 'Unregistered'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">DHCP Name:</span>
+                  <span className="text-foreground truncate max-w-[130px]" title={device?.dhcpLease?.hostname || 'None'}>
+                    {device?.dhcpLease?.hostname || 'None'}
+                  </span>
+                </div>
+                {device?.dhcpLease?.clientId ? (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Client ID:</span>
+                    <span className="text-foreground truncate max-w-[130px]" title={device.dhcpLease.clientId}>
+                      {device.dhcpLease.clientId}
+                    </span>
+                  </div>
+                ) : null}
+                {device?.dhcpLease && Number(device.dhcpLease.subnetId) > 0 ? (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Kea Subnet:</span>
+                    <span className="text-foreground font-semibold">
+                      Subnet {Number(device.dhcpLease.subnetId)}
+                    </span>
+                  </div>
+                ) : null}
+                {device?.dhcpLease && Number(device.dhcpLease.expireUnix) > 0 ? (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Lease Expiry:</span>
+                    <span className="text-foreground" title={new Date(Number(device.dhcpLease.expireUnix) * 1000).toLocaleString()}>
+                      {formatRelativeTime(Number(device.dhcpLease.expireUnix))}
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -1159,6 +1240,16 @@ export function DeviceDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Educational Note about Unknown / Unverified Device */}
+          {!device?.isKnown && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Unverified Device:</strong> This device does not have a static reverse DNS PTR record configured in the router's DNS server. {device?.dhcpLease?.hostname ? `Its hostname "${device.dhcpLease.hostname}" was reported via DHCP option 12 during lease negotiation.` : 'No hostname was reported by DHCP or DNS.'}
+              </span>
+            </div>
+          )}
 
           {/* Educational Note about MAC Randomization if present */}
           {isRandomized && (

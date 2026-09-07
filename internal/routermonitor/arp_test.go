@@ -96,3 +96,26 @@ func TestCollect_UsesFreshCacheWithoutQueueingLookup(t *testing.T) {
 		t.Fatalf("expected no pending lookups, got %d", len(collector.pendingLookups))
 	}
 }
+
+func TestCleanHostname(t *testing.T) {
+	tests := []struct {
+		raw    string
+		suffix string
+		want   string
+	}{
+		{"tp-link-eap-670.home.lan.", ".home.lan.", "tp-link-eap-670"},
+		{"tp-link-eap-670.home.lan.", ".home.lan", "tp-link-eap-670"},
+		{"tp-link-eap-670.home.lan.", "home.lan", "tp-link-eap-670"},
+		{"tp-link-eap-670.home.lan", ".home.lan", "tp-link-eap-670"},
+		{"iphone.", "", "iphone"},
+		{"iphone", ".home.lan", "iphone"},
+		{"server.other.domain.", ".home.lan", "server.other.domain"},
+	}
+
+	for _, tt := range tests {
+		got := CleanHostname(tt.raw, tt.suffix)
+		if got != tt.want {
+			t.Errorf("CleanHostname(%q, %q) = %q, want %q", tt.raw, tt.suffix, got, tt.want)
+		}
+	}
+}

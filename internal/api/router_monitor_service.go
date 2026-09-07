@@ -25,6 +25,7 @@ type RouterMonitorService struct {
 	internetChecker *routermonitor.InternetChecker
 	tsdbDB          *tsdb.DB
 	sampler         *tsdb.Sampler
+	dhcpReader      routermonitor.DHCPLeaseReader
 }
 
 func NewRouterMonitorService(
@@ -35,6 +36,7 @@ func NewRouterMonitorService(
 	checker *routermonitor.InternetChecker,
 	db *tsdb.DB,
 	sampler *tsdb.Sampler,
+	dhcpReader routermonitor.DHCPLeaseReader,
 ) *RouterMonitorService {
 	return &RouterMonitorService{
 		interfaceName:   ifaceName,
@@ -44,6 +46,7 @@ func NewRouterMonitorService(
 		internetChecker: checker,
 		tsdbDB:          db,
 		sampler:         sampler,
+		dhcpReader:      dhcpReader,
 	}
 }
 
@@ -130,6 +133,12 @@ func (s *RouterMonitorService) ListDevices(
 	rawDevices := s.arpCollector.GetDevices()
 	deviceRates := s.sampler.GetDeviceRates()
 
+	var leasesByIP map[string]routermonitor.DHCPLease
+	var leasesByMAC map[string]routermonitor.DHCPLease
+	if s.dhcpReader != nil {
+		leasesByIP, leasesByMAC, _ = s.dhcpReader.GetLeasesMap()
+	}
+
 	// 1. Load persisted devices from SQLite TSDB
 	persistedDevices, _ := s.tsdbDB.GetPersistedDevices()
 	persistedByMAC := make(map[string]tsdb.PersistedDevice)
@@ -143,6 +152,13 @@ func (s *RouterMonitorService) ListDevices(
 	for _, rd := range rawDevices {
 		if rd.Hostname != "" && !strings.HasPrefix(rd.Hostname, "unknown:") {
 			ipToHostname[rd.IPAddr] = rd.Hostname
+		}
+	}
+	for ip, lease := range leasesByIP {
+		if lease.Hostname != "" {
+			if _, exists := ipToHostname[ip]; !exists {
+				ipToHostname[ip] = lease.Hostname
+			}
 		}
 	}
 
@@ -163,12 +179,42 @@ func (s *RouterMonitorService) ListDevices(
 	devices := make([]*routermonitorv1.Device, 0, len(rawDevices)+len(persistedDevices))
 
 	createDevice := func(
-		ip, mac, hostname, iface, status string,
+		ip, mac, rawHostname, iface, status string,
 		firstSeen, lastSeen int64,
 		arpInfo *routermonitorv1.ArpInfo,
 		rate tsdb.DeviceRate,
 		pu *tsdb.DevicePeriodUsage,
 	) *routermonitorv1.Device {
+		isKnown := rawHostname != "" && !strings.HasPrefix(rawHostname, "unknown:")
+
+		var dhcpLeaseProto *routermonitorv1.DhcpLeaseInfo
+		var lease routermonitor.DHCPLease
+		var hasLease bool
+		if leasesByIP != nil {
+			lease, hasLease = leasesByIP[ip]
+		}
+		if !hasLease && leasesByMAC != nil && mac != "" && mac != "00:00:00:00:00:00" {
+			lease, hasLease = leasesByMAC[strings.ToLower(mac)]
+		}
+
+		if hasLease {
+			dhcpLeaseProto = &routermonitorv1.DhcpLeaseInfo{
+				Hostname:             lease.Hostname,
+				ClientId:             lease.ClientID,
+				ValidLifetimeSeconds: int64(lease.ValidLifetime.Seconds()),
+				ExpireUnix:           lease.Expire.Unix(),
+				SubnetId:             lease.SubnetID,
+				State:                lease.State,
+			}
+		}
+
+		displayHostname := ""
+		if isKnown {
+			displayHostname = rawHostname
+		} else if dhcpLeaseProto != nil && dhcpLeaseProto.Hostname != "" {
+			displayHostname = dhcpLeaseProto.Hostname
+		}
+
 		var puDl, puUl, puWanDl, puWanUl, puLanDl, puLanUl uint64
 		if pu != nil {
 			puDl = pu.DownloadBytes
@@ -285,7 +331,7 @@ func (s *RouterMonitorService) ListDevices(
 		return &routermonitorv1.Device{
 			IpAddr:        ip,
 			MacAddr:       mac,
-			Hostname:      hostname,
+			Hostname:      displayHostname,
 			Interface:     iface,
 			Status:        status,
 			FirstSeenUnix: firstSeen,
@@ -318,6 +364,8 @@ func (s *RouterMonitorService) ListDevices(
 			Protocols: protoList,
 			Peers:     peerList,
 			Vendor:    vendor,
+			IsKnown:   isKnown,
+			DhcpLease: dhcpLeaseProto,
 		}
 	}
 
@@ -343,15 +391,19 @@ func (s *RouterMonitorService) ListDevices(
 
 		firstSeen := now
 		lastSeen := now
+		rawHostname := d.Hostname
 		if pd, ok := persistedByMAC[d.HWAddr]; ok {
 			firstSeen = pd.FirstSeen.Unix()
 			lastSeen = pd.LastSeen.Unix()
+			if (rawHostname == "" || strings.HasPrefix(rawHostname, "unknown:")) && pd.Hostname != "" && !strings.HasPrefix(pd.Hostname, "unknown:") {
+				rawHostname = pd.Hostname
+			}
 		}
 
 		rate := deviceRates[d.IPAddr]
 
 		dev := createDevice(
-			d.IPAddr, d.HWAddr, d.Hostname, d.Device, status,
+			d.IPAddr, d.HWAddr, rawHostname, d.Device, status,
 			firstSeen, lastSeen,
 			&routermonitorv1.ArpInfo{
 				Flags:     d.Flag,

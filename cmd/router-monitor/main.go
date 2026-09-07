@@ -160,6 +160,8 @@ func main() {
 	sampler := tsdb.NewSampler(tsdbDB, ebpfFirewallCollector, arpCollector, internetChecker, sampleInterval)
 	sampler.Start(ctx)
 
+	dhcpReader := routermonitor.NewDHCPLeaseReader(os.Getenv("DHCP_LEASES_FILE"), os.Getenv("DHCP_TYPE"))
+
 	routerService := api.NewRouterMonitorService(
 		iface.Name,
 		os.Getenv("LAN_SUBNET_CIDR"),
@@ -168,6 +170,7 @@ func main() {
 		internetChecker,
 		tsdbDB,
 		sampler,
+		dhcpReader,
 	)
 	rpcPath, rpcHandler := routermonitorv1connect.NewRouterMonitorServiceHandler(routerService)
 
