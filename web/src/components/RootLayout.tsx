@@ -27,7 +27,7 @@ export function useRootOutletContext() {
 export function RootLayout() {
   const [searchParams, setSearchParams] = useSearchParams()
   const periodParam = searchParams.get('period')
-  const period: Period = isPeriod(periodParam) ? periodParam : '24h'
+  const period: Period = periodParam === '24h' ? '1d' : isPeriod(periodParam) ? periodParam : '1d'
 
   const handlePeriodChange = useCallback((newPeriod: Period) => {
     setSearchParams((prev) => {

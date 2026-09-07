@@ -34,6 +34,7 @@ import {
 
 import { useRootOutletContext } from './RootLayout'
 import { getPeriodRange } from '@/lib/period'
+import { formatChartTime } from '@/lib/format'
 
 function safeKey(addr: string): string {
   return addr.replace(/[^a-zA-Z0-9_-]/g, '_')
@@ -97,7 +98,7 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
             if (!entry) {
               const d = new Date(ts * 1000)
               entry = {
-                time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                time: formatChartTime(d, period),
               }
               timeMap.set(ts, entry)
             }
@@ -459,9 +460,11 @@ export function InternetHealthTab({ health }: InternetHealthTabProps) {
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
+                    minTickGap={28}
                     fontSize={11}
                     className="font-mono text-[10px]"
                   />
+
                   <YAxis
                     tickLine={false}
                     axisLine={false}
