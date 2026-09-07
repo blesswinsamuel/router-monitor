@@ -580,7 +580,7 @@ func (d *DB) UpsertDevices(devices []PersistedDevice) error {
 	VALUES (?, ?, ?, ?, ?, ?)
 	ON CONFLICT(mac) DO UPDATE SET
 		ip = excluded.ip,
-		hostname = CASE WHEN excluded.hostname != '' AND excluded.hostname NOT LIKE 'unknown:%' THEN excluded.hostname ELSE devices.hostname END,
+		hostname = CASE WHEN excluded.hostname != '' THEN excluded.hostname ELSE devices.hostname END,
 		interface = excluded.interface,
 		last_seen = excluded.last_seen
 	`

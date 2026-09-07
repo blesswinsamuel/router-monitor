@@ -133,9 +133,8 @@ func (collector *ArpCollector) GetDevices() []ArpDeviceEntry {
 		collector.hostCacheMutex.RLock()
 		host, ok := collector.hostCache[ipAddr]
 		collector.hostCacheMutex.RUnlock()
-		hostname = host.Hostname
-		if hostname == "" {
-			hostname = "unknown:" + ipAddr
+		if ok {
+			hostname = host.Hostname
 		}
 		if !ok || host.Expiry.Before(time.Now()) {
 			collector.enqueueLookup(ipAddr)
@@ -186,7 +185,7 @@ func (collector *ArpCollector) enqueueLookup(ipAddr string) {
 
 func (collector *ArpCollector) lookupLoop() {
 	for ipAddr := range collector.lookupQueue {
-		hostname := "unknown:" + ipAddr
+		var hostname string
 
 		ctx, cancel := context.WithTimeout(context.Background(), collector.lookupTimeout)
 		hosts, err := net.DefaultResolver.LookupAddr(ctx, ipAddr)

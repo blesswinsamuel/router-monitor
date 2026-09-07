@@ -145,12 +145,12 @@ func (s *RouterMonitorService) ListDevices(
 	ipToHostname := make(map[string]string)
 	for _, pd := range persistedDevices {
 		persistedByMAC[pd.HWAddr] = pd
-		if pd.Hostname != "" && !strings.HasPrefix(pd.Hostname, "unknown:") {
+		if pd.Hostname != "" {
 			ipToHostname[pd.IPAddr] = pd.Hostname
 		}
 	}
 	for _, rd := range rawDevices {
-		if rd.Hostname != "" && !strings.HasPrefix(rd.Hostname, "unknown:") {
+		if rd.Hostname != "" {
 			ipToHostname[rd.IPAddr] = rd.Hostname
 		}
 	}
@@ -185,7 +185,7 @@ func (s *RouterMonitorService) ListDevices(
 		rate tsdb.DeviceRate,
 		pu *tsdb.DevicePeriodUsage,
 	) *routermonitorv1.Device {
-		isKnown := rawHostname != "" && !strings.HasPrefix(rawHostname, "unknown:")
+		isKnown := rawHostname != ""
 
 		var dhcpLeaseProto *routermonitorv1.DhcpLeaseInfo
 		var lease routermonitor.DHCPLease
@@ -395,7 +395,7 @@ func (s *RouterMonitorService) ListDevices(
 		if pd, ok := persistedByMAC[d.HWAddr]; ok {
 			firstSeen = pd.FirstSeen.Unix()
 			lastSeen = pd.LastSeen.Unix()
-			if (rawHostname == "" || strings.HasPrefix(rawHostname, "unknown:")) && pd.Hostname != "" && !strings.HasPrefix(pd.Hostname, "unknown:") {
+			if rawHostname == "" && pd.Hostname != "" {
 				rawHostname = pd.Hostname
 			}
 		}

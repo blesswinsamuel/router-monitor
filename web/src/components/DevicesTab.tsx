@@ -439,7 +439,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                               <span className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap">
                                 {device.isKnown ? (
                                   <span>{device.hostname || 'Known Device'}</span>
-                                ) : device.hostname && !device.hostname.startsWith('unknown:') ? (
+                                ) : device.hostname ? (
                                   <>
                                     <span>{device.hostname}</span>
                                     <Badge

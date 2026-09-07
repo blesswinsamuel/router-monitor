@@ -336,9 +336,7 @@ export function DeviceDetailPage() {
           </Link>
           <span>/</span>
           <span className="font-mono text-foreground font-semibold text-xs sm:text-sm">
-            {device?.hostname && !device.hostname.startsWith('unknown:')
-              ? device.hostname
-              : ip}
+            {device?.hostname || ip}
           </span>
         </div>
 
@@ -365,11 +363,7 @@ export function DeviceDetailPage() {
               <div className="space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
-                    {device?.isKnown
-                      ? device.hostname || ip
-                      : device?.hostname && !device.hostname.startsWith('unknown:')
-                        ? device.hostname
-                        : (device?.vendor ? `${device.vendor} Device` : 'Unknown Device')}
+                    {device?.hostname || (device?.vendor ? `${device.vendor} Device` : 'Unknown Device')}
                   </h2>
 
                   {/* Known / Unknown Classification Badge */}
