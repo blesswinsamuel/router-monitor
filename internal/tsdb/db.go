@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pressly/goose/v3"
+	"golang.org/x/sync/singleflight"
 	_ "modernc.org/sqlite"
 )
 
@@ -78,6 +79,8 @@ type DB struct {
 
 	usageCacheMu sync.RWMutex
 	usageCache   map[string]cachedUsage
+	usageSF      singleflight.Group
+	overviewSF   singleflight.Group
 }
 
 func Open(dbPath string) (*DB, error) {
@@ -222,6 +225,8 @@ func (d *DB) getOrCreateSeriesID(metric string, labels map[string]string) (int64
 		Name:      metric,
 		IP:        labels["ip"],
 		Direction: labels["direction"],
+		Protocol:  labels["protocol"],
+		PeerIP:    labels["peer_ip"],
 	}
 	return id, nil
 }
@@ -464,9 +469,18 @@ type OverviewPeriodUsage struct {
 }
 
 // GetDeviceUsageByPeriod aggregates device traffic samples over [fromUnix, toUnix].
-// Leverages covering index idx_samples_time_series_val and caches recent results in memory.
+// Leverages covering index idx_samples_series_time_val, singleflight, and caches results in memory.
 func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DevicePeriodUsage, error) {
-	cacheKey := fmt.Sprintf("%d:%d", fromUnix/15, toUnix/15)
+	now := time.Now().Unix()
+	isLive := (now-toUnix) >= -10 && (now-toUnix) <= 60
+
+	var cacheKey string
+	if isLive {
+		cacheKey = fmt.Sprintf("live:%d", toUnix-fromUnix)
+	} else {
+		cacheKey = fmt.Sprintf("hist:%d:%d", fromUnix, toUnix)
+	}
+
 	d.usageCacheMu.RLock()
 	if cu, ok := d.usageCache[cacheKey]; ok && time.Now().Before(cu.expiry) {
 		d.usageCacheMu.RUnlock()
@@ -474,11 +488,59 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 	}
 	d.usageCacheMu.RUnlock()
 
+	res, err, _ := d.usageSF.Do(cacheKey, func() (any, error) {
+		d.usageCacheMu.RLock()
+		if cu, ok := d.usageCache[cacheKey]; ok && time.Now().Before(cu.expiry) {
+			d.usageCacheMu.RUnlock()
+			return cu.data, nil
+		}
+		d.usageCacheMu.RUnlock()
+
+		usage, err := d.calculateDeviceUsage(fromUnix, toUnix)
+		if err != nil {
+			return nil, err
+		}
+
+		ttl := 15 * time.Second
+		if !isLive {
+			ttl = 5 * time.Minute
+		}
+
+		d.usageCacheMu.Lock()
+		d.usageCache[cacheKey] = cachedUsage{
+			fromUnix: fromUnix,
+			toUnix:   toUnix,
+			expiry:   time.Now().Add(ttl),
+			data:     usage,
+		}
+		if len(d.usageCache) > 50 {
+			d.usageCache = make(map[string]cachedUsage)
+		}
+		d.usageCacheMu.Unlock()
+
+		return usage, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res.(map[string]*DevicePeriodUsage), nil
+}
+
+func (d *DB) calculateDeviceUsage(fromUnix, toUnix int64) (map[string]*DevicePeriodUsage, error) {
 	q := `
-	SELECT series_id, COALESCE(SUM(value), 0)
-	FROM samples
-	WHERE timestamp >= ? AND timestamp <= ?
-	GROUP BY series_id
+	SELECT s.id, (
+		SELECT COALESCE(SUM(value), 0)
+		FROM samples
+		WHERE series_id = s.id AND timestamp >= ? AND timestamp <= ?
+	)
+	FROM series s
+	WHERE s.name IN (
+		'device_traffic_bytes_rate',
+		'device_wan_bytes_rate',
+		'device_lan_bytes_rate',
+		'device_protocol_bytes_rate',
+		'device_peer_bytes_rate'
+	)
 	`
 	rows, err := d.db.Query(q, fromUnix, toUnix)
 	if err != nil {
@@ -496,6 +558,9 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 		var seriesID int64
 		var sumRate float64
 		if err := rows.Scan(&seriesID, &sumRate); err != nil {
+			continue
+		}
+		if sumRate <= 0 {
 			continue
 		}
 
@@ -567,37 +632,117 @@ func (d *DB) GetDeviceUsageByPeriod(fromUnix, toUnix int64) (map[string]*DeviceP
 		}
 	}
 
-	d.usageCacheMu.Lock()
-	d.usageCache[cacheKey] = cachedUsage{
-		fromUnix: fromUnix,
-		toUnix:   toUnix,
-		expiry:   time.Now().Add(15 * time.Second),
-		data:     usage,
-	}
-	if len(d.usageCache) > 50 {
-		d.usageCache = make(map[string]cachedUsage)
-	}
-	d.usageCacheMu.Unlock()
-
 	return usage, nil
 }
 
 // GetOverviewUsageByPeriod aggregates router-wide WAN and LAN traffic volume over [fromUnix, toUnix].
+// Directly aggregates router-level traffic series rather than scanning per-device samples.
 func (d *DB) GetOverviewUsageByPeriod(fromUnix, toUnix int64) (*OverviewPeriodUsage, error) {
-	devUsage, err := d.GetDeviceUsageByPeriod(fromUnix, toUnix)
+	now := time.Now().Unix()
+	isLive := (now-toUnix) >= -10 && (now-toUnix) <= 60
+
+	var cacheKey string
+	if isLive {
+		cacheKey = fmt.Sprintf("ov_live:%d", toUnix-fromUnix)
+	} else {
+		cacheKey = fmt.Sprintf("ov_hist:%d:%d", fromUnix, toUnix)
+	}
+
+	res, err, _ := d.overviewSF.Do(cacheKey, func() (any, error) {
+		d.cacheMu.RLock()
+		type metricInfo struct {
+			metric    string
+			direction string
+		}
+		var targetIDs []any
+		seriesMap := make(map[int64]metricInfo)
+		for id, meta := range d.seriesMeta {
+			if meta.Name == "traffic_bytes_rate" || meta.Name == "wan_traffic_bytes_rate" || meta.Name == "lan_traffic_bytes_rate" {
+				targetIDs = append(targetIDs, id)
+				seriesMap[id] = metricInfo{metric: meta.Name, direction: meta.Direction}
+			}
+		}
+		d.cacheMu.RUnlock()
+
+		ov := &OverviewPeriodUsage{}
+		if len(targetIDs) == 0 {
+			return ov, nil
+		}
+
+		placeholders := make([]string, len(targetIDs))
+		for i := range targetIDs {
+			placeholders[i] = "?"
+		}
+		args := append([]any{}, targetIDs...)
+		args = append(args, fromUnix, toUnix)
+
+		q := fmt.Sprintf(`
+		SELECT series_id, COALESCE(SUM(value), 0)
+		FROM samples
+		WHERE series_id IN (%s) AND timestamp >= ? AND timestamp <= ?
+		GROUP BY series_id
+		`, strings.Join(placeholders, ","))
+
+		rows, err := d.db.Query(q, args...)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		interval := d.sampleInterval
+		if interval <= 0 {
+			interval = 15.0
+		}
+
+		for rows.Next() {
+			var sID int64
+			var sumRate float64
+			if err := rows.Scan(&sID, &sumRate); err != nil {
+				continue
+			}
+			if sumRate <= 0 {
+				continue
+			}
+			info, ok := seriesMap[sID]
+			if !ok {
+				continue
+			}
+			b := uint64(sumRate * interval)
+			switch info.metric {
+			case "traffic_bytes_rate":
+				if info.direction == "ingress" {
+					ov.TotalDownloadBytes = b
+				} else if info.direction == "egress" {
+					ov.TotalUploadBytes = b
+				}
+			case "wan_traffic_bytes_rate":
+				if info.direction == "ingress" {
+					ov.WanDownloadBytes = b
+				} else if info.direction == "egress" {
+					ov.WanUploadBytes = b
+				}
+			case "lan_traffic_bytes_rate":
+				if info.direction == "ingress" {
+					ov.LanDownloadBytes = b
+				} else if info.direction == "egress" {
+					ov.LanUploadBytes = b
+				}
+			}
+		}
+
+		if ov.TotalDownloadBytes == 0 && (ov.WanDownloadBytes > 0 || ov.LanDownloadBytes > 0) {
+			ov.TotalDownloadBytes = ov.WanDownloadBytes + ov.LanDownloadBytes
+		}
+		if ov.TotalUploadBytes == 0 && (ov.WanUploadBytes > 0 || ov.LanUploadBytes > 0) {
+			ov.TotalUploadBytes = ov.WanUploadBytes + ov.LanUploadBytes
+		}
+
+		return ov, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	ov := &OverviewPeriodUsage{}
-	for _, u := range devUsage {
-		ov.TotalDownloadBytes += u.DownloadBytes
-		ov.TotalUploadBytes += u.UploadBytes
-		ov.WanDownloadBytes += u.WanDownloadBytes
-		ov.WanUploadBytes += u.WanUploadBytes
-		ov.LanDownloadBytes += u.LanDownloadBytes
-		ov.LanUploadBytes += u.LanUploadBytes
-	}
-	return ov, nil
+	return res.(*OverviewPeriodUsage), nil
 }
 
 func (d *DB) PurgeOlderThan(retention time.Duration) (int64, error) {
