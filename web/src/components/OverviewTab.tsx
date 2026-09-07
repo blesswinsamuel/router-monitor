@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { formatBytes, formatRate, formatLatency, formatPercent } from '@/lib/format'
+import { formatBytes, formatRate, formatLatency, formatPercent, formatChartTime } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import { useRootOutletContext } from './RootLayout'
@@ -89,13 +89,13 @@ interface TimeSeriesEntry {
   upload: number
 }
 
-function processSeriesPoints(dlPoints: any[], ulPoints: any[]): TimeSeriesEntry[] {
+function processSeriesPoints(dlPoints: any[], ulPoints: any[], period?: string): TimeSeriesEntry[] {
   const mergedMap = new Map<number, TimeSeriesEntry>()
 
   for (const p of dlPoints) {
     const ts = Number(p.timestampUnix)
     const d = new Date(ts * 1000)
-    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const timeStr = formatChartTime(d, period)
     mergedMap.set(ts, { time: timeStr, download: p.value, upload: 0 })
   }
 
@@ -106,7 +106,7 @@ function processSeriesPoints(dlPoints: any[], ulPoints: any[]): TimeSeriesEntry[
       entry.upload = p.value
     } else {
       const d = new Date(ts * 1000)
-      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const timeStr = formatChartTime(d, period)
       mergedMap.set(ts, { time: timeStr, download: 0, upload: p.value })
     }
   }
@@ -115,6 +115,7 @@ function processSeriesPoints(dlPoints: any[], ulPoints: any[]): TimeSeriesEntry[
     .sort(([a], [b]) => a - b)
     .map(([_, v]) => v)
 }
+
 
 export function OverviewTab({
   overview: propOverview,
@@ -125,7 +126,7 @@ export function OverviewTab({
   const overview = propOverview || context?.overview
   const devices = (propDevices || context?.devices || []) as Device[]
   const health = propHealth || context?.health
-  const period = context?.period || '24h'
+  const period = context?.period || '1d'
 
   const [chartScope, setChartScope] = useState<ChartScope>('wan')
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -156,7 +157,7 @@ export function OverviewTab({
             stepSeconds: step,
           }),
         ])
-        setWanHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || []))
+        setWanHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || [], period))
       }
 
       if (chartScope === 'lan' || chartScope === 'split') {
@@ -176,7 +177,7 @@ export function OverviewTab({
             stepSeconds: step,
           }),
         ])
-        setLanHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || []))
+        setLanHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || [], period))
       }
 
       if (chartScope === 'total') {
@@ -196,7 +197,7 @@ export function OverviewTab({
             stepSeconds: step,
           }),
         ])
-        setTotalHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || []))
+        setTotalHistory(processSeriesPoints(dlRes.series[0]?.points || [], ulRes.series[0]?.points || [], period))
       }
     } catch (err) {
       console.error('Failed to load history from SQLite TSDB:', err)
@@ -651,7 +652,7 @@ export function OverviewTab({
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={10} className="font-mono" />
+                        <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={28} fontSize={10} className="font-mono" />
                         <YAxis tickLine={false} axisLine={false} fontSize={10} tickFormatter={(val) => formatBytes(val)} width={65} className="font-mono" />
                         <ChartTooltip
                           content={
@@ -710,7 +711,7 @@ export function OverviewTab({
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={10} className="font-mono" />
+                        <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={28} fontSize={10} className="font-mono" />
                         <YAxis tickLine={false} axisLine={false} fontSize={10} tickFormatter={(val) => formatBytes(val)} width={65} className="font-mono" />
                         <ChartTooltip
                           content={
@@ -792,7 +793,7 @@ export function OverviewTab({
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} fontSize={11} className="font-mono" />
+                    <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={28} fontSize={11} className="font-mono" />
                     <YAxis
                       tickLine={false}
                       axisLine={false}

@@ -80,7 +80,7 @@ export function Header({
 
         <div className="flex items-center space-x-2">
           {/* Global Period Selector */}
-          <div className="flex items-center bg-muted/80 p-0.5 rounded-lg border border-border/50">
+          <div className="flex items-center bg-muted/80 p-0.5 rounded-lg border border-border/50 shrink-0">
             {PERIODS.map((p) => (
               <button
                 key={p}

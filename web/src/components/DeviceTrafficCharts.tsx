@@ -9,7 +9,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Badge } from './ui/badge'
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs'
-import { formatBytes, formatRate, formatPercent } from '@/lib/format'
+import { formatBytes, formatRate, formatPercent, formatChartTime } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { getPeriodRange, type Period } from '@/lib/period'
 import { getDeviceCategory } from '@/lib/device-icons'
@@ -76,7 +76,7 @@ export function DeviceTrafficCharts({
   trafficScope,
   selectedDeviceIp,
   onSelectDevice,
-  period = '24h',
+  period = '1d',
 }: DeviceTrafficChartsProps) {
   const [viewMode, setViewMode] = useState<'both' | 'donut' | 'trends'>('both')
   const [historyLoading, setHistoryLoading] = useState(false)
@@ -226,7 +226,7 @@ export function DeviceTrafficCharts({
           let entry = mergedMap.get(ts)
           if (!entry) {
             const d = new Date(ts * 1000)
-            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            const timeStr = formatChartTime(d, period)
             entry = { time: timeStr, timestamp: ts }
             // initialize all top IPs with 0
             for (const otherIp of topIps) {
@@ -547,6 +547,7 @@ export function DeviceTrafficCharts({
                         tickLine={false}
                         axisLine={false}
                         tickMargin={8}
+                        minTickGap={28}
                         fontSize={10}
                         className="font-mono"
                       />

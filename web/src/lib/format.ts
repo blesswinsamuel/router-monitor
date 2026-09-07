@@ -71,3 +71,11 @@ export function formatPercent(ratio: number | undefined | null): string {
   if (ratio === undefined || ratio === null || isNaN(ratio)) return "0.0%"
   return `${(ratio * 100).toFixed(1)}%`
 }
+
+export function formatChartTime(date: Date, period?: string): string {
+  if (period === '3d' || period === '7d') {
+    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  }
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+

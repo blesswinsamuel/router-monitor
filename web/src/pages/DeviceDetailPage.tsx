@@ -32,6 +32,7 @@ import {
   formatPacketsRate,
   formatRelativeTime,
   formatDateTime,
+  formatChartTime,
 } from '@/lib/format'
 import { rpcClient } from '@/lib/client'
 import { useRootOutletContext } from '@/components/RootLayout'
@@ -201,7 +202,7 @@ export function DeviceDetailPage() {
         for (const p of dlPoints) {
           const ts = Number(p.timestampUnix)
           const d = new Date(ts * 1000)
-          const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          const timeStr = formatChartTime(d, period)
           mergedMap.set(ts, { time: timeStr, download: p.value, upload: 0 })
         }
 
@@ -212,10 +213,11 @@ export function DeviceDetailPage() {
             entry.upload = p.value
           } else {
             const d = new Date(ts * 1000)
-            const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            const timeStr = formatChartTime(d, period)
             mergedMap.set(ts, { time: timeStr, download: 0, upload: p.value })
           }
         }
+
 
         const sorted = Array.from(mergedMap.entries())
           .sort(([a], [b]) => a - b)
