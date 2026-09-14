@@ -7,7 +7,7 @@
 #   local-compose logs -f
 #   local-compose down
 #
-# Actions:
+# Tasks:
 #   local-compose run generate
 #   local-compose run deploy
 #   local-compose run logs
@@ -26,7 +26,7 @@ services:
       working_dir: ./web
     restart: always
 
-actions:
+tasks:
   generate: task go-generate
   deploy: task deploy-dev
   logs: task logs-dev
