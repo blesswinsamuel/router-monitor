@@ -1,17 +1,20 @@
 package routermonitor
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestKeaCSVParser(t *testing.T) {
-	keaData := `address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
-10.100.50.69,98:77:D5:2C:10:A8,01:98:77:d5:2c:10:a8,28800,1788767560,50,0,0,wiz2c10a8,0,,0
-10.100.99.153,EE:41:6B:C8:F9:9D,01:ee:41:6b:c8:f9:9d,28800,1788764898,99,0,0,iphone.,0,,0
+	future := time.Now().Add(24 * time.Hour).Unix()
+	keaData := fmt.Sprintf(`address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
+10.100.50.69,98:77:D5:2C:10:A8,01:98:77:d5:2c:10:a8,28800,%d,50,0,0,wiz2c10a8,0,,0
+10.100.99.153,EE:41:6B:C8:F9:9D,01:ee:41:6b:c8:f9:9d,28800,%d,99,0,0,iphone.,0,,0
 10.100.99.200,AA:BB:CC:DD:EE:FF,01:aa:bb:cc:dd:ee:ff,28800,1000000000,99,0,0,expired-device,2,,0
-`
+`, future, future)
 	tmpDir := t.TempDir()
 	leasePath := filepath.Join(tmpDir, "dhcp4.leases")
 	if err := os.WriteFile(leasePath, []byte(keaData), 0644); err != nil {
@@ -58,12 +61,13 @@ func TestKeaCSVParser(t *testing.T) {
 }
 
 func TestKeaCompanionFilesMerging(t *testing.T) {
-	file1 := `address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
-10.100.1.2,74:fe:ce:cb:4a:36,01:74:fe:ce:cb:4a:36,28800,1788761099,1,0,0,eap670,0,,0
-`
-	file2 := `address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
-10.100.99.153,ee:41:6b:c8:f9:9d,01:ee:41:6b:c8:f9:9d,28800,1788764898,99,0,0,iphone,0,,0
-`
+	future := time.Now().Add(24 * time.Hour).Unix()
+	file1 := fmt.Sprintf(`address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
+10.100.1.2,74:fe:ce:cb:4a:36,01:74:fe:ce:cb:4a:36,28800,%d,1,0,0,eap670,0,,0
+`, future)
+	file2 := fmt.Sprintf(`address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context,pool_id
+10.100.99.153,ee:41:6b:c8:f9:9d,01:ee:41:6b:c8:f9:9d,28800,%d,99,0,0,iphone,0,,0
+`, future)
 	tmpDir := t.TempDir()
 	basePath := filepath.Join(tmpDir, "dhcp4.leases")
 	compPath := filepath.Join(tmpDir, "dhcp4.leases.2")
@@ -87,9 +91,10 @@ func TestKeaCompanionFilesMerging(t *testing.T) {
 }
 
 func TestDnsmasqLeaseParser(t *testing.T) {
-	dnsmasqData := `1788764898 00:11:22:33:44:55 10.100.1.50 my-pc 01:00:11:22:33:44:55
-1788764899 66:77:88:99:aa:bb 10.100.1.51 * *
-`
+	future := time.Now().Add(24 * time.Hour).Unix()
+	dnsmasqData := fmt.Sprintf(`%d 00:11:22:33:44:55 10.100.1.50 my-pc 01:00:11:22:33:44:55
+%d 66:77:88:99:aa:bb 10.100.1.51 * *
+`, future, future)
 	tmpDir := t.TempDir()
 	leasePath := filepath.Join(tmpDir, "dnsmasq.leases")
 	if err := os.WriteFile(leasePath, []byte(dnsmasqData), 0644); err != nil {

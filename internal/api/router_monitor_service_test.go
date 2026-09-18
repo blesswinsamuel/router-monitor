@@ -253,4 +253,79 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 	}
 }
 
+func TestRouterMonitorService_WakeOnLan(t *testing.T) {
+	tmpDir := t.TempDir()
+	dbPath := filepath.Join(tmpDir, "test.db")
+
+	db, err := tsdb.Open(dbPath)
+	if err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	defer db.Close()
+
+	ebpf := routermonitor.NewEbpfCollector()
+	arp := routermonitor.NewArpCollector("/dev/null", "", 30*time.Minute)
+	checker := routermonitor.NewInternetChecker(10*time.Second, nil, db)
+	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
+
+	// Persist a device to verify MAC auto-lookup by IP
+	_ = db.UpsertDevice("aa:bb:cc:dd:ee:88", "10.100.1.88", "desktop-pc", "lan", time.Now())
+
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil)
+	ctx := context.Background()
+
+	// 1. Successful WoL with explicit MAC
+	res, err := svc.WakeOnLan(ctx, connect.NewRequest(&routermonitorv1.WakeOnLanRequest{
+		MacAddr: "00:11:22:33:44:55",
+	}))
+	if err != nil {
+		t.Fatalf("WakeOnLan unexpected RPC error: %v", err)
+	}
+	if !res.Msg.Success {
+		t.Errorf("expected success=true, got error: %s", res.Msg.ErrorMessage)
+	}
+	if res.Msg.MacAddr != "00:11:22:33:44:55" {
+		t.Errorf("expected canonical MAC 00:11:22:33:44:55, got %s", res.Msg.MacAddr)
+	}
+	if !strings.Contains(res.Msg.BroadcastAddr, ":9") {
+		t.Errorf("expected broadcast target port 9, got %s", res.Msg.BroadcastAddr)
+	}
+
+	// 2. WoL with auto-resolved MAC via IP
+	resAuto, err := svc.WakeOnLan(ctx, connect.NewRequest(&routermonitorv1.WakeOnLanRequest{
+		IpAddr: "10.100.1.88",
+	}))
+	if err != nil {
+		t.Fatalf("WakeOnLan auto-resolve RPC error: %v", err)
+	}
+	if !resAuto.Msg.Success {
+		t.Errorf("expected success=true for auto-resolved IP, got error: %s", resAuto.Msg.ErrorMessage)
+	}
+	if resAuto.Msg.MacAddr != "aa:bb:cc:dd:ee:88" {
+		t.Errorf("expected MAC aa:bb:cc:dd:ee:88, got %s", resAuto.Msg.MacAddr)
+	}
+
+	// 3. Failed WoL when no MAC and unknown IP
+	resFail, err := svc.WakeOnLan(ctx, connect.NewRequest(&routermonitorv1.WakeOnLanRequest{
+		IpAddr: "10.100.99.99",
+	}))
+	if err != nil {
+		t.Fatalf("WakeOnLan unexpected RPC error: %v", err)
+	}
+	if resFail.Msg.Success {
+		t.Errorf("expected success=false for unknown device without MAC")
+	}
+
+	// 4. Failed WoL with invalid MAC
+	resInvalid, err := svc.WakeOnLan(ctx, connect.NewRequest(&routermonitorv1.WakeOnLanRequest{
+		MacAddr: "invalid-mac-address",
+	}))
+	if err != nil {
+		t.Fatalf("WakeOnLan unexpected RPC error: %v", err)
+	}
+	if resInvalid.Msg.Success {
+		t.Errorf("expected success=false for invalid MAC format")
+	}
+}
+
 

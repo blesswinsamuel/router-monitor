@@ -51,6 +51,9 @@ const (
 	// RouterMonitorServicePingDeviceProcedure is the fully-qualified name of the RouterMonitorService's
 	// PingDevice RPC.
 	RouterMonitorServicePingDeviceProcedure = "/routermonitor.v1.RouterMonitorService/PingDevice"
+	// RouterMonitorServiceWakeOnLanProcedure is the fully-qualified name of the RouterMonitorService's
+	// WakeOnLan RPC.
+	RouterMonitorServiceWakeOnLanProcedure = "/routermonitor.v1.RouterMonitorService/WakeOnLan"
 )
 
 // RouterMonitorServiceClient is a client for the routermonitor.v1.RouterMonitorService service.
@@ -67,6 +70,8 @@ type RouterMonitorServiceClient interface {
 	QueryTimeSeries(context.Context, *connect.Request[v1.QueryTimeSeriesRequest]) (*connect.Response[v1.QueryTimeSeriesResponse], error)
 	// Ping a specific LAN device on-demand and measure round-trip latency, jitter, and packet loss.
 	PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error)
+	// Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
+	WakeOnLan(context.Context, *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error)
 }
 
 // NewRouterMonitorServiceClient constructs a client for the routermonitor.v1.RouterMonitorService
@@ -116,6 +121,12 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(routerMonitorServiceMethods.ByName("PingDevice")),
 			connect.WithClientOptions(opts...),
 		),
+		wakeOnLan: connect.NewClient[v1.WakeOnLanRequest, v1.WakeOnLanResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceWakeOnLanProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("WakeOnLan")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -127,6 +138,7 @@ type routerMonitorServiceClient struct {
 	streamLiveStats   *connect.Client[v1.StreamLiveStatsRequest, v1.LiveStatsResponse]
 	queryTimeSeries   *connect.Client[v1.QueryTimeSeriesRequest, v1.QueryTimeSeriesResponse]
 	pingDevice        *connect.Client[v1.PingDeviceRequest, v1.PingDeviceResponse]
+	wakeOnLan         *connect.Client[v1.WakeOnLanRequest, v1.WakeOnLanResponse]
 }
 
 // GetOverview calls routermonitor.v1.RouterMonitorService.GetOverview.
@@ -159,6 +171,11 @@ func (c *routerMonitorServiceClient) PingDevice(ctx context.Context, req *connec
 	return c.pingDevice.CallUnary(ctx, req)
 }
 
+// WakeOnLan calls routermonitor.v1.RouterMonitorService.WakeOnLan.
+func (c *routerMonitorServiceClient) WakeOnLan(ctx context.Context, req *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error) {
+	return c.wakeOnLan.CallUnary(ctx, req)
+}
+
 // RouterMonitorServiceHandler is an implementation of the routermonitor.v1.RouterMonitorService
 // service.
 type RouterMonitorServiceHandler interface {
@@ -174,6 +191,8 @@ type RouterMonitorServiceHandler interface {
 	QueryTimeSeries(context.Context, *connect.Request[v1.QueryTimeSeriesRequest]) (*connect.Response[v1.QueryTimeSeriesResponse], error)
 	// Ping a specific LAN device on-demand and measure round-trip latency, jitter, and packet loss.
 	PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error)
+	// Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
+	WakeOnLan(context.Context, *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error)
 }
 
 // NewRouterMonitorServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -219,6 +238,12 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 		connect.WithSchema(routerMonitorServiceMethods.ByName("PingDevice")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routerMonitorServiceWakeOnLanHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceWakeOnLanProcedure,
+		svc.WakeOnLan,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("WakeOnLan")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/routermonitor.v1.RouterMonitorService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RouterMonitorServiceGetOverviewProcedure:
@@ -233,6 +258,8 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 			routerMonitorServiceQueryTimeSeriesHandler.ServeHTTP(w, r)
 		case RouterMonitorServicePingDeviceProcedure:
 			routerMonitorServicePingDeviceHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceWakeOnLanProcedure:
+			routerMonitorServiceWakeOnLanHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -264,4 +291,8 @@ func (UnimplementedRouterMonitorServiceHandler) QueryTimeSeries(context.Context,
 
 func (UnimplementedRouterMonitorServiceHandler) PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.PingDevice is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) WakeOnLan(context.Context, *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.WakeOnLan is not implemented"))
 }

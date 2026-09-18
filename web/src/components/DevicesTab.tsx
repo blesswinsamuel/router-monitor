@@ -11,6 +11,7 @@ import {
   HardDrive,
   PieChart as PieChartIcon,
   XCircle,
+  Power,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Button } from './ui/button'
@@ -30,6 +31,7 @@ import {
 } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { getDeviceCategory } from '@/lib/device-icons'
+import { rpcClient } from '@/lib/client'
 import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
 
 import { useRootOutletContext } from './RootLayout'
@@ -47,7 +49,36 @@ export function DevicesTab({ devices }: DevicesTabProps) {
   const [showUnknownOnly, setShowUnknownOnly] = useState(false)
   const [selectedDeviceIp, setSelectedDeviceIp] = useState<string | null>(null)
   const [showCharts, setShowCharts] = useState(true)
+  const [wakingMacs, setWakingMacs] = useState<Record<string, 'loading' | 'success' | 'error'>>({})
   const navigate = useNavigate()
+
+  async function handleQuickWol(e: React.MouseEvent, device: Device) {
+    e.stopPropagation()
+    if (!device.macAddr || device.macAddr === '00:00:00:00:00:00') return
+    const mac = device.macAddr
+    setWakingMacs((prev) => ({ ...prev, [mac]: 'loading' }))
+    try {
+      const res = await rpcClient.wakeOnLan({
+        macAddr: mac,
+        ipAddr: device.ipAddr,
+        interface: device.interface || device.arp?.interface || '',
+      })
+      if (res.success) {
+        setWakingMacs((prev) => ({ ...prev, [mac]: 'success' }))
+        setTimeout(() => {
+          setWakingMacs((prev) => {
+            const next = { ...prev }
+            delete next[mac]
+            return next
+          })
+        }, 3000)
+      } else {
+        setWakingMacs((prev) => ({ ...prev, [mac]: 'error' }))
+      }
+    } catch {
+      setWakingMacs((prev) => ({ ...prev, [mac]: 'error' }))
+    }
+  }
 
   const activeDeviceList = devices
 
@@ -352,7 +383,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                         Bandwidth Used (<span className="font-mono">{period}</span>)
                       </span>
                     </TableHead>
-                    <TableHead className="w-8"></TableHead>
+                    <TableHead className="w-16 text-right"></TableHead>
                   </TableRow>
                 ) : (
                   <TableRow>
@@ -375,7 +406,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                         <HardDrive className="w-3.5 h-3.5" /> Total (<span className="font-mono">{period}</span>)
                       </span>
                     </TableHead>
-                    <TableHead className="w-8"></TableHead>
+                    <TableHead className="w-16 text-right"></TableHead>
                   </TableRow>
                 )}
               </TableHeader>
@@ -666,8 +697,39 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                           </>
                         )}
 
-                        <TableCell className="text-center p-0 pr-2">
-                          <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                        <TableCell className="text-right p-0 pr-2">
+                          <div className="flex items-center justify-end gap-1">
+                            {device.macAddr && device.macAddr !== '00:00:00:00:00:00' && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10"
+                                    onClick={(e) => handleQuickWol(e, device)}
+                                    disabled={wakingMacs[device.macAddr] === 'loading'}
+                                  >
+                                    <Power className={cn(
+                                      "w-3.5 h-3.5",
+                                      wakingMacs[device.macAddr] === 'loading' && "animate-spin text-amber-500",
+                                      wakingMacs[device.macAddr] === 'success' && "text-emerald-500",
+                                      wakingMacs[device.macAddr] === 'error' && "text-destructive"
+                                    )} />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="text-xs">
+                                  {wakingMacs[device.macAddr] === 'loading'
+                                    ? 'Sending Magic Packet...'
+                                    : wakingMacs[device.macAddr] === 'success'
+                                    ? 'Magic Packet Sent!'
+                                    : wakingMacs[device.macAddr] === 'error'
+                                    ? 'Failed to send packet'
+                                    : 'Wake on LAN (Send Magic Packet)'}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary transition-colors" />
+                          </div>
                         </TableCell>
                       </TableRow>
                     )

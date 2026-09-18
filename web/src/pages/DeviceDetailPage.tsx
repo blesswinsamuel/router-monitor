@@ -20,6 +20,7 @@ import {
   Info,
   Calendar,
   Hash,
+  Power,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -38,7 +39,7 @@ import { rpcClient } from '@/lib/client'
 import { useRootOutletContext } from '@/components/RootLayout'
 import { getDeviceCategory, isLocallyAdministeredMac } from '@/lib/device-icons'
 import { getPeriodRange } from '@/lib/period'
-import type { Device, PingDeviceResponse, ProtocolTraffic, PeerTraffic } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device, PingDeviceResponse, WakeOnLanResponse, ProtocolTraffic, PeerTraffic } from '@/gen/routermonitor/v1/router_monitor_pb'
 import {
   AreaChart,
   Area,
@@ -91,6 +92,11 @@ export function DeviceDetailPage() {
   const [pingResult, setPingResult] = useState<PingDeviceResponse | null>(null)
   const [pingError, setPingError] = useState<string | null>(null)
 
+  // Wake-on-LAN state
+  const [wolLoading, setWolLoading] = useState(false)
+  const [wolResult, setWolResult] = useState<WakeOnLanResponse | null>(null)
+  const [wolError, setWolError] = useState<string | null>(null)
+
   // Look up device from root context first
   const contextDevice = useMemo(() => {
     if (!ip) return null
@@ -98,6 +104,14 @@ export function DeviceDetailPage() {
   }, [devices, ip])
 
   const device = fetchedDevice || contextDevice
+
+  const canWakeOnLan = useMemo(() => {
+    return Boolean(
+      device?.macAddr &&
+      device.macAddr !== '00:00:00:00:00:00' &&
+      device.macAddr.trim() !== ''
+    )
+  }, [device?.macAddr])
 
   const isRandomized = useMemo(() => {
     return isLocallyAdministeredMac(device?.macAddr)
@@ -140,6 +154,29 @@ export function DeviceDetailPage() {
       setPingError(err?.message || 'Failed to ping device')
     } finally {
       setPingLoading(false)
+    }
+  }
+
+  async function handleWakeOnLan() {
+    if (!device?.macAddr || !canWakeOnLan) return
+    setWolLoading(true)
+    setWolError(null)
+    setWolResult(null)
+    try {
+      const res = await rpcClient.wakeOnLan({
+        macAddr: device.macAddr,
+        ipAddr: ip || '',
+        interface: device.interface || device.arp?.interface || '',
+      })
+      if (!res.success) {
+        setWolError(res.errorMessage || 'Failed to send Wake-on-LAN packet')
+      } else {
+        setWolResult(res)
+      }
+    } catch (err: any) {
+      setWolError(err?.message || 'Failed to send Wake-on-LAN packet')
+    } finally {
+      setWolLoading(false)
     }
   }
 
@@ -337,16 +374,30 @@ export function DeviceDetailPage() {
           </span>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 text-xs gap-1.5"
-          onClick={handleRunPing}
-          disabled={pingLoading}
-        >
-          <Radio className={cn("w-3.5 h-3.5", pingLoading && "animate-spin text-primary")} />
-          <span>{pingLoading ? 'Pinging...' : 'Ping Device'}</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={handleRunPing}
+            disabled={pingLoading}
+          >
+            <Radio className={cn("w-3.5 h-3.5", pingLoading && "animate-spin text-primary")} />
+            <span>{pingLoading ? 'Pinging...' : 'Ping Device'}</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs gap-1.5"
+            onClick={handleWakeOnLan}
+            disabled={wolLoading || !canWakeOnLan}
+            title={!canWakeOnLan ? "MAC address required for Wake-on-LAN" : "Send Wake-on-LAN magic packet"}
+          >
+            <Power className={cn("w-3.5 h-3.5", wolLoading ? "animate-spin text-amber-500" : "text-amber-500")} />
+            <span>{wolLoading ? 'Waking...' : 'Wake on LAN'}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Main Device Identity Card */}
@@ -1030,6 +1081,101 @@ export function DeviceDetailPage() {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Wake-on-LAN (Magic Packet) Card */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="space-y-0.5">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <Power className="w-4 h-4 text-amber-500" />
+                Wake-on-LAN (Magic Packet)
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Broadcast an AMD Magic Packet over UDP port 9 to power on or resume this device from network standby.
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5 self-start sm:self-auto"
+              onClick={handleWakeOnLan}
+              disabled={wolLoading || !canWakeOnLan}
+            >
+              {wolLoading ? (
+                <RefreshCw className="w-3 h-3 animate-spin text-amber-500" />
+              ) : (
+                <Power className="w-3 h-3 text-amber-500" />
+              )}
+              <span>{wolLoading ? 'Transmitting...' : 'Send Magic Packet'}</span>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {wolError && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-xs">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{wolError}</span>
+            </div>
+          )}
+
+          {wolResult && (
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-1.5">
+              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
+                <Check className="w-4 h-4 shrink-0" />
+                <span>Wake-on-LAN magic packet successfully transmitted!</span>
+              </div>
+              <div className="text-muted-foreground text-[11px] font-mono flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span>Target MAC: <strong className="text-foreground">{wolResult.macAddr}</strong></span>
+                <span>Broadcast: <strong className="text-foreground">{wolResult.broadcastAddr}</strong></span>
+                {wolResult.interface && (
+                  <span>Interface: <strong className="text-foreground">{wolResult.interface}</strong></span>
+                )}
+              </div>
+              <div className="pt-1 flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-[11px] px-2 gap-1 text-primary hover:text-primary/80"
+                  onClick={handleRunPing}
+                  disabled={pingLoading}
+                >
+                  <Radio className="w-3 h-3" />
+                  <span>Check if device has booted (Ping Test)</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+              <span className="text-[11px] text-muted-foreground block">Target MAC Address</span>
+              <span className="font-mono font-semibold text-foreground">
+                {device?.macAddr || 'Not available'}
+              </span>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+              <span className="text-[11px] text-muted-foreground block">Network Interface</span>
+              <span className="font-mono font-semibold text-foreground">
+                {device?.interface || device?.arp?.interface || 'lan'}
+              </span>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+              <span className="text-[11px] text-muted-foreground block">Default Port & Protocol</span>
+              <span className="font-mono font-semibold text-foreground">
+                UDP Port 9 (Discard)
+              </span>
+            </div>
+          </div>
+
+          {!canWakeOnLan && (
+            <div className="p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
+              <Info className="w-4 h-4 shrink-0" />
+              <span>Wake-on-LAN is unavailable because this device does not have an Ethernet MAC address registered in ARP or DHCP.</span>
             </div>
           )}
         </CardContent>

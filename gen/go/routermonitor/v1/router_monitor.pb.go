@@ -395,6 +395,158 @@ func (x *PingDeviceResponse) GetErrorMessage() string {
 	return ""
 }
 
+type WakeOnLanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MacAddr       string                 `protobuf:"bytes,1,opt,name=mac_addr,json=macAddr,proto3" json:"mac_addr,omitempty"` // Target MAC address (e.g. "aa:bb:cc:dd:ee:ff")
+	IpAddr        string                 `protobuf:"bytes,2,opt,name=ip_addr,json=ipAddr,proto3" json:"ip_addr,omitempty"`    // Optional target IP to resolve subnet/interface
+	Interface     string                 `protobuf:"bytes,3,opt,name=interface,proto3" json:"interface,omitempty"`            // Optional network interface (e.g. "lan")
+	Port          int32                  `protobuf:"varint,4,opt,name=port,proto3" json:"port,omitempty"`                     // Optional target UDP port (defaults to 9)
+	Password      string                 `protobuf:"bytes,5,opt,name=password,proto3" json:"password,omitempty"`              // Optional SecureOn password (empty, 4 or 6 bytes hex)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WakeOnLanRequest) Reset() {
+	*x = WakeOnLanRequest{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WakeOnLanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WakeOnLanRequest) ProtoMessage() {}
+
+func (x *WakeOnLanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WakeOnLanRequest.ProtoReflect.Descriptor instead.
+func (*WakeOnLanRequest) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *WakeOnLanRequest) GetMacAddr() string {
+	if x != nil {
+		return x.MacAddr
+	}
+	return ""
+}
+
+func (x *WakeOnLanRequest) GetIpAddr() string {
+	if x != nil {
+		return x.IpAddr
+	}
+	return ""
+}
+
+func (x *WakeOnLanRequest) GetInterface() string {
+	if x != nil {
+		return x.Interface
+	}
+	return ""
+}
+
+func (x *WakeOnLanRequest) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *WakeOnLanRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type WakeOnLanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	MacAddr       string                 `protobuf:"bytes,2,opt,name=mac_addr,json=macAddr,proto3" json:"mac_addr,omitempty"`                   // Formatted canonical MAC address
+	BroadcastAddr string                 `protobuf:"bytes,3,opt,name=broadcast_addr,json=broadcastAddr,proto3" json:"broadcast_addr,omitempty"` // Address packet was sent to (e.g. "10.100.255.255:9")
+	Interface     string                 `protobuf:"bytes,4,opt,name=interface,proto3" json:"interface,omitempty"`                              // Network interface used
+	ErrorMessage  string                 `protobuf:"bytes,5,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WakeOnLanResponse) Reset() {
+	*x = WakeOnLanResponse{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WakeOnLanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WakeOnLanResponse) ProtoMessage() {}
+
+func (x *WakeOnLanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WakeOnLanResponse.ProtoReflect.Descriptor instead.
+func (*WakeOnLanResponse) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WakeOnLanResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *WakeOnLanResponse) GetMacAddr() string {
+	if x != nil {
+		return x.MacAddr
+	}
+	return ""
+}
+
+func (x *WakeOnLanResponse) GetBroadcastAddr() string {
+	if x != nil {
+		return x.BroadcastAddr
+	}
+	return ""
+}
+
+func (x *WakeOnLanResponse) GetInterface() string {
+	if x != nil {
+		return x.Interface
+	}
+	return ""
+}
+
+func (x *WakeOnLanResponse) GetErrorMessage() string {
+	if x != nil {
+		return x.ErrorMessage
+	}
+	return ""
+}
+
 type GetOverviewRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FromUnix      int64                  `protobuf:"varint,1,opt,name=from_unix,json=fromUnix,proto3" json:"from_unix,omitempty"`
@@ -405,7 +557,7 @@ type GetOverviewRequest struct {
 
 func (x *GetOverviewRequest) Reset() {
 	*x = GetOverviewRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[5]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -417,7 +569,7 @@ func (x *GetOverviewRequest) String() string {
 func (*GetOverviewRequest) ProtoMessage() {}
 
 func (x *GetOverviewRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[5]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -430,7 +582,7 @@ func (x *GetOverviewRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOverviewRequest.ProtoReflect.Descriptor instead.
 func (*GetOverviewRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{5}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetOverviewRequest) GetFromUnix() int64 {
@@ -466,7 +618,7 @@ type GetOverviewResponse struct {
 
 func (x *GetOverviewResponse) Reset() {
 	*x = GetOverviewResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[6]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -478,7 +630,7 @@ func (x *GetOverviewResponse) String() string {
 func (*GetOverviewResponse) ProtoMessage() {}
 
 func (x *GetOverviewResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[6]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -491,7 +643,7 @@ func (x *GetOverviewResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOverviewResponse.ProtoReflect.Descriptor instead.
 func (*GetOverviewResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{6}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetOverviewResponse) GetInterfaceName() string {
@@ -581,7 +733,7 @@ type ListDevicesRequest struct {
 
 func (x *ListDevicesRequest) Reset() {
 	*x = ListDevicesRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[7]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -593,7 +745,7 @@ func (x *ListDevicesRequest) String() string {
 func (*ListDevicesRequest) ProtoMessage() {}
 
 func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[7]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -606,7 +758,7 @@ func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
 func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{7}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListDevicesRequest) GetFromUnix() int64 {
@@ -634,7 +786,7 @@ type ArpInfo struct {
 
 func (x *ArpInfo) Reset() {
 	*x = ArpInfo{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[8]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -646,7 +798,7 @@ func (x *ArpInfo) String() string {
 func (*ArpInfo) ProtoMessage() {}
 
 func (x *ArpInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[8]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -659,7 +811,7 @@ func (x *ArpInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArpInfo.ProtoReflect.Descriptor instead.
 func (*ArpInfo) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{8}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ArpInfo) GetFlags() int64 {
@@ -697,7 +849,7 @@ type DhcpLeaseInfo struct {
 
 func (x *DhcpLeaseInfo) Reset() {
 	*x = DhcpLeaseInfo{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[9]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -709,7 +861,7 @@ func (x *DhcpLeaseInfo) String() string {
 func (*DhcpLeaseInfo) ProtoMessage() {}
 
 func (x *DhcpLeaseInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[9]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -722,7 +874,7 @@ func (x *DhcpLeaseInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DhcpLeaseInfo.ProtoReflect.Descriptor instead.
 func (*DhcpLeaseInfo) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{9}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DhcpLeaseInfo) GetHostname() string {
@@ -791,7 +943,7 @@ type Device struct {
 
 func (x *Device) Reset() {
 	*x = Device{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[10]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -803,7 +955,7 @@ func (x *Device) String() string {
 func (*Device) ProtoMessage() {}
 
 func (x *Device) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[10]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -816,7 +968,7 @@ func (x *Device) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Device.ProtoReflect.Descriptor instead.
 func (*Device) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{10}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Device) GetIpAddr() string {
@@ -940,7 +1092,7 @@ type ListDevicesResponse struct {
 
 func (x *ListDevicesResponse) Reset() {
 	*x = ListDevicesResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[11]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -952,7 +1104,7 @@ func (x *ListDevicesResponse) String() string {
 func (*ListDevicesResponse) ProtoMessage() {}
 
 func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[11]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -965,7 +1117,7 @@ func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
 func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{11}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ListDevicesResponse) GetDevices() []*Device {
@@ -983,7 +1135,7 @@ type GetInternetHealthRequest struct {
 
 func (x *GetInternetHealthRequest) Reset() {
 	*x = GetInternetHealthRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[12]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -995,7 +1147,7 @@ func (x *GetInternetHealthRequest) String() string {
 func (*GetInternetHealthRequest) ProtoMessage() {}
 
 func (x *GetInternetHealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[12]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1008,7 +1160,7 @@ func (x *GetInternetHealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInternetHealthRequest.ProtoReflect.Descriptor instead.
 func (*GetInternetHealthRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{12}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{14}
 }
 
 type TargetHealth struct {
@@ -1031,7 +1183,7 @@ type TargetHealth struct {
 
 func (x *TargetHealth) Reset() {
 	*x = TargetHealth{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1043,7 +1195,7 @@ func (x *TargetHealth) String() string {
 func (*TargetHealth) ProtoMessage() {}
 
 func (x *TargetHealth) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[13]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1056,7 +1208,7 @@ func (x *TargetHealth) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TargetHealth.ProtoReflect.Descriptor instead.
 func (*TargetHealth) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{13}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *TargetHealth) GetName() string {
@@ -1157,7 +1309,7 @@ type OutageRecord struct {
 
 func (x *OutageRecord) Reset() {
 	*x = OutageRecord{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1169,7 +1321,7 @@ func (x *OutageRecord) String() string {
 func (*OutageRecord) ProtoMessage() {}
 
 func (x *OutageRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[14]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1182,7 +1334,7 @@ func (x *OutageRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OutageRecord.ProtoReflect.Descriptor instead.
 func (*OutageRecord) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{14}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *OutageRecord) GetId() int64 {
@@ -1242,7 +1394,7 @@ type GetInternetHealthResponse struct {
 
 func (x *GetInternetHealthResponse) Reset() {
 	*x = GetInternetHealthResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1254,7 +1406,7 @@ func (x *GetInternetHealthResponse) String() string {
 func (*GetInternetHealthResponse) ProtoMessage() {}
 
 func (x *GetInternetHealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[15]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1267,7 +1419,7 @@ func (x *GetInternetHealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetInternetHealthResponse.ProtoReflect.Descriptor instead.
 func (*GetInternetHealthResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{15}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetInternetHealthResponse) GetOverallStatus() string {
@@ -1328,7 +1480,7 @@ type StreamLiveStatsRequest struct {
 
 func (x *StreamLiveStatsRequest) Reset() {
 	*x = StreamLiveStatsRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1340,7 +1492,7 @@ func (x *StreamLiveStatsRequest) String() string {
 func (*StreamLiveStatsRequest) ProtoMessage() {}
 
 func (x *StreamLiveStatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[16]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1353,7 +1505,7 @@ func (x *StreamLiveStatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamLiveStatsRequest.ProtoReflect.Descriptor instead.
 func (*StreamLiveStatsRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{16}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *StreamLiveStatsRequest) GetIntervalSeconds() int32 {
@@ -1381,7 +1533,7 @@ type LiveStatsResponse struct {
 
 func (x *LiveStatsResponse) Reset() {
 	*x = LiveStatsResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1393,7 +1545,7 @@ func (x *LiveStatsResponse) String() string {
 func (*LiveStatsResponse) ProtoMessage() {}
 
 func (x *LiveStatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[17]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1406,7 +1558,7 @@ func (x *LiveStatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LiveStatsResponse.ProtoReflect.Descriptor instead.
 func (*LiveStatsResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{17}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *LiveStatsResponse) GetTimestampUnix() int64 {
@@ -1489,7 +1641,7 @@ type TimeSeriesQuery struct {
 
 func (x *TimeSeriesQuery) Reset() {
 	*x = TimeSeriesQuery{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1501,7 +1653,7 @@ func (x *TimeSeriesQuery) String() string {
 func (*TimeSeriesQuery) ProtoMessage() {}
 
 func (x *TimeSeriesQuery) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[18]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1514,7 +1666,7 @@ func (x *TimeSeriesQuery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeSeriesQuery.ProtoReflect.Descriptor instead.
 func (*TimeSeriesQuery) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{18}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *TimeSeriesQuery) GetMetricName() string {
@@ -1543,7 +1695,7 @@ type QueryTimeSeriesRequest struct {
 
 func (x *QueryTimeSeriesRequest) Reset() {
 	*x = QueryTimeSeriesRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1555,7 +1707,7 @@ func (x *QueryTimeSeriesRequest) String() string {
 func (*QueryTimeSeriesRequest) ProtoMessage() {}
 
 func (x *QueryTimeSeriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[19]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1568,7 +1720,7 @@ func (x *QueryTimeSeriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryTimeSeriesRequest.ProtoReflect.Descriptor instead.
 func (*QueryTimeSeriesRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{19}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *QueryTimeSeriesRequest) GetQueries() []*TimeSeriesQuery {
@@ -1611,7 +1763,7 @@ type TimeSeriesPoint struct {
 
 func (x *TimeSeriesPoint) Reset() {
 	*x = TimeSeriesPoint{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[20]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1623,7 +1775,7 @@ func (x *TimeSeriesPoint) String() string {
 func (*TimeSeriesPoint) ProtoMessage() {}
 
 func (x *TimeSeriesPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[20]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1636,7 +1788,7 @@ func (x *TimeSeriesPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeSeriesPoint.ProtoReflect.Descriptor instead.
 func (*TimeSeriesPoint) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{20}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *TimeSeriesPoint) GetTimestampUnix() int64 {
@@ -1678,7 +1830,7 @@ type TimeSeries struct {
 
 func (x *TimeSeries) Reset() {
 	*x = TimeSeries{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[21]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1690,7 +1842,7 @@ func (x *TimeSeries) String() string {
 func (*TimeSeries) ProtoMessage() {}
 
 func (x *TimeSeries) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[21]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1703,7 +1855,7 @@ func (x *TimeSeries) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeSeries.ProtoReflect.Descriptor instead.
 func (*TimeSeries) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{21}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *TimeSeries) GetMetricName() string {
@@ -1736,7 +1888,7 @@ type QueryTimeSeriesResponse struct {
 
 func (x *QueryTimeSeriesResponse) Reset() {
 	*x = QueryTimeSeriesResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[22]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1748,7 +1900,7 @@ func (x *QueryTimeSeriesResponse) String() string {
 func (*QueryTimeSeriesResponse) ProtoMessage() {}
 
 func (x *QueryTimeSeriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[22]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1761,7 +1913,7 @@ func (x *QueryTimeSeriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryTimeSeriesResponse.ProtoReflect.Descriptor instead.
 func (*QueryTimeSeriesResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{22}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *QueryTimeSeriesResponse) GetSeries() []*TimeSeries {
@@ -1804,7 +1956,19 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x13max_latency_seconds\x18\x06 \x01(\x01R\x11maxLatencySeconds\x12%\n" +
 	"\x0ejitter_seconds\x18\a \x01(\x01R\rjitterSeconds\x12-\n" +
 	"\x13round_trip_times_ms\x18\b \x03(\x01R\x10roundTripTimesMs\x12#\n" +
-	"\rerror_message\x18\t \x01(\tR\ferrorMessage\"J\n" +
+	"\rerror_message\x18\t \x01(\tR\ferrorMessage\"\x94\x01\n" +
+	"\x10WakeOnLanRequest\x12\x19\n" +
+	"\bmac_addr\x18\x01 \x01(\tR\amacAddr\x12\x17\n" +
+	"\aip_addr\x18\x02 \x01(\tR\x06ipAddr\x12\x1c\n" +
+	"\tinterface\x18\x03 \x01(\tR\tinterface\x12\x12\n" +
+	"\x04port\x18\x04 \x01(\x05R\x04port\x12\x1a\n" +
+	"\bpassword\x18\x05 \x01(\tR\bpassword\"\xb2\x01\n" +
+	"\x11WakeOnLanResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x19\n" +
+	"\bmac_addr\x18\x02 \x01(\tR\amacAddr\x12%\n" +
+	"\x0ebroadcast_addr\x18\x03 \x01(\tR\rbroadcastAddr\x12\x1c\n" +
+	"\tinterface\x18\x04 \x01(\tR\tinterface\x12#\n" +
+	"\rerror_message\x18\x05 \x01(\tR\ferrorMessage\"J\n" +
 	"\x12GetOverviewRequest\x12\x1b\n" +
 	"\tfrom_unix\x18\x01 \x01(\x03R\bfromUnix\x12\x17\n" +
 	"\ato_unix\x18\x02 \x01(\x03R\x06toUnix\"\xc6\x04\n" +
@@ -1931,7 +2095,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"O\n" +
 	"\x17QueryTimeSeriesResponse\x124\n" +
-	"\x06series\x18\x01 \x03(\v2\x1c.routermonitor.v1.TimeSeriesR\x06series2\xe1\x04\n" +
+	"\x06series\x18\x01 \x03(\v2\x1c.routermonitor.v1.TimeSeriesR\x06series2\xb7\x05\n" +
 	"\x14RouterMonitorService\x12Z\n" +
 	"\vGetOverview\x12$.routermonitor.v1.GetOverviewRequest\x1a%.routermonitor.v1.GetOverviewResponse\x12Z\n" +
 	"\vListDevices\x12$.routermonitor.v1.ListDevicesRequest\x1a%.routermonitor.v1.ListDevicesResponse\x12l\n" +
@@ -1939,7 +2103,8 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x0fStreamLiveStats\x12(.routermonitor.v1.StreamLiveStatsRequest\x1a#.routermonitor.v1.LiveStatsResponse0\x01\x12f\n" +
 	"\x0fQueryTimeSeries\x12(.routermonitor.v1.QueryTimeSeriesRequest\x1a).routermonitor.v1.QueryTimeSeriesResponse\x12W\n" +
 	"\n" +
-	"PingDevice\x12#.routermonitor.v1.PingDeviceRequest\x1a$.routermonitor.v1.PingDeviceResponseBRZPgithub.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1;routermonitorv1b\x06proto3"
+	"PingDevice\x12#.routermonitor.v1.PingDeviceRequest\x1a$.routermonitor.v1.PingDeviceResponse\x12T\n" +
+	"\tWakeOnLan\x12\".routermonitor.v1.WakeOnLanRequest\x1a#.routermonitor.v1.WakeOnLanResponseBRZPgithub.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1;routermonitorv1b\x06proto3"
 
 var (
 	file_routermonitor_v1_router_monitor_proto_rawDescOnce sync.Once
@@ -1953,33 +2118,35 @@ func file_routermonitor_v1_router_monitor_proto_rawDescGZIP() []byte {
 	return file_routermonitor_v1_router_monitor_proto_rawDescData
 }
 
-var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*DirectionalTraffic)(nil),        // 0: routermonitor.v1.DirectionalTraffic
 	(*ProtocolTraffic)(nil),           // 1: routermonitor.v1.ProtocolTraffic
 	(*PeerTraffic)(nil),               // 2: routermonitor.v1.PeerTraffic
 	(*PingDeviceRequest)(nil),         // 3: routermonitor.v1.PingDeviceRequest
 	(*PingDeviceResponse)(nil),        // 4: routermonitor.v1.PingDeviceResponse
-	(*GetOverviewRequest)(nil),        // 5: routermonitor.v1.GetOverviewRequest
-	(*GetOverviewResponse)(nil),       // 6: routermonitor.v1.GetOverviewResponse
-	(*ListDevicesRequest)(nil),        // 7: routermonitor.v1.ListDevicesRequest
-	(*ArpInfo)(nil),                   // 8: routermonitor.v1.ArpInfo
-	(*DhcpLeaseInfo)(nil),             // 9: routermonitor.v1.DhcpLeaseInfo
-	(*Device)(nil),                    // 10: routermonitor.v1.Device
-	(*ListDevicesResponse)(nil),       // 11: routermonitor.v1.ListDevicesResponse
-	(*GetInternetHealthRequest)(nil),  // 12: routermonitor.v1.GetInternetHealthRequest
-	(*TargetHealth)(nil),              // 13: routermonitor.v1.TargetHealth
-	(*OutageRecord)(nil),              // 14: routermonitor.v1.OutageRecord
-	(*GetInternetHealthResponse)(nil), // 15: routermonitor.v1.GetInternetHealthResponse
-	(*StreamLiveStatsRequest)(nil),    // 16: routermonitor.v1.StreamLiveStatsRequest
-	(*LiveStatsResponse)(nil),         // 17: routermonitor.v1.LiveStatsResponse
-	(*TimeSeriesQuery)(nil),           // 18: routermonitor.v1.TimeSeriesQuery
-	(*QueryTimeSeriesRequest)(nil),    // 19: routermonitor.v1.QueryTimeSeriesRequest
-	(*TimeSeriesPoint)(nil),           // 20: routermonitor.v1.TimeSeriesPoint
-	(*TimeSeries)(nil),                // 21: routermonitor.v1.TimeSeries
-	(*QueryTimeSeriesResponse)(nil),   // 22: routermonitor.v1.QueryTimeSeriesResponse
-	nil,                               // 23: routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
-	nil,                               // 24: routermonitor.v1.TimeSeries.LabelsEntry
+	(*WakeOnLanRequest)(nil),          // 5: routermonitor.v1.WakeOnLanRequest
+	(*WakeOnLanResponse)(nil),         // 6: routermonitor.v1.WakeOnLanResponse
+	(*GetOverviewRequest)(nil),        // 7: routermonitor.v1.GetOverviewRequest
+	(*GetOverviewResponse)(nil),       // 8: routermonitor.v1.GetOverviewResponse
+	(*ListDevicesRequest)(nil),        // 9: routermonitor.v1.ListDevicesRequest
+	(*ArpInfo)(nil),                   // 10: routermonitor.v1.ArpInfo
+	(*DhcpLeaseInfo)(nil),             // 11: routermonitor.v1.DhcpLeaseInfo
+	(*Device)(nil),                    // 12: routermonitor.v1.Device
+	(*ListDevicesResponse)(nil),       // 13: routermonitor.v1.ListDevicesResponse
+	(*GetInternetHealthRequest)(nil),  // 14: routermonitor.v1.GetInternetHealthRequest
+	(*TargetHealth)(nil),              // 15: routermonitor.v1.TargetHealth
+	(*OutageRecord)(nil),              // 16: routermonitor.v1.OutageRecord
+	(*GetInternetHealthResponse)(nil), // 17: routermonitor.v1.GetInternetHealthResponse
+	(*StreamLiveStatsRequest)(nil),    // 18: routermonitor.v1.StreamLiveStatsRequest
+	(*LiveStatsResponse)(nil),         // 19: routermonitor.v1.LiveStatsResponse
+	(*TimeSeriesQuery)(nil),           // 20: routermonitor.v1.TimeSeriesQuery
+	(*QueryTimeSeriesRequest)(nil),    // 21: routermonitor.v1.QueryTimeSeriesRequest
+	(*TimeSeriesPoint)(nil),           // 22: routermonitor.v1.TimeSeriesPoint
+	(*TimeSeries)(nil),                // 23: routermonitor.v1.TimeSeries
+	(*QueryTimeSeriesResponse)(nil),   // 24: routermonitor.v1.QueryTimeSeriesResponse
+	nil,                               // 25: routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
+	nil,                               // 26: routermonitor.v1.TimeSeries.LabelsEntry
 }
 var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 0: routermonitor.v1.ProtocolTraffic.traffic:type_name -> routermonitor.v1.DirectionalTraffic
@@ -1987,38 +2154,40 @@ var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 2: routermonitor.v1.GetOverviewResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 3: routermonitor.v1.GetOverviewResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 4: routermonitor.v1.GetOverviewResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
-	8,  // 5: routermonitor.v1.Device.arp:type_name -> routermonitor.v1.ArpInfo
+	10, // 5: routermonitor.v1.Device.arp:type_name -> routermonitor.v1.ArpInfo
 	0,  // 6: routermonitor.v1.Device.total:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 7: routermonitor.v1.Device.wan:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 8: routermonitor.v1.Device.lan:type_name -> routermonitor.v1.DirectionalTraffic
 	1,  // 9: routermonitor.v1.Device.protocols:type_name -> routermonitor.v1.ProtocolTraffic
 	2,  // 10: routermonitor.v1.Device.peers:type_name -> routermonitor.v1.PeerTraffic
-	9,  // 11: routermonitor.v1.Device.dhcp_lease:type_name -> routermonitor.v1.DhcpLeaseInfo
-	10, // 12: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
-	13, // 13: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.TargetHealth
-	14, // 14: routermonitor.v1.GetInternetHealthResponse.recent_outages:type_name -> routermonitor.v1.OutageRecord
+	11, // 11: routermonitor.v1.Device.dhcp_lease:type_name -> routermonitor.v1.DhcpLeaseInfo
+	12, // 12: routermonitor.v1.ListDevicesResponse.devices:type_name -> routermonitor.v1.Device
+	15, // 13: routermonitor.v1.GetInternetHealthResponse.targets:type_name -> routermonitor.v1.TargetHealth
+	16, // 14: routermonitor.v1.GetInternetHealthResponse.recent_outages:type_name -> routermonitor.v1.OutageRecord
 	0,  // 15: routermonitor.v1.LiveStatsResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 16: routermonitor.v1.LiveStatsResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 17: routermonitor.v1.LiveStatsResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
-	23, // 18: routermonitor.v1.TimeSeriesQuery.match_labels:type_name -> routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
-	18, // 19: routermonitor.v1.QueryTimeSeriesRequest.queries:type_name -> routermonitor.v1.TimeSeriesQuery
-	24, // 20: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
-	20, // 21: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
-	21, // 22: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
-	5,  // 23: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
-	7,  // 24: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
-	12, // 25: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
-	16, // 26: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
-	19, // 27: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
+	25, // 18: routermonitor.v1.TimeSeriesQuery.match_labels:type_name -> routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
+	20, // 19: routermonitor.v1.QueryTimeSeriesRequest.queries:type_name -> routermonitor.v1.TimeSeriesQuery
+	26, // 20: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
+	22, // 21: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
+	23, // 22: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
+	7,  // 23: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
+	9,  // 24: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
+	14, // 25: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
+	18, // 26: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
+	21, // 27: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
 	3,  // 28: routermonitor.v1.RouterMonitorService.PingDevice:input_type -> routermonitor.v1.PingDeviceRequest
-	6,  // 29: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
-	11, // 30: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
-	15, // 31: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
-	17, // 32: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
-	22, // 33: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
-	4,  // 34: routermonitor.v1.RouterMonitorService.PingDevice:output_type -> routermonitor.v1.PingDeviceResponse
-	29, // [29:35] is the sub-list for method output_type
-	23, // [23:29] is the sub-list for method input_type
+	5,  // 29: routermonitor.v1.RouterMonitorService.WakeOnLan:input_type -> routermonitor.v1.WakeOnLanRequest
+	8,  // 30: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
+	13, // 31: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
+	17, // 32: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
+	19, // 33: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
+	24, // 34: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
+	4,  // 35: routermonitor.v1.RouterMonitorService.PingDevice:output_type -> routermonitor.v1.PingDeviceResponse
+	6,  // 36: routermonitor.v1.RouterMonitorService.WakeOnLan:output_type -> routermonitor.v1.WakeOnLanResponse
+	30, // [30:37] is the sub-list for method output_type
+	23, // [23:30] is the sub-list for method input_type
 	23, // [23:23] is the sub-list for extension type_name
 	23, // [23:23] is the sub-list for extension extendee
 	0,  // [0:23] is the sub-list for field type_name
@@ -2035,7 +2204,7 @@ func file_routermonitor_v1_router_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_routermonitor_v1_router_monitor_proto_rawDesc), len(file_routermonitor_v1_router_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   25,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

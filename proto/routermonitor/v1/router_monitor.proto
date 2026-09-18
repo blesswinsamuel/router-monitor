@@ -22,6 +22,9 @@ service RouterMonitorService {
 
   // Ping a specific LAN device on-demand and measure round-trip latency, jitter, and packet loss.
   rpc PingDevice(PingDeviceRequest) returns (PingDeviceResponse);
+
+  // Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
+  rpc WakeOnLan(WakeOnLanRequest) returns (WakeOnLanResponse);
 }
 
 message DirectionalTraffic {
@@ -64,6 +67,22 @@ message PingDeviceResponse {
   double jitter_seconds = 7;
   repeated double round_trip_times_ms = 8;
   string error_message = 9;
+}
+
+message WakeOnLanRequest {
+  string mac_addr = 1;        // Target MAC address (e.g. "aa:bb:cc:dd:ee:ff")
+  string ip_addr = 2;         // Optional target IP to resolve subnet/interface
+  string interface = 3;       // Optional network interface (e.g. "lan")
+  int32 port = 4;             // Optional target UDP port (defaults to 9)
+  string password = 5;        // Optional SecureOn password (empty, 4 or 6 bytes hex)
+}
+
+message WakeOnLanResponse {
+  bool success = 1;
+  string mac_addr = 2;        // Formatted canonical MAC address
+  string broadcast_addr = 3;  // Address packet was sent to (e.g. "10.100.255.255:9")
+  string interface = 4;       // Network interface used
+  string error_message = 5;
 }
 
 message GetOverviewRequest {

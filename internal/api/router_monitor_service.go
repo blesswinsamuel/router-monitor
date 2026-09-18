@@ -630,3 +630,89 @@ func (s *RouterMonitorService) PingDevice(
 	return connect.NewResponse(res), nil
 }
 
+func (s *RouterMonitorService) WakeOnLan(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.WakeOnLanRequest],
+) (*connect.Response[routermonitorv1.WakeOnLanResponse], error) {
+	mac := strings.TrimSpace(req.Msg.MacAddr)
+	ip := strings.TrimSpace(req.Msg.IpAddr)
+	iface := strings.TrimSpace(req.Msg.Interface)
+
+	// If MAC is empty but IP is provided, look up MAC from ARP/TSDB/DHCP
+	if mac == "" && ip != "" {
+		for _, dev := range s.arpCollector.GetDevices() {
+			if dev.IPAddr == ip && dev.HWAddr != "" && dev.HWAddr != "00:00:00:00:00:00" {
+				mac = dev.HWAddr
+				if iface == "" && dev.Device != "" {
+					iface = dev.Device
+				}
+				break
+			}
+		}
+		if mac == "" && s.dhcpReader != nil {
+			leasesByIP, _, _ := s.dhcpReader.GetLeasesMap()
+			if lease, ok := leasesByIP[ip]; ok && lease.MACAddr != "" {
+				mac = lease.MACAddr
+			}
+		}
+		if mac == "" {
+			persisted, _ := s.tsdbDB.GetPersistedDevices()
+			for _, pd := range persisted {
+				if pd.IPAddr == ip && pd.HWAddr != "" && pd.HWAddr != "00:00:00:00:00:00" {
+					mac = pd.HWAddr
+					if iface == "" && pd.Device != "" {
+						iface = pd.Device
+					}
+					break
+				}
+			}
+		}
+	}
+
+	// If interface is empty, try to resolve from device info or router default interface
+	if iface == "" {
+		if mac != "" {
+			for _, dev := range s.arpCollector.GetDevices() {
+				if strings.EqualFold(dev.HWAddr, mac) && dev.Device != "" {
+					iface = dev.Device
+					break
+				}
+			}
+		}
+		if iface == "" {
+			iface = s.interfaceName
+		}
+	}
+
+	if mac == "" {
+		return connect.NewResponse(&routermonitorv1.WakeOnLanResponse{
+			Success:      false,
+			ErrorMessage: "A valid MAC address is required for Wake-on-LAN",
+		}), nil
+	}
+
+	res, err := routermonitor.SendWakeOnLan(
+		mac,
+		ip,
+		iface,
+		int(req.Msg.Port),
+		req.Msg.Password,
+		s.lanSubnetCIDR,
+	)
+	if err != nil {
+		return connect.NewResponse(&routermonitorv1.WakeOnLanResponse{
+			Success:      false,
+			MacAddr:      mac,
+			Interface:    iface,
+			ErrorMessage: err.Error(),
+		}), nil
+	}
+
+	return connect.NewResponse(&routermonitorv1.WakeOnLanResponse{
+		Success:       true,
+		MacAddr:       res.MAC,
+		BroadcastAddr: res.BroadcastAddr,
+		Interface:     res.Interface,
+	}), nil
+}
+
