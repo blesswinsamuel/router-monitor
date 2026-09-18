@@ -3,13 +3,14 @@ import { Outlet, NavLink, useOutletContext, useSearchParams } from 'react-router
 import { Header } from './Header'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Laptop, Activity } from 'lucide-react'
+import { LayoutDashboard, Laptop, Activity, Globe } from 'lucide-react'
 import { type Period, isPeriod, getPeriodRange } from '@/lib/period'
 
 export interface RootOutletContext {
   overview: any
   devices: any[]
   health: any
+  ddns: any
   isLive: boolean
   isRefreshing: boolean
   error: string | null
@@ -40,15 +41,16 @@ export function RootLayout() {
   const [overview, setOverview] = useState<any>(null)
   const [devices, setDevices] = useState<any[]>([])
   const [health, setHealth] = useState<any>(null)
+  const [ddns, setDdns] = useState<any>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch all snapshot data (devices, flows, health, overview) for the current period
+  // Fetch all snapshot data (devices, flows, health, overview, ddns) for the current period
   const fetchAllData = useCallback(async () => {
     setIsRefreshing(true)
     try {
       const { fromUnix: from, toUnix: to } = getPeriodRange(period)
-      const [ov, dev, hl] = await Promise.all([
+      const [ov, dev, hl, ddnsRes] = await Promise.all([
         rpcClient.getOverview({
           fromUnix: BigInt(from),
           toUnix: BigInt(to),
@@ -58,10 +60,12 @@ export function RootLayout() {
           toUnix: BigInt(to),
         }),
         rpcClient.getInternetHealth({}),
+        rpcClient.getDDNSStatus({}).catch(() => null),
       ])
       setOverview(ov)
       setDevices(dev.devices || [])
       setHealth(hl)
+      if (ddnsRes) setDdns(ddnsRes)
       setError(null)
     } catch (err: any) {
       console.error('Failed to fetch router monitor data:', err)
@@ -85,6 +89,7 @@ export function RootLayout() {
     overview,
     devices,
     health,
+    ddns,
     isLive: isConnected,
     isRefreshing,
     error,
@@ -158,6 +163,27 @@ export function RootLayout() {
           >
             <Activity className="w-4 h-4" />
             <span>Health</span>
+          </NavLink>
+          <NavLink
+            to="/ddns"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap",
+                isActive
+                  ? "bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              )
+            }
+          >
+            <Globe className="w-4 h-4" />
+            <span>DDNS</span>
+            {ddns?.enabled && (
+              <span className={cn(
+                "w-1.5 h-1.5 rounded-full inline-block",
+                ddns.lastSyncStatus === 'success' ? "bg-emerald-500" :
+                ddns.lastSyncStatus === 'failure' ? "bg-destructive" : "bg-amber-500"
+              )} />
+            )}
           </NavLink>
         </nav>
 

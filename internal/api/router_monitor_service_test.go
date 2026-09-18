@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	routermonitorv1 "github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
+	"github.com/blesswinsamuel/router-monitor/internal/routermonitor/ddns"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
 )
 
@@ -31,7 +32,7 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 	}, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
-	svc := NewRouterMonitorService("eth0", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil)
+	svc := NewRouterMonitorService("eth0", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil)
 
 	ctx := context.Background()
 
@@ -107,7 +108,7 @@ func TestRouterMonitorService_DeviceTrafficAndPersistence(t *testing.T) {
 	}, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil)
 	ctx := context.Background()
 
 	res, err := svc.ListDevices(ctx, connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
@@ -208,7 +209,7 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 		t.Fatalf("UpsertDevice failed: %v", err)
 	}
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, mockDHCP)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, mockDHCP, nil)
 	res, err := svc.ListDevices(context.Background(), connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
 	if err != nil {
 		t.Fatalf("ListDevices failed: %v", err)
@@ -271,7 +272,7 @@ func TestRouterMonitorService_WakeOnLan(t *testing.T) {
 	// Persist a device to verify MAC auto-lookup by IP
 	_ = db.UpsertDevice("aa:bb:cc:dd:ee:88", "10.100.1.88", "desktop-pc", "lan", time.Now())
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil)
 	ctx := context.Background()
 
 	// 1. Successful WoL with explicit MAC
@@ -327,5 +328,97 @@ func TestRouterMonitorService_WakeOnLan(t *testing.T) {
 		t.Errorf("expected success=false for invalid MAC format")
 	}
 }
+
+type testDDNSDetector struct{}
+
+func (d *testDDNSDetector) DetectIPs(ctx context.Context, v4, v6 bool) (ddns.IPPair, error) {
+	return ddns.IPPair{IPv4: "203.0.113.50", IPv6: "2001:db8::50"}, nil
+}
+
+type testDDNSProvider struct{}
+
+func (p *testDDNSProvider) Name() string { return "testprovider" }
+func (p *testDDNSProvider) Update(ctx context.Context, req ddns.UpdateRequest) (*ddns.UpdateResult, error) {
+	return &ddns.UpdateResult{UpdatedRecords: len(req.Domains), Message: "All good", Success: true}, nil
+}
+
+func TestRouterMonitorService_DDNS(t *testing.T) {
+	db, err := tsdb.Open(":memory:")
+	if err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	defer db.Close()
+
+	ctx := context.Background()
+
+	// 1. Service without DDNS manager
+	svcNoDDNS := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, nil)
+	stNoDDNS, err := svcNoDDNS.GetDDNSStatus(ctx, connect.NewRequest(&routermonitorv1.GetDDNSStatusRequest{}))
+	if err != nil {
+		t.Fatalf("GetDDNSStatus failed: %v", err)
+	}
+	if stNoDDNS.Msg.Enabled {
+		t.Errorf("expected Enabled=false when manager is nil")
+	}
+	if stNoDDNS.Msg.LastSyncStatus != "disabled" {
+		t.Errorf("expected LastSyncStatus=disabled, got %s", stNoDDNS.Msg.LastSyncStatus)
+	}
+
+	syncNoDDNS, err := svcNoDDNS.SyncDDNS(ctx, connect.NewRequest(&routermonitorv1.SyncDDNSRequest{}))
+	if err != nil {
+		t.Fatalf("SyncDDNS failed: %v", err)
+	}
+	if syncNoDDNS.Msg.Success {
+		t.Errorf("expected SyncDDNS to fail when manager is nil")
+	}
+
+	// 2. Service with DDNS manager
+	mgr := ddns.NewManager(ddns.ManagerConfig{
+		Enabled:   true,
+		Provider:  &testDDNSProvider{},
+		Detector:  &testDDNSDetector{},
+		Domains:   []string{"home.example.com"},
+		Interval:  5 * time.Minute,
+		CheckIPv4: true,
+		CheckIPv6: true,
+		Store:     db,
+	})
+
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, mgr)
+
+	// Sync via RPC
+	syncRes, err := svc.SyncDDNS(ctx, connect.NewRequest(&routermonitorv1.SyncDDNSRequest{Force: true}))
+	if err != nil {
+		t.Fatalf("SyncDDNS error: %v", err)
+	}
+	if !syncRes.Msg.Success {
+		t.Errorf("expected SyncDDNS success, got error: %s", syncRes.Msg.Message)
+	}
+	if syncRes.Msg.Status == nil || syncRes.Msg.Status.CurrentIpv4 != "203.0.113.50" {
+		t.Errorf("unexpected sync status: %+v", syncRes.Msg.Status)
+	}
+
+	// Fetch status
+	stRes, err := svc.GetDDNSStatus(ctx, connect.NewRequest(&routermonitorv1.GetDDNSStatusRequest{}))
+	if err != nil {
+		t.Fatalf("GetDDNSStatus error: %v", err)
+	}
+	if !stRes.Msg.Enabled {
+		t.Errorf("expected Enabled=true")
+	}
+	if stRes.Msg.Provider != "testprovider" {
+		t.Errorf("expected provider testprovider, got %s", stRes.Msg.Provider)
+	}
+	if len(stRes.Msg.Domains) != 1 || stRes.Msg.Domains[0] != "home.example.com" {
+		t.Errorf("unexpected domains: %v", stRes.Msg.Domains)
+	}
+	if stRes.Msg.CurrentIpv4 != "203.0.113.50" || stRes.Msg.CurrentIpv6 != "2001:db8::50" {
+		t.Errorf("unexpected IPs: v4=%s v6=%s", stRes.Msg.CurrentIpv4, stRes.Msg.CurrentIpv6)
+	}
+	if len(stRes.Msg.History) != 1 {
+		t.Errorf("expected 1 history record, got %d", len(stRes.Msg.History))
+	}
+}
+
 
 

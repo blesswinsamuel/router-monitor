@@ -10,6 +10,7 @@ import (
 	routermonitorv1 "github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1"
 	"github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1/routermonitorv1connect"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
+	"github.com/blesswinsamuel/router-monitor/internal/routermonitor/ddns"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
 	"github.com/endobit/oui"
 )
@@ -26,6 +27,7 @@ type RouterMonitorService struct {
 	tsdbDB          *tsdb.DB
 	sampler         *tsdb.Sampler
 	dhcpReader      routermonitor.DHCPLeaseReader
+	ddnsManager     *ddns.Manager
 }
 
 func NewRouterMonitorService(
@@ -37,6 +39,7 @@ func NewRouterMonitorService(
 	db *tsdb.DB,
 	sampler *tsdb.Sampler,
 	dhcpReader routermonitor.DHCPLeaseReader,
+	ddnsMgr *ddns.Manager,
 ) *RouterMonitorService {
 	return &RouterMonitorService{
 		interfaceName:   ifaceName,
@@ -47,6 +50,7 @@ func NewRouterMonitorService(
 		tsdbDB:          db,
 		sampler:         sampler,
 		dhcpReader:      dhcpReader,
+		ddnsManager:     ddnsMgr,
 	}
 }
 
@@ -715,4 +719,83 @@ func (s *RouterMonitorService) WakeOnLan(
 		Interface:     res.Interface,
 	}), nil
 }
+
+func (s *RouterMonitorService) GetDDNSStatus(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.GetDDNSStatusRequest],
+) (*connect.Response[routermonitorv1.GetDDNSStatusResponse], error) {
+	if s.ddnsManager == nil {
+		return connect.NewResponse(&routermonitorv1.GetDDNSStatusResponse{
+			Enabled:         false,
+			LastSyncStatus:  "disabled",
+			LastSyncMessage: "DDNS is not configured",
+		}), nil
+	}
+
+	st, err := s.ddnsManager.GetStatus(ctx)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	history := make([]*routermonitorv1.DDNSHistoryRecord, len(st.History))
+	for i, h := range st.History {
+		history[i] = &routermonitorv1.DDNSHistoryRecord{
+			Id:            h.ID,
+			TimestampUnix: h.Timestamp.Unix(),
+			Provider:      h.Provider,
+			Ipv4:          h.IPv4,
+			Ipv6:          h.IPv6,
+			Status:        h.Status,
+			Message:       h.Message,
+		}
+	}
+
+	return connect.NewResponse(&routermonitorv1.GetDDNSStatusResponse{
+		Enabled:              st.Enabled,
+		Provider:             st.Provider,
+		Domains:              st.Domains,
+		CurrentIpv4:          st.CurrentIPv4,
+		CurrentIpv6:          st.CurrentIPv6,
+		LastSyncUnix:         st.LastSyncUnix,
+		LastSyncStatus:       st.LastSyncStatus,
+		LastSyncMessage:      st.LastSyncMessage,
+		CheckIntervalSeconds: st.CheckIntervalSeconds,
+		History:              history,
+	}), nil
+}
+
+func (s *RouterMonitorService) SyncDDNS(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.SyncDDNSRequest],
+) (*connect.Response[routermonitorv1.SyncDDNSResponse], error) {
+	if s.ddnsManager == nil {
+		return connect.NewResponse(&routermonitorv1.SyncDDNSResponse{
+			Success: false,
+			Message: "DDNS is not configured",
+		}), nil
+	}
+
+	res, err := s.ddnsManager.Sync(ctx, req.Msg.Force)
+	statusRes, _ := s.GetDDNSStatus(ctx, connect.NewRequest(&routermonitorv1.GetDDNSStatusRequest{}))
+
+	var status *routermonitorv1.GetDDNSStatusResponse
+	if statusRes != nil {
+		status = statusRes.Msg
+	}
+
+	if err != nil {
+		return connect.NewResponse(&routermonitorv1.SyncDDNSResponse{
+			Success: false,
+			Message: err.Error(),
+			Status:  status,
+		}), nil
+	}
+
+	return connect.NewResponse(&routermonitorv1.SyncDDNSResponse{
+		Success: res.Success,
+		Message: res.Message,
+		Status:  status,
+	}), nil
+}
+
 

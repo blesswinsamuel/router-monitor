@@ -245,3 +245,44 @@ func TestTSDB_DeviceAndOverviewUsage(t *testing.T) {
 	}
 }
 
+func TestDB_DDNSHistory(t *testing.T) {
+	db, err := Open(":memory:")
+	if err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	defer db.Close()
+
+	now := time.Now().Truncate(time.Second)
+	id1, err := db.RecordDDNSEvent(now.Add(-2*time.Minute), "cloudflare", "198.51.100.1", "", "success", "Updated 2 records")
+	if err != nil {
+		t.Fatalf("RecordDDNSEvent failed: %v", err)
+	}
+	if id1 <= 0 {
+		t.Errorf("expected valid id, got %d", id1)
+	}
+
+	id2, err := db.RecordDDNSEvent(now, "cloudflare", "198.51.100.2", "2001:db8::1", "failure", "API error: unauthorized")
+	if err != nil {
+		t.Fatalf("RecordDDNSEvent failed: %v", err)
+	}
+	if id2 <= id1 {
+		t.Errorf("expected id2 > id1, got id1=%d, id2=%d", id1, id2)
+	}
+
+	history, err := db.GetRecentDDNSHistory(10)
+	if err != nil {
+		t.Fatalf("GetRecentDDNSHistory failed: %v", err)
+	}
+	if len(history) != 2 {
+		t.Fatalf("expected 2 history events, got %d", len(history))
+	}
+
+	// Should be ordered DESC by timestamp
+	if history[0].ID != id2 || history[0].Status != "failure" || history[0].IPv4 != "198.51.100.2" || history[0].IPv6 != "2001:db8::1" {
+		t.Errorf("unexpected event 0: %+v", history[0])
+	}
+	if history[1].ID != id1 || history[1].Status != "success" || history[1].IPv4 != "198.51.100.1" || history[1].IPv6 != "" {
+		t.Errorf("unexpected event 1: %+v", history[1])
+	}
+}
+

@@ -54,3 +54,32 @@ func TestParseDurationWithDefault(t *testing.T) {
 		t.Fatal("expected parse error for invalid duration")
 	}
 }
+
+func TestParseBoolWithDefault(t *testing.T) {
+	if !parseBoolWithDefault("", true) {
+		t.Errorf("expected default true")
+	}
+	if parseBoolWithDefault("", false) {
+		t.Errorf("expected default false")
+	}
+	if !parseBoolWithDefault("true", false) || !parseBoolWithDefault("1", false) || !parseBoolWithDefault("yes", false) {
+		t.Errorf("expected truthy values to parse true")
+	}
+	if parseBoolWithDefault("false", true) || parseBoolWithDefault("0", true) || parseBoolWithDefault("no", true) {
+		t.Errorf("expected falsy values to parse false")
+	}
+}
+
+func TestParseDomains(t *testing.T) {
+	got := parseDomains(" home.example.com, vpn.example.com , ,foo.bar.org ")
+	want := []string{"home.example.com", "vpn.example.com", "foo.bar.org"}
+	if len(got) != len(want) {
+		t.Fatalf("expected %d domains, got %d", len(want), len(got))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("expected domain %s, got %s", want[i], got[i])
+		}
+	}
+}
+

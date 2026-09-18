@@ -1923,6 +1923,354 @@ func (x *QueryTimeSeriesResponse) GetSeries() []*TimeSeries {
 	return nil
 }
 
+type GetDDNSStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDDNSStatusRequest) Reset() {
+	*x = GetDDNSStatusRequest{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDDNSStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDDNSStatusRequest) ProtoMessage() {}
+
+func (x *GetDDNSStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDDNSStatusRequest.ProtoReflect.Descriptor instead.
+func (*GetDDNSStatusRequest) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{25}
+}
+
+type DDNSHistoryRecord struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	TimestampUnix int64                  `protobuf:"varint,2,opt,name=timestamp_unix,json=timestampUnix,proto3" json:"timestamp_unix,omitempty"`
+	Provider      string                 `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
+	Ipv4          string                 `protobuf:"bytes,4,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
+	Ipv6          string                 `protobuf:"bytes,5,opt,name=ipv6,proto3" json:"ipv6,omitempty"`
+	Status        string                 `protobuf:"bytes,6,opt,name=status,proto3" json:"status,omitempty"` // "success", "failure"
+	Message       string                 `protobuf:"bytes,7,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DDNSHistoryRecord) Reset() {
+	*x = DDNSHistoryRecord{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DDNSHistoryRecord) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DDNSHistoryRecord) ProtoMessage() {}
+
+func (x *DDNSHistoryRecord) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DDNSHistoryRecord.ProtoReflect.Descriptor instead.
+func (*DDNSHistoryRecord) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *DDNSHistoryRecord) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *DDNSHistoryRecord) GetTimestampUnix() int64 {
+	if x != nil {
+		return x.TimestampUnix
+	}
+	return 0
+}
+
+func (x *DDNSHistoryRecord) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *DDNSHistoryRecord) GetIpv4() string {
+	if x != nil {
+		return x.Ipv4
+	}
+	return ""
+}
+
+func (x *DDNSHistoryRecord) GetIpv6() string {
+	if x != nil {
+		return x.Ipv6
+	}
+	return ""
+}
+
+func (x *DDNSHistoryRecord) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *DDNSHistoryRecord) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type GetDDNSStatusResponse struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Enabled              bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Provider             string                 `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
+	Domains              []string               `protobuf:"bytes,3,rep,name=domains,proto3" json:"domains,omitempty"`
+	CurrentIpv4          string                 `protobuf:"bytes,4,opt,name=current_ipv4,json=currentIpv4,proto3" json:"current_ipv4,omitempty"`
+	CurrentIpv6          string                 `protobuf:"bytes,5,opt,name=current_ipv6,json=currentIpv6,proto3" json:"current_ipv6,omitempty"`
+	LastSyncUnix         int64                  `protobuf:"varint,6,opt,name=last_sync_unix,json=lastSyncUnix,proto3" json:"last_sync_unix,omitempty"`
+	LastSyncStatus       string                 `protobuf:"bytes,7,opt,name=last_sync_status,json=lastSyncStatus,proto3" json:"last_sync_status,omitempty"` // "success", "failure", "pending", "disabled"
+	LastSyncMessage      string                 `protobuf:"bytes,8,opt,name=last_sync_message,json=lastSyncMessage,proto3" json:"last_sync_message,omitempty"`
+	CheckIntervalSeconds int64                  `protobuf:"varint,9,opt,name=check_interval_seconds,json=checkIntervalSeconds,proto3" json:"check_interval_seconds,omitempty"`
+	History              []*DDNSHistoryRecord   `protobuf:"bytes,10,rep,name=history,proto3" json:"history,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *GetDDNSStatusResponse) Reset() {
+	*x = GetDDNSStatusResponse{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDDNSStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDDNSStatusResponse) ProtoMessage() {}
+
+func (x *GetDDNSStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDDNSStatusResponse.ProtoReflect.Descriptor instead.
+func (*GetDDNSStatusResponse) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetDDNSStatusResponse) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *GetDDNSStatusResponse) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *GetDDNSStatusResponse) GetDomains() []string {
+	if x != nil {
+		return x.Domains
+	}
+	return nil
+}
+
+func (x *GetDDNSStatusResponse) GetCurrentIpv4() string {
+	if x != nil {
+		return x.CurrentIpv4
+	}
+	return ""
+}
+
+func (x *GetDDNSStatusResponse) GetCurrentIpv6() string {
+	if x != nil {
+		return x.CurrentIpv6
+	}
+	return ""
+}
+
+func (x *GetDDNSStatusResponse) GetLastSyncUnix() int64 {
+	if x != nil {
+		return x.LastSyncUnix
+	}
+	return 0
+}
+
+func (x *GetDDNSStatusResponse) GetLastSyncStatus() string {
+	if x != nil {
+		return x.LastSyncStatus
+	}
+	return ""
+}
+
+func (x *GetDDNSStatusResponse) GetLastSyncMessage() string {
+	if x != nil {
+		return x.LastSyncMessage
+	}
+	return ""
+}
+
+func (x *GetDDNSStatusResponse) GetCheckIntervalSeconds() int64 {
+	if x != nil {
+		return x.CheckIntervalSeconds
+	}
+	return 0
+}
+
+func (x *GetDDNSStatusResponse) GetHistory() []*DDNSHistoryRecord {
+	if x != nil {
+		return x.History
+	}
+	return nil
+}
+
+type SyncDDNSRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Force         bool                   `protobuf:"varint,1,opt,name=force,proto3" json:"force,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncDDNSRequest) Reset() {
+	*x = SyncDDNSRequest{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncDDNSRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncDDNSRequest) ProtoMessage() {}
+
+func (x *SyncDDNSRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncDDNSRequest.ProtoReflect.Descriptor instead.
+func (*SyncDDNSRequest) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *SyncDDNSRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
+type SyncDDNSResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Status        *GetDDNSStatusResponse `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncDDNSResponse) Reset() {
+	*x = SyncDDNSResponse{}
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncDDNSResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncDDNSResponse) ProtoMessage() {}
+
+func (x *SyncDDNSResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncDDNSResponse.ProtoReflect.Descriptor instead.
+func (*SyncDDNSResponse) Descriptor() ([]byte, []int) {
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *SyncDDNSResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SyncDDNSResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SyncDDNSResponse) GetStatus() *GetDDNSStatusResponse {
+	if x != nil {
+		return x.Status
+	}
+	return nil
+}
+
 var File_routermonitor_v1_router_monitor_proto protoreflect.FileDescriptor
 
 const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
@@ -2095,7 +2443,34 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"O\n" +
 	"\x17QueryTimeSeriesResponse\x124\n" +
-	"\x06series\x18\x01 \x03(\v2\x1c.routermonitor.v1.TimeSeriesR\x06series2\xb7\x05\n" +
+	"\x06series\x18\x01 \x03(\v2\x1c.routermonitor.v1.TimeSeriesR\x06series\"\x16\n" +
+	"\x14GetDDNSStatusRequest\"\xc0\x01\n" +
+	"\x11DDNSHistoryRecord\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12%\n" +
+	"\x0etimestamp_unix\x18\x02 \x01(\x03R\rtimestampUnix\x12\x1a\n" +
+	"\bprovider\x18\x03 \x01(\tR\bprovider\x12\x12\n" +
+	"\x04ipv4\x18\x04 \x01(\tR\x04ipv4\x12\x12\n" +
+	"\x04ipv6\x18\x05 \x01(\tR\x04ipv6\x12\x16\n" +
+	"\x06status\x18\x06 \x01(\tR\x06status\x12\x18\n" +
+	"\amessage\x18\a \x01(\tR\amessage\"\x9e\x03\n" +
+	"\x15GetDDNSStatusResponse\x12\x18\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1a\n" +
+	"\bprovider\x18\x02 \x01(\tR\bprovider\x12\x18\n" +
+	"\adomains\x18\x03 \x03(\tR\adomains\x12!\n" +
+	"\fcurrent_ipv4\x18\x04 \x01(\tR\vcurrentIpv4\x12!\n" +
+	"\fcurrent_ipv6\x18\x05 \x01(\tR\vcurrentIpv6\x12$\n" +
+	"\x0elast_sync_unix\x18\x06 \x01(\x03R\flastSyncUnix\x12(\n" +
+	"\x10last_sync_status\x18\a \x01(\tR\x0elastSyncStatus\x12*\n" +
+	"\x11last_sync_message\x18\b \x01(\tR\x0flastSyncMessage\x124\n" +
+	"\x16check_interval_seconds\x18\t \x01(\x03R\x14checkIntervalSeconds\x12=\n" +
+	"\ahistory\x18\n" +
+	" \x03(\v2#.routermonitor.v1.DDNSHistoryRecordR\ahistory\"'\n" +
+	"\x0fSyncDDNSRequest\x12\x14\n" +
+	"\x05force\x18\x01 \x01(\bR\x05force\"\x87\x01\n" +
+	"\x10SyncDDNSResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12?\n" +
+	"\x06status\x18\x03 \x01(\v2'.routermonitor.v1.GetDDNSStatusResponseR\x06status2\xec\x06\n" +
 	"\x14RouterMonitorService\x12Z\n" +
 	"\vGetOverview\x12$.routermonitor.v1.GetOverviewRequest\x1a%.routermonitor.v1.GetOverviewResponse\x12Z\n" +
 	"\vListDevices\x12$.routermonitor.v1.ListDevicesRequest\x1a%.routermonitor.v1.ListDevicesResponse\x12l\n" +
@@ -2104,7 +2479,9 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x0fQueryTimeSeries\x12(.routermonitor.v1.QueryTimeSeriesRequest\x1a).routermonitor.v1.QueryTimeSeriesResponse\x12W\n" +
 	"\n" +
 	"PingDevice\x12#.routermonitor.v1.PingDeviceRequest\x1a$.routermonitor.v1.PingDeviceResponse\x12T\n" +
-	"\tWakeOnLan\x12\".routermonitor.v1.WakeOnLanRequest\x1a#.routermonitor.v1.WakeOnLanResponseBRZPgithub.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1;routermonitorv1b\x06proto3"
+	"\tWakeOnLan\x12\".routermonitor.v1.WakeOnLanRequest\x1a#.routermonitor.v1.WakeOnLanResponse\x12`\n" +
+	"\rGetDDNSStatus\x12&.routermonitor.v1.GetDDNSStatusRequest\x1a'.routermonitor.v1.GetDDNSStatusResponse\x12Q\n" +
+	"\bSyncDDNS\x12!.routermonitor.v1.SyncDDNSRequest\x1a\".routermonitor.v1.SyncDDNSResponseBRZPgithub.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1;routermonitorv1b\x06proto3"
 
 var (
 	file_routermonitor_v1_router_monitor_proto_rawDescOnce sync.Once
@@ -2118,7 +2495,7 @@ func file_routermonitor_v1_router_monitor_proto_rawDescGZIP() []byte {
 	return file_routermonitor_v1_router_monitor_proto_rawDescData
 }
 
-var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*DirectionalTraffic)(nil),        // 0: routermonitor.v1.DirectionalTraffic
 	(*ProtocolTraffic)(nil),           // 1: routermonitor.v1.ProtocolTraffic
@@ -2145,8 +2522,13 @@ var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*TimeSeriesPoint)(nil),           // 22: routermonitor.v1.TimeSeriesPoint
 	(*TimeSeries)(nil),                // 23: routermonitor.v1.TimeSeries
 	(*QueryTimeSeriesResponse)(nil),   // 24: routermonitor.v1.QueryTimeSeriesResponse
-	nil,                               // 25: routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
-	nil,                               // 26: routermonitor.v1.TimeSeries.LabelsEntry
+	(*GetDDNSStatusRequest)(nil),      // 25: routermonitor.v1.GetDDNSStatusRequest
+	(*DDNSHistoryRecord)(nil),         // 26: routermonitor.v1.DDNSHistoryRecord
+	(*GetDDNSStatusResponse)(nil),     // 27: routermonitor.v1.GetDDNSStatusResponse
+	(*SyncDDNSRequest)(nil),           // 28: routermonitor.v1.SyncDDNSRequest
+	(*SyncDDNSResponse)(nil),          // 29: routermonitor.v1.SyncDDNSResponse
+	nil,                               // 30: routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
+	nil,                               // 31: routermonitor.v1.TimeSeries.LabelsEntry
 }
 var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 0: routermonitor.v1.ProtocolTraffic.traffic:type_name -> routermonitor.v1.DirectionalTraffic
@@ -2167,30 +2549,36 @@ var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 15: routermonitor.v1.LiveStatsResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 16: routermonitor.v1.LiveStatsResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 17: routermonitor.v1.LiveStatsResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
-	25, // 18: routermonitor.v1.TimeSeriesQuery.match_labels:type_name -> routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
+	30, // 18: routermonitor.v1.TimeSeriesQuery.match_labels:type_name -> routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
 	20, // 19: routermonitor.v1.QueryTimeSeriesRequest.queries:type_name -> routermonitor.v1.TimeSeriesQuery
-	26, // 20: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
+	31, // 20: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
 	22, // 21: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
 	23, // 22: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
-	7,  // 23: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
-	9,  // 24: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
-	14, // 25: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
-	18, // 26: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
-	21, // 27: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
-	3,  // 28: routermonitor.v1.RouterMonitorService.PingDevice:input_type -> routermonitor.v1.PingDeviceRequest
-	5,  // 29: routermonitor.v1.RouterMonitorService.WakeOnLan:input_type -> routermonitor.v1.WakeOnLanRequest
-	8,  // 30: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
-	13, // 31: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
-	17, // 32: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
-	19, // 33: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
-	24, // 34: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
-	4,  // 35: routermonitor.v1.RouterMonitorService.PingDevice:output_type -> routermonitor.v1.PingDeviceResponse
-	6,  // 36: routermonitor.v1.RouterMonitorService.WakeOnLan:output_type -> routermonitor.v1.WakeOnLanResponse
-	30, // [30:37] is the sub-list for method output_type
-	23, // [23:30] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	26, // 23: routermonitor.v1.GetDDNSStatusResponse.history:type_name -> routermonitor.v1.DDNSHistoryRecord
+	27, // 24: routermonitor.v1.SyncDDNSResponse.status:type_name -> routermonitor.v1.GetDDNSStatusResponse
+	7,  // 25: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
+	9,  // 26: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
+	14, // 27: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
+	18, // 28: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
+	21, // 29: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
+	3,  // 30: routermonitor.v1.RouterMonitorService.PingDevice:input_type -> routermonitor.v1.PingDeviceRequest
+	5,  // 31: routermonitor.v1.RouterMonitorService.WakeOnLan:input_type -> routermonitor.v1.WakeOnLanRequest
+	25, // 32: routermonitor.v1.RouterMonitorService.GetDDNSStatus:input_type -> routermonitor.v1.GetDDNSStatusRequest
+	28, // 33: routermonitor.v1.RouterMonitorService.SyncDDNS:input_type -> routermonitor.v1.SyncDDNSRequest
+	8,  // 34: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
+	13, // 35: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
+	17, // 36: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
+	19, // 37: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
+	24, // 38: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
+	4,  // 39: routermonitor.v1.RouterMonitorService.PingDevice:output_type -> routermonitor.v1.PingDeviceResponse
+	6,  // 40: routermonitor.v1.RouterMonitorService.WakeOnLan:output_type -> routermonitor.v1.WakeOnLanResponse
+	27, // 41: routermonitor.v1.RouterMonitorService.GetDDNSStatus:output_type -> routermonitor.v1.GetDDNSStatusResponse
+	29, // 42: routermonitor.v1.RouterMonitorService.SyncDDNS:output_type -> routermonitor.v1.SyncDDNSResponse
+	34, // [34:43] is the sub-list for method output_type
+	25, // [25:34] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_routermonitor_v1_router_monitor_proto_init() }
@@ -2204,7 +2592,7 @@ func file_routermonitor_v1_router_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_routermonitor_v1_router_monitor_proto_rawDesc), len(file_routermonitor_v1_router_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

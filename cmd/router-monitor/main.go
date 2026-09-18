@@ -18,6 +18,7 @@ import (
 	"github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1/routermonitorv1connect"
 	"github.com/blesswinsamuel/router-monitor/internal/api"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
+	"github.com/blesswinsamuel/router-monitor/internal/routermonitor/ddns"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
 	"github.com/blesswinsamuel/router-monitor/internal/web"
 	"github.com/prometheus/client_golang/prometheus"
@@ -62,6 +63,113 @@ func parseDurationWithDefault(raw string, fallback time.Duration) (time.Duration
 		return 0, err
 	}
 	return duration, nil
+}
+
+func parseBoolWithDefault(raw string, fallback bool) bool {
+	v := strings.TrimSpace(strings.ToLower(raw))
+	if v == "" {
+		return fallback
+	}
+	return v == "1" || v == "true" || v == "yes" || v == "on"
+}
+
+func parseDomains(raw string) []string {
+	parts := strings.Split(raw, ",")
+	var domains []string
+	for _, p := range parts {
+		d := strings.TrimSpace(p)
+		if d != "" {
+			domains = append(domains, d)
+		}
+	}
+	return domains
+}
+
+func setupDDNS(ctx context.Context, tsdbDB *tsdb.DB) *ddns.Manager {
+	providerName := strings.ToLower(strings.TrimSpace(os.Getenv("DDNS_PROVIDER")))
+	domains := parseDomains(os.Getenv("DDNS_DOMAINS"))
+
+	enabledRaw := os.Getenv("DDNS_ENABLED")
+	enabled := false
+	if enabledRaw != "" {
+		enabled = parseBoolWithDefault(enabledRaw, false)
+	} else if providerName != "" && len(domains) > 0 {
+		enabled = true
+	}
+
+	checkInterval, err := parseDurationWithDefault(os.Getenv("DDNS_CHECK_INTERVAL"), 5*time.Minute)
+	if err != nil {
+		log.Printf("warn: invalid DDNS_CHECK_INTERVAL: %v, defaulting to 5m", err)
+		checkInterval = 5 * time.Minute
+	}
+
+	checkIPv4 := parseBoolWithDefault(os.Getenv("DDNS_IPV4"), true)
+	checkIPv6 := parseBoolWithDefault(os.Getenv("DDNS_IPV6"), false)
+
+	detector := ddns.NewDetector(ddns.DetectorConfig{
+		Source: os.Getenv("DDNS_IP_SOURCE"),
+	})
+
+	var provider ddns.Provider
+	switch providerName {
+	case "cloudflare":
+		token := os.Getenv("CLOUDFLARE_API_TOKEN")
+		zoneID := os.Getenv("CLOUDFLARE_ZONE_ID")
+		proxied := parseBoolWithDefault(os.Getenv("CLOUDFLARE_PROXIED"), false)
+		cfProvider, err := ddns.NewCloudflareProvider(ddns.CloudflareConfig{
+			APIToken: token,
+			ZoneID:   zoneID,
+			Proxied:  proxied,
+		})
+		if err != nil {
+			log.Printf("warn: failed to initialize Cloudflare DDNS provider: %v", err)
+		} else {
+			provider = cfProvider
+		}
+	case "duckdns":
+		token := os.Getenv("DUCKDNS_TOKEN")
+		duckProvider, err := ddns.NewDuckDNSProvider(ddns.DuckDNSConfig{
+			Token: token,
+		})
+		if err != nil {
+			log.Printf("warn: failed to initialize DuckDNS provider: %v", err)
+		} else {
+			provider = duckProvider
+		}
+	case "generic_http", "generic":
+		updateURL := os.Getenv("DDNS_UPDATE_URL")
+		genProvider, err := ddns.NewGenericProvider(ddns.GenericConfig{
+			URLTemplate: updateURL,
+			HTTPMethod:  os.Getenv("DDNS_HTTP_METHOD"),
+		})
+		if err != nil {
+			log.Printf("warn: failed to initialize Generic HTTP DDNS provider: %v", err)
+		} else {
+			provider = genProvider
+		}
+	default:
+		if providerName != "" {
+			log.Printf("warn: unknown DDNS provider: %q", providerName)
+		}
+	}
+
+	mgr := ddns.NewManager(ddns.ManagerConfig{
+		Enabled:   enabled && provider != nil,
+		Provider:  provider,
+		Detector:  detector,
+		Domains:   domains,
+		Interval:  checkInterval,
+		CheckIPv4: checkIPv4,
+		CheckIPv6: checkIPv6,
+		Store:     tsdbDB,
+	})
+
+	if enabled && provider != nil {
+		mgr.Register(prometheus.DefaultRegisterer)
+		go mgr.Start(ctx)
+	}
+
+	return mgr
 }
 
 func main() {
@@ -161,6 +269,7 @@ func main() {
 	sampler.Start(ctx)
 
 	dhcpReader := routermonitor.NewDHCPLeaseReader(os.Getenv("DHCP_LEASES_FILE"), os.Getenv("DHCP_TYPE"))
+	ddnsManager := setupDDNS(ctx, tsdbDB)
 
 	routerService := api.NewRouterMonitorService(
 		iface.Name,
@@ -171,6 +280,7 @@ func main() {
 		tsdbDB,
 		sampler,
 		dhcpReader,
+		ddnsManager,
 	)
 	rpcPath, rpcHandler := routermonitorv1connect.NewRouterMonitorServiceHandler(routerService)
 

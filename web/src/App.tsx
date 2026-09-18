@@ -5,6 +5,7 @@ import { OverviewPage } from './pages/OverviewPage'
 import { DevicesPage } from './pages/DevicesPage'
 import { DeviceDetailPage } from './pages/DeviceDetailPage'
 import { InternetHealthPage } from './pages/InternetHealthPage'
+import { DDNSPage } from './pages/DDNSPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 export function App() {
@@ -18,6 +19,7 @@ export function App() {
             <Route path="devices" element={<DevicesPage />} />
             <Route path="devices/:ip" element={<DeviceDetailPage />} />
             <Route path="health" element={<InternetHealthPage />} />
+            <Route path="ddns" element={<DDNSPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

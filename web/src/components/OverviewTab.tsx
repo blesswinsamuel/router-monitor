@@ -315,7 +315,7 @@ export function OverviewTab({
   return (
     <div className="space-y-6">
       {/* 1. Top KPI Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* WAN Traffic Card */}
         <Card
           className={cn(
@@ -482,6 +482,42 @@ export function OverviewTab({
               <div className="pt-2 border-t flex items-center justify-between text-xs text-muted-foreground">
                 <span>Subnet:</span>
                 <span className="font-mono text-foreground font-medium">{overview?.lanSubnetCidr || '10.100.0.0/16'}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Public WAN & DDNS Card */}
+        <Link to="/ddns" className="block focus:outline-hidden group">
+          <Card className="hover:border-primary/50 transition-all h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-muted text-foreground">
+                  <Globe className="h-4 w-4 text-primary" />
+                </div>
+                <CardTitle className="text-sm font-semibold">WAN & DDNS</CardTitle>
+              </div>
+              <Badge
+                variant={context?.ddns?.lastSyncStatus === 'failure' ? "destructive" : "outline"}
+                className={cn(
+                  "font-normal capitalize text-[10px]",
+                  context?.ddns?.lastSyncStatus === 'success' && "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                )}
+              >
+                {context?.ddns?.enabled ? (context?.ddns?.lastSyncStatus === 'success' ? 'In Sync' : context?.ddns?.lastSyncStatus) : 'Disabled'}
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              <div className="pt-1">
+                <div className="text-lg font-bold font-mono tracking-tight text-foreground truncate" title={context?.ddns?.currentIpv4 || undefined}>
+                  {context?.ddns?.currentIpv4 || <span className="text-muted-foreground text-sm font-normal">No WAN IP</span>}
+                </div>
+              </div>
+              <div className="pt-2 border-t flex items-center justify-between text-xs text-muted-foreground">
+                <span className="capitalize">{context?.ddns?.provider || 'DDNS'}</span>
+                <span className="font-mono text-foreground font-medium">
+                  {context?.ddns?.domains?.length ? `${context.ddns.domains.length} domain${context.ddns.domains.length > 1 ? 's' : ''}` : '--'}
+                </span>
               </div>
             </CardContent>
           </Card>

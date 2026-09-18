@@ -933,3 +933,53 @@ func (d *DB) GetRecentOutages(limit int) ([]OutageRecord, error) {
 	}
 	return outages, nil
 }
+
+type DDNSEvent struct {
+	ID        int64     `json:"id"`
+	Timestamp time.Time `json:"timestamp"`
+	Provider  string    `json:"provider"`
+	IPv4      string    `json:"ipv4"`
+	IPv6      string    `json:"ipv6"`
+	Status    string    `json:"status"` // "success", "failure"
+	Message   string    `json:"message"`
+}
+
+func (d *DB) RecordDDNSEvent(timestamp time.Time, provider, ipv4, ipv6, status, message string) (int64, error) {
+	d.writeMu.Lock()
+	defer d.writeMu.Unlock()
+
+	res, err := d.db.Exec(
+		"INSERT INTO ddns_history(timestamp_unix, provider, ipv4, ipv6, status, message) VALUES(?, ?, ?, ?, ?, ?)",
+		timestamp.Unix(), provider, ipv4, ipv6, status, message,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("insert ddns event: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (d *DB) GetRecentDDNSHistory(limit int) ([]DDNSEvent, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	rows, err := d.db.Query(
+		"SELECT id, timestamp_unix, provider, COALESCE(ipv4, ''), COALESCE(ipv6, ''), status, COALESCE(message, '') FROM ddns_history ORDER BY timestamp_unix DESC LIMIT ?",
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query ddns history: %w", err)
+	}
+	defer rows.Close()
+
+	var events []DDNSEvent
+	for rows.Next() {
+		var e DDNSEvent
+		var tsUnix int64
+		if err := rows.Scan(&e.ID, &tsUnix, &e.Provider, &e.IPv4, &e.IPv6, &e.Status, &e.Message); err != nil {
+			continue
+		}
+		e.Timestamp = time.Unix(tsUnix, 0)
+		events = append(events, e)
+	}
+	return events, nil
+}

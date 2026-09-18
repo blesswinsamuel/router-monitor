@@ -25,6 +25,12 @@ service RouterMonitorService {
 
   // Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
   rpc WakeOnLan(WakeOnLanRequest) returns (WakeOnLanResponse);
+
+  // Get dynamic DNS status, current WAN IPs, and update history.
+  rpc GetDDNSStatus(GetDDNSStatusRequest) returns (GetDDNSStatusResponse);
+
+  // Trigger an immediate dynamic DNS synchronization.
+  rpc SyncDDNS(SyncDDNSRequest) returns (SyncDDNSResponse);
 }
 
 message DirectionalTraffic {
@@ -235,4 +241,39 @@ message TimeSeries {
 
 message QueryTimeSeriesResponse {
   repeated TimeSeries series = 1;
+}
+
+message GetDDNSStatusRequest {}
+
+message DDNSHistoryRecord {
+  int64 id = 1;
+  int64 timestamp_unix = 2;
+  string provider = 3;
+  string ipv4 = 4;
+  string ipv6 = 5;
+  string status = 6; // "success", "failure"
+  string message = 7;
+}
+
+message GetDDNSStatusResponse {
+  bool enabled = 1;
+  string provider = 2;
+  repeated string domains = 3;
+  string current_ipv4 = 4;
+  string current_ipv6 = 5;
+  int64 last_sync_unix = 6;
+  string last_sync_status = 7; // "success", "failure", "pending", "disabled"
+  string last_sync_message = 8;
+  int64 check_interval_seconds = 9;
+  repeated DDNSHistoryRecord history = 10;
+}
+
+message SyncDDNSRequest {
+  bool force = 1;
+}
+
+message SyncDDNSResponse {
+  bool success = 1;
+  string message = 2;
+  GetDDNSStatusResponse status = 3;
 }

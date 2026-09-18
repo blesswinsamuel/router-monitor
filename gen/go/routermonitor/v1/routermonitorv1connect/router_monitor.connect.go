@@ -54,6 +54,12 @@ const (
 	// RouterMonitorServiceWakeOnLanProcedure is the fully-qualified name of the RouterMonitorService's
 	// WakeOnLan RPC.
 	RouterMonitorServiceWakeOnLanProcedure = "/routermonitor.v1.RouterMonitorService/WakeOnLan"
+	// RouterMonitorServiceGetDDNSStatusProcedure is the fully-qualified name of the
+	// RouterMonitorService's GetDDNSStatus RPC.
+	RouterMonitorServiceGetDDNSStatusProcedure = "/routermonitor.v1.RouterMonitorService/GetDDNSStatus"
+	// RouterMonitorServiceSyncDDNSProcedure is the fully-qualified name of the RouterMonitorService's
+	// SyncDDNS RPC.
+	RouterMonitorServiceSyncDDNSProcedure = "/routermonitor.v1.RouterMonitorService/SyncDDNS"
 )
 
 // RouterMonitorServiceClient is a client for the routermonitor.v1.RouterMonitorService service.
@@ -72,6 +78,10 @@ type RouterMonitorServiceClient interface {
 	PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error)
 	// Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
 	WakeOnLan(context.Context, *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error)
+	// Get dynamic DNS status, current WAN IPs, and update history.
+	GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error)
+	// Trigger an immediate dynamic DNS synchronization.
+	SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error)
 }
 
 // NewRouterMonitorServiceClient constructs a client for the routermonitor.v1.RouterMonitorService
@@ -127,6 +137,18 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(routerMonitorServiceMethods.ByName("WakeOnLan")),
 			connect.WithClientOptions(opts...),
 		),
+		getDDNSStatus: connect.NewClient[v1.GetDDNSStatusRequest, v1.GetDDNSStatusResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceGetDDNSStatusProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("GetDDNSStatus")),
+			connect.WithClientOptions(opts...),
+		),
+		syncDDNS: connect.NewClient[v1.SyncDDNSRequest, v1.SyncDDNSResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceSyncDDNSProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("SyncDDNS")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -139,6 +161,8 @@ type routerMonitorServiceClient struct {
 	queryTimeSeries   *connect.Client[v1.QueryTimeSeriesRequest, v1.QueryTimeSeriesResponse]
 	pingDevice        *connect.Client[v1.PingDeviceRequest, v1.PingDeviceResponse]
 	wakeOnLan         *connect.Client[v1.WakeOnLanRequest, v1.WakeOnLanResponse]
+	getDDNSStatus     *connect.Client[v1.GetDDNSStatusRequest, v1.GetDDNSStatusResponse]
+	syncDDNS          *connect.Client[v1.SyncDDNSRequest, v1.SyncDDNSResponse]
 }
 
 // GetOverview calls routermonitor.v1.RouterMonitorService.GetOverview.
@@ -176,6 +200,16 @@ func (c *routerMonitorServiceClient) WakeOnLan(ctx context.Context, req *connect
 	return c.wakeOnLan.CallUnary(ctx, req)
 }
 
+// GetDDNSStatus calls routermonitor.v1.RouterMonitorService.GetDDNSStatus.
+func (c *routerMonitorServiceClient) GetDDNSStatus(ctx context.Context, req *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error) {
+	return c.getDDNSStatus.CallUnary(ctx, req)
+}
+
+// SyncDDNS calls routermonitor.v1.RouterMonitorService.SyncDDNS.
+func (c *routerMonitorServiceClient) SyncDDNS(ctx context.Context, req *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error) {
+	return c.syncDDNS.CallUnary(ctx, req)
+}
+
 // RouterMonitorServiceHandler is an implementation of the routermonitor.v1.RouterMonitorService
 // service.
 type RouterMonitorServiceHandler interface {
@@ -193,6 +227,10 @@ type RouterMonitorServiceHandler interface {
 	PingDevice(context.Context, *connect.Request[v1.PingDeviceRequest]) (*connect.Response[v1.PingDeviceResponse], error)
 	// Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
 	WakeOnLan(context.Context, *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error)
+	// Get dynamic DNS status, current WAN IPs, and update history.
+	GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error)
+	// Trigger an immediate dynamic DNS synchronization.
+	SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error)
 }
 
 // NewRouterMonitorServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -244,6 +282,18 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 		connect.WithSchema(routerMonitorServiceMethods.ByName("WakeOnLan")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routerMonitorServiceGetDDNSStatusHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceGetDDNSStatusProcedure,
+		svc.GetDDNSStatus,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("GetDDNSStatus")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routerMonitorServiceSyncDDNSHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceSyncDDNSProcedure,
+		svc.SyncDDNS,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("SyncDDNS")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/routermonitor.v1.RouterMonitorService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RouterMonitorServiceGetOverviewProcedure:
@@ -260,6 +310,10 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 			routerMonitorServicePingDeviceHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceWakeOnLanProcedure:
 			routerMonitorServiceWakeOnLanHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceGetDDNSStatusProcedure:
+			routerMonitorServiceGetDDNSStatusHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceSyncDDNSProcedure:
+			routerMonitorServiceSyncDDNSHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -295,4 +349,12 @@ func (UnimplementedRouterMonitorServiceHandler) PingDevice(context.Context, *con
 
 func (UnimplementedRouterMonitorServiceHandler) WakeOnLan(context.Context, *connect.Request[v1.WakeOnLanRequest]) (*connect.Response[v1.WakeOnLanResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.WakeOnLan is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.GetDDNSStatus is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.SyncDDNS is not implemented"))
 }
