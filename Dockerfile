@@ -31,6 +31,7 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
+COPY gen ./gen
 COPY internal ./internal
 
 RUN go generate ./...
