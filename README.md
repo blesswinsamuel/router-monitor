@@ -67,7 +67,7 @@ http://<router-host>:9156/metrics
 | `DB_PATH` | Path to the embedded SQLite time-series database | `/var/lib/lanpilot/lanpilot.db` |
 | `DHCP_LEASES_FILE` | Path to the DHCP leases file (Kea or dnsmasq) | — |
 | `DHCP_TYPE` | DHCP lease file type (`kea` or `dnsmasq`) | — |
-| `DEVICES_CONFIG_PATH` | Path to the managed device inventory (`devices.yaml`) | `devices.yaml` |
+| `DEVICES_CONFIG_PATH` | Path to the managed device inventory (`devices.yaml`) | `/var/lib/lanpilot/devices.yaml` |
 | `DNSMASQ_DHCP_HOSTS_PATH` | dnsmasq DHCP hosts file rendered from the device inventory | — |
 | `DNSMASQ_HOSTS_PATH` | dnsmasq hosts file rendered from managed DNS records | — |
 | `NFTABLES_SETS_PATH` | nftables sets file rendered from the device inventory | — |

@@ -65,11 +65,7 @@ func NewManager(opts Options) (*Manager, error) {
 		devicesPath = os.Getenv("DEVICES_CONFIG_PATH")
 	}
 	if devicesPath == "" {
-		if _, err := os.Stat("/var/lib/lanpilot/devices.yaml"); err == nil {
-			devicesPath = "/var/lib/lanpilot/devices.yaml"
-		} else {
-			devicesPath = "devices.yaml"
-		}
+		devicesPath = "/var/lib/lanpilot/devices.yaml"
 	}
 	if abs, err := filepath.Abs(devicesPath); err == nil {
 		devicesPath = abs
