@@ -81,10 +81,10 @@ func TestNetworkMgr_RenderFiles(t *testing.T) {
 		t.Fatalf("ReadFile hosts failed: %v", err)
 	}
 	hostsStr := string(hostsData)
-	if !strings.Contains(hostsStr, "10.100.1.20\tappletv appletv.home.lan living-room-appletv living-room-appletv.home.lan") {
+	if !strings.Contains(hostsStr, "10.100.1.20\tappletv living-room-appletv") {
 		t.Errorf("missing expected appletv entry in hosts: %s", hostsStr)
 	}
-	if !strings.Contains(hostsStr, "10.100.1.200\tphotos photos.home.lan photos.home.lan immich.home.lan") {
+	if !strings.Contains(hostsStr, "10.100.1.200\tphotos photos.home.lan immich.home.lan") {
 		t.Errorf("missing expected photos record in hosts: %s", hostsStr)
 	}
 

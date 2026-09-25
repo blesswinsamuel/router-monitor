@@ -108,6 +108,11 @@ func NewManager(opts Options) (*Manager, error) {
 		}
 		log.Printf("info: %s does not exist yet; will initialize empty config", devicesPath)
 		m.cfg = DevicesConfig{Version: 1}
+	} else {
+		// Render initial files from existing devices.yaml on startup
+		m.mu.Lock()
+		_ = m.renderAndReloadLocked()
+		m.mu.Unlock()
 	}
 
 	return m, nil
@@ -198,24 +203,28 @@ func (m *Manager) renderAndReloadLocked() error {
 		var names []string
 		for _, h := range dev.Hostnames {
 			names = append(names, h)
-			if !strings.Contains(h, ".") && m.searchDomain != "" {
-				names = append(names, h+"."+m.searchDomain)
-			}
 		}
-		hostsLines = append(hostsLines, fmt.Sprintf("%s\t%s", dev.IP, strings.Join(names, " ")))
+		if len(names) == 0 && dev.Name != "" {
+			names = append(names, dev.Name)
+		}
+		if len(names) > 0 {
+			hostsLines = append(hostsLines, fmt.Sprintf("%s\t%s", dev.IP, strings.Join(names, " ")))
+		}
 	}
 	for _, rec := range m.cfg.DnsRecords {
+		if rec.IP == "" {
+			continue
+		}
 		var names []string
 		if rec.Name != "" {
 			names = append(names, rec.Name)
-			if !strings.Contains(rec.Name, ".") && m.searchDomain != "" {
-				names = append(names, rec.Name+"."+m.searchDomain)
-			}
 		}
 		for _, alias := range rec.Aliases {
 			names = append(names, alias)
 		}
-		hostsLines = append(hostsLines, fmt.Sprintf("%s\t%s", rec.IP, strings.Join(names, " ")))
+		if len(names) > 0 {
+			hostsLines = append(hostsLines, fmt.Sprintf("%s\t%s", rec.IP, strings.Join(names, " ")))
+		}
 	}
 	if err := os.WriteFile(m.dnsmasqHosts, []byte(strings.Join(hostsLines, "\n")+"\n"), 0644); err != nil {
 		log.Printf("warn: failed writing %s: %v", m.dnsmasqHosts, err)
