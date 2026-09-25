@@ -71,6 +71,9 @@ func NewManager(opts Options) (*Manager, error) {
 			devicesPath = "devices.yaml"
 		}
 	}
+	if abs, err := filepath.Abs(devicesPath); err == nil {
+		devicesPath = abs
+	}
 
 	stateDir := filepath.Dir(devicesPath)
 	dhcpHosts := opts.DnsmasqDhcpHostsPath
