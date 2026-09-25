@@ -139,8 +139,14 @@ func (s *RouterMonitorService) ListDevices(
 	ctx context.Context,
 	req *connect.Request[routermonitorv1.ListDevicesRequest],
 ) (*connect.Response[routermonitorv1.ListDevicesResponse], error) {
-	rawDevices := s.arpCollector.GetDevices()
-	deviceRates := s.sampler.GetDeviceRates()
+	var rawDevices []routermonitor.ArpDeviceEntry
+	if s.arpCollector != nil {
+		rawDevices = s.arpCollector.GetDevices()
+	}
+	var deviceRates map[string]tsdb.DeviceRate
+	if s.sampler != nil {
+		deviceRates = s.sampler.GetDeviceRates()
+	}
 
 	var leasesByIP map[string]routermonitor.DHCPLease
 	var leasesByMAC map[string]routermonitor.DHCPLease
@@ -149,18 +155,16 @@ func (s *RouterMonitorService) ListDevices(
 	}
 
 	// 1. Load persisted devices from SQLite TSDB
-	persistedDevices, _ := s.tsdbDB.GetPersistedDevices()
+	var persistedDevices []tsdb.PersistedDevice
+	if s.tsdbDB != nil {
+		persistedDevices, _ = s.tsdbDB.GetPersistedDevices()
+	}
 	persistedByMAC := make(map[string]tsdb.PersistedDevice)
 	ipToHostname := make(map[string]string)
 	for _, pd := range persistedDevices {
 		persistedByMAC[pd.HWAddr] = pd
 		if pd.Hostname != "" {
 			ipToHostname[pd.IPAddr] = pd.Hostname
-		}
-	}
-	for _, rd := range rawDevices {
-		if rd.Hostname != "" {
-			ipToHostname[rd.IPAddr] = rd.Hostname
 		}
 	}
 	for ip, lease := range leasesByIP {
@@ -221,13 +225,16 @@ func (s *RouterMonitorService) ListDevices(
 		var tags []string
 		var vlan string
 		var configName string
+		var configId string
+		var configHostnames []string
+		isConfigured := matchedCfg != nil
 		if matchedCfg != nil {
 			tags = matchedCfg.Tags
 			vlan = matchedCfg.Vlan
 			configName = matchedCfg.Name
+			configId = matchedCfg.ID
+			configHostnames = matchedCfg.Hostnames
 		}
-
-		isKnown := rawHostname != "" || matchedCfg != nil
 
 		var dhcpLeaseProto *routermonitorv1.DhcpLeaseInfo
 		var lease routermonitor.DHCPLease
@@ -251,15 +258,17 @@ func (s *RouterMonitorService) ListDevices(
 		}
 
 		displayHostname := ""
-		if rawHostname != "" {
-			displayHostname = rawHostname
-		} else if configName != "" {
+		if configName != "" {
 			displayHostname = configName
 		} else if matchedCfg != nil && len(matchedCfg.Hostnames) > 0 {
 			displayHostname = matchedCfg.Hostnames[0]
 		} else if dhcpLeaseProto != nil && dhcpLeaseProto.Hostname != "" {
 			displayHostname = dhcpLeaseProto.Hostname
+		} else if rawHostname != "" {
+			displayHostname = rawHostname
 		}
+
+		isKnown := isConfigured
 
 		var puDl, puUl, puWanDl, puWanUl, puLanDl, puLanUl uint64
 		if pu != nil {
@@ -412,9 +421,12 @@ func (s *RouterMonitorService) ListDevices(
 			Vendor:    vendor,
 			IsKnown:   isKnown,
 			DhcpLease: dhcpLeaseProto,
-			Tags:      tags,
-			Vlan:      vlan,
-			ConfigName: configName,
+			Tags:            tags,
+			Vlan:            vlan,
+			ConfigName:      configName,
+			ConfigId:        configId,
+			ConfigHostnames: configHostnames,
+			IsConfigured:    isConfigured,
 		}
 	}
 
@@ -440,11 +452,11 @@ func (s *RouterMonitorService) ListDevices(
 
 		firstSeen := now
 		lastSeen := now
-		rawHostname := d.Hostname
+		rawHostname := ""
 		if pd, ok := persistedByMAC[d.HWAddr]; ok {
 			firstSeen = pd.FirstSeen.Unix()
 			lastSeen = pd.LastSeen.Unix()
-			if rawHostname == "" && pd.Hostname != "" {
+			if pd.Hostname != "" {
 				rawHostname = pd.Hostname
 			}
 		}
@@ -862,28 +874,6 @@ func (s *RouterMonitorService) SyncDDNS(
 	}), nil
 }
 
-func (s *RouterMonitorService) ListConfigDevices(
-	ctx context.Context,
-	req *connect.Request[routermonitorv1.ListConfigDevicesRequest],
-) (*connect.Response[routermonitorv1.ListConfigDevicesResponse], error) {
-	if s.networkMgr == nil {
-		return connect.NewResponse(&routermonitorv1.ListConfigDevicesResponse{}), nil
-	}
-	devs := s.networkMgr.GetDevices()
-	res := make([]*routermonitorv1.ConfigDevice, len(devs))
-	for i, d := range devs {
-		res[i] = &routermonitorv1.ConfigDevice{
-			Id:        d.ID,
-			Name:      d.Name,
-			Mac:       d.MAC,
-			Vlan:      d.Vlan,
-			Ip:        d.IP,
-			Hostnames: d.Hostnames,
-			Tags:      d.Tags,
-		}
-	}
-	return connect.NewResponse(&routermonitorv1.ListConfigDevicesResponse{Devices: res}), nil
-}
 
 func (s *RouterMonitorService) UpsertConfigDevice(
 	ctx context.Context,

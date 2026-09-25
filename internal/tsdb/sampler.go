@@ -651,13 +651,12 @@ func (s *Sampler) SampleOnce() {
 			validDevices++
 		}
 		if d.HWAddr != "" && d.HWAddr != "00:00:00:00:00:00" && (d.Flag&2 != 0 || d.Flag&4 != 0) {
-			stateSig := d.IPAddr + "|" + d.Hostname + "|" + d.Device
+			stateSig := d.IPAddr + "|" + d.Device
 			if needsPeriodicRefresh || s.knownDeviceState[d.HWAddr] != stateSig {
 				s.knownDeviceState[d.HWAddr] = stateSig
 				devicesToUpsert = append(devicesToUpsert, PersistedDevice{
 					HWAddr:    d.HWAddr,
 					IPAddr:    d.IPAddr,
-					Hostname:  d.Hostname,
 					Device:    d.Device,
 					FirstSeen: now,
 					LastSeen:  now,

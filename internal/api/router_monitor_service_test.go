@@ -27,7 +27,7 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 	defer db.Close()
 
 	ebpf := routermonitor.NewEbpfCollector()
-	arp := routermonitor.NewArpCollector("/dev/null", "", 30*time.Minute)
+	arp := routermonitor.NewArpCollector("/dev/null")
 	checker := routermonitor.NewInternetChecker(10*time.Second, []routermonitor.TargetConfig{
 		{Name: "Target 1", Target: "1.1.1.1:53", Type: routermonitor.ProbeTCP},
 	}, db)
@@ -103,7 +103,7 @@ func TestRouterMonitorService_DeviceTrafficAndPersistence(t *testing.T) {
 	}
 
 	ebpf := routermonitor.NewEbpfCollector()
-	arp := routermonitor.NewArpCollector(arpPath, "", 30*time.Minute)
+	arp := routermonitor.NewArpCollector(arpPath)
 	checker := routermonitor.NewInternetChecker(10*time.Second, []routermonitor.TargetConfig{
 		{Name: "Target 1", Target: "1.1.1.1:53", Type: routermonitor.ProbeTCP},
 	}, db)
@@ -181,13 +181,9 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 	}
 
 	ebpf := routermonitor.NewEbpfCollector()
-	arp := routermonitor.NewArpCollector(arpPath, "", 30*time.Minute)
+	arp := routermonitor.NewArpCollector(arpPath)
 	checker := routermonitor.NewInternetChecker(10*time.Second, nil, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
-
-	// Pre-populate reverse DNS cache for 10.100.1.10 (known) but not for 10.100.99.153
-	// We call GetDevices so ARP collector parses the file, but inject hostCache for 10.100.1.10
-	_ = arp.GetDevices()
 
 	mockDHCP := &mockDHCPReader{
 		leases: []routermonitor.DHCPLease{
@@ -204,13 +200,18 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 		},
 	}
 
-	// Statically upsert 10.100.1.10 in DB with a known hostname from reverse DNS
-	tNow := time.Now()
-	if err := db.UpsertDevice("aa:bb:cc:dd:ee:01", "10.100.1.10", "static-workstation", "lan", tNow); err != nil {
-		t.Fatalf("UpsertDevice failed: %v", err)
+	devicesYaml := filepath.Join(tmpDir, "devices.yaml")
+	netYaml := filepath.Join(tmpDir, "network.yaml")
+	_ = os.WriteFile(devicesYaml, []byte("devices:\n  - id: workstation\n    name: static-workstation\n    ip: 10.100.1.10\n    mac: aa:bb:cc:dd:ee:01\n"), 0644)
+	_ = os.WriteFile(netYaml, []byte("vlan:\n"), 0644)
+	netMgr, err := networkmgr.NewManager(networkmgr.Options{
+		DevicesPath: devicesYaml,
+	})
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
 	}
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, mockDHCP, nil, nil)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, mockDHCP, nil, netMgr)
 	res, err := svc.ListDevices(context.Background(), connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
 	if err != nil {
 		t.Fatalf("ListDevices failed: %v", err)
@@ -228,8 +229,8 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 	if dKnown == nil {
 		t.Fatal("missing 10.100.1.10")
 	}
-	if !dKnown.IsKnown {
-		t.Errorf("expected 10.100.1.10 to be known (static DNS), got IsKnown=false")
+	if !dKnown.IsKnown || !dKnown.IsConfigured {
+		t.Errorf("expected 10.100.1.10 to be known and configured, got IsKnown=%v IsConfigured=%v", dKnown.IsKnown, dKnown.IsConfigured)
 	}
 	if dKnown.Hostname != "static-workstation" {
 		t.Errorf("expected hostname static-workstation, got %s", dKnown.Hostname)
@@ -238,8 +239,8 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 	if dUnknown == nil {
 		t.Fatal("missing 10.100.99.153")
 	}
-	if dUnknown.IsKnown {
-		t.Errorf("expected 10.100.99.153 to be unknown (no reverse DNS), got IsKnown=true")
+	if dUnknown.IsKnown || dUnknown.IsConfigured {
+		t.Errorf("expected 10.100.99.153 to be unknown (not in devices.yaml), got IsKnown=%v IsConfigured=%v", dUnknown.IsKnown, dUnknown.IsConfigured)
 	}
 	if dUnknown.Hostname != "iphone" {
 		t.Errorf("expected hostname iphone from DHCP, got %s", dUnknown.Hostname)
@@ -266,7 +267,7 @@ func TestRouterMonitorService_WakeOnLan(t *testing.T) {
 	defer db.Close()
 
 	ebpf := routermonitor.NewEbpfCollector()
-	arp := routermonitor.NewArpCollector("/dev/null", "", 30*time.Minute)
+	arp := routermonitor.NewArpCollector("/dev/null")
 	checker := routermonitor.NewInternetChecker(10*time.Second, nil, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
@@ -460,16 +461,29 @@ func TestRouterMonitorService_NetworkMgr(t *testing.T) {
 		t.Errorf("expected name Living Room Apple TV, got %s", upsertDevRes.Msg.Device.Name)
 	}
 
-	// 2. ListConfigDevices
-	listDevRes, err := svc.ListConfigDevices(ctx, connect.NewRequest(&routermonitorv1.ListConfigDevicesRequest{}))
+	// 2. ListDevices (unified API)
+	listDevRes, err := svc.ListDevices(ctx, connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
 	if err != nil {
-		t.Fatalf("ListConfigDevices failed: %v", err)
+		t.Fatalf("ListDevices failed: %v", err)
 	}
 	if len(listDevRes.Msg.Devices) != 1 {
 		t.Fatalf("expected 1 device, got %d", len(listDevRes.Msg.Devices))
 	}
-	if listDevRes.Msg.Devices[0].Vlan != "trusted" {
-		t.Errorf("expected vlan trusted, got %s", listDevRes.Msg.Devices[0].Vlan)
+	dev := listDevRes.Msg.Devices[0]
+	if dev.Vlan != "trusted" {
+		t.Errorf("expected vlan trusted, got %s", dev.Vlan)
+	}
+	if !dev.IsConfigured {
+		t.Errorf("expected IsConfigured=true, got %v", dev.IsConfigured)
+	}
+	if dev.ConfigId != "test-apple-tv" {
+		t.Errorf("expected ConfigId test-apple-tv, got %s", dev.ConfigId)
+	}
+	if dev.ConfigName != "Living Room Apple TV" {
+		t.Errorf("expected ConfigName Living Room Apple TV, got %s", dev.ConfigName)
+	}
+	if len(dev.ConfigHostnames) != 2 || dev.ConfigHostnames[0] != "apple-tv" {
+		t.Errorf("expected ConfigHostnames [apple-tv, living-room], got %v", dev.ConfigHostnames)
 	}
 
 	// 3. UpsertConfigDnsRecord
@@ -519,7 +533,7 @@ func TestRouterMonitorService_NetworkMgr(t *testing.T) {
 	}
 
 	// 7. Verify empty lists
-	listDevResAfter, _ := svc.ListConfigDevices(ctx, connect.NewRequest(&routermonitorv1.ListConfigDevicesRequest{}))
+	listDevResAfter, _ := svc.ListDevices(ctx, connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
 	if len(listDevResAfter.Msg.Devices) != 0 {
 		t.Errorf("expected 0 devices after delete, got %d", len(listDevResAfter.Msg.Devices))
 	}

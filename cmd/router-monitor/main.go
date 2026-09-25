@@ -200,11 +200,6 @@ func main() {
 		log.Fatalf("invalid LAN_SUBNET_CIDR: %v", err)
 	}
 
-	arpCacheTTL, err := parseDurationWithDefault(os.Getenv("ARP_HOST_CACHE_TTL"), 30*time.Minute)
-	if err != nil {
-		log.Fatalf("invalid ARP_HOST_CACHE_TTL: %v", err)
-	}
-
 	ebpfFirewallCollector := routermonitor.NewEbpfCollector()
 	ebpfFirewallCollector.SetLANSubnet(lanSubnetIP, lanSubnetMask)
 	if err := ebpfFirewallCollector.Load(); err != nil {
@@ -240,7 +235,7 @@ func main() {
 	defer tsdbDB.Close()
 	tsdbDB.StartRetentionWorker(ctx, 1*time.Hour, 7*24*time.Hour)
 
-	arpCollector := routermonitor.NewArpCollector("/proc/net/arp", os.Getenv("DOMAIN_SUFFIX"), arpCacheTTL)
+	arpCollector := routermonitor.NewArpCollector("/proc/net/arp")
 	internetChecker := routermonitor.NewInternetChecker(checkInterval, checkTargets, tsdbDB)
 	internetChecker.SetSampleSink(func(samples []routermonitor.MetricSample) {
 		dbSamples := make([]tsdb.Sample, len(samples))

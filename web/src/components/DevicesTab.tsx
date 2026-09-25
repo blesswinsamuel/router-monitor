@@ -89,9 +89,9 @@ export function DevicesTab({ devices }: DevicesTabProps) {
 
   const activeDeviceList = devices
 
-  // Count unknown devices (devices not verified via reverse DNS)
+  // Count unknown devices (devices not configured in devices.yaml)
   const unknownCount = useMemo(() => {
-    return activeDeviceList.filter((d) => !d.isKnown).length
+    return activeDeviceList.filter((d) => !d.isConfigured).length
   }, [activeDeviceList])
 
   // Extract unique interface names
@@ -170,7 +170,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         return false
       }
 
-      if (showUnknownOnly && d.isKnown) {
+      if (showUnknownOnly && d.isConfigured) {
         return false
       }
 
@@ -308,7 +308,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                     ? "bg-amber-600 hover:bg-amber-700 text-white border-amber-600 shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 )}
-                title={showUnknownOnly ? "Showing unknown devices only. Click to show all." : "Show only unknown devices (not in static reverse DNS)"}
+                title={showUnknownOnly ? "Showing unknown devices only. Click to show all." : "Show only unknown devices (not configured in devices.yaml)"}
               >
                 <HelpCircle className={cn("w-3.5 h-3.5", showUnknownOnly ? "text-white" : "text-amber-500")} />
                 <span>Unknown Only</span>
@@ -534,13 +534,21 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                     {device.vlan}
                                   </Badge>
                                 )}
-                                {!device.isKnown && !device.configName && (
+                                {device.isConfigured ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-normal px-1.5 py-0"
+                                    title="Configured device in devices.yaml"
+                                  >
+                                    Configured
+                                  </Badge>
+                                ) : (
                                   <Badge
                                     variant="outline"
                                     className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0"
-                                    title="Unmanaged device without static DNS entry or DHCP hostname."
+                                    title="Unmanaged device not defined in devices.yaml"
                                   >
-                                    {device.hostname ? 'Unknown • DHCP' : 'Unknown'}
+                                    {device.dhcpLease?.hostname || device.hostname ? 'Dynamic • DHCP' : 'Unmanaged'}
                                   </Badge>
                                 )}
                               </span>

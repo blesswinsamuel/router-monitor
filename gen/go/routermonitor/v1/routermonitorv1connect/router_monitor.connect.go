@@ -60,9 +60,6 @@ const (
 	// RouterMonitorServiceSyncDDNSProcedure is the fully-qualified name of the RouterMonitorService's
 	// SyncDDNS RPC.
 	RouterMonitorServiceSyncDDNSProcedure = "/routermonitor.v1.RouterMonitorService/SyncDDNS"
-	// RouterMonitorServiceListConfigDevicesProcedure is the fully-qualified name of the
-	// RouterMonitorService's ListConfigDevices RPC.
-	RouterMonitorServiceListConfigDevicesProcedure = "/routermonitor.v1.RouterMonitorService/ListConfigDevices"
 	// RouterMonitorServiceUpsertConfigDeviceProcedure is the fully-qualified name of the
 	// RouterMonitorService's UpsertConfigDevice RPC.
 	RouterMonitorServiceUpsertConfigDeviceProcedure = "/routermonitor.v1.RouterMonitorService/UpsertConfigDevice"
@@ -100,8 +97,6 @@ type RouterMonitorServiceClient interface {
 	GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error)
 	// Trigger an immediate dynamic DNS synchronization.
 	SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error)
-	// List configured devices from devices.yaml
-	ListConfigDevices(context.Context, *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error)
 	// Create or update a configured device in devices.yaml
 	UpsertConfigDevice(context.Context, *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error)
 	// Delete a configured device from devices.yaml
@@ -179,12 +174,6 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(routerMonitorServiceMethods.ByName("SyncDDNS")),
 			connect.WithClientOptions(opts...),
 		),
-		listConfigDevices: connect.NewClient[v1.ListConfigDevicesRequest, v1.ListConfigDevicesResponse](
-			httpClient,
-			baseURL+RouterMonitorServiceListConfigDevicesProcedure,
-			connect.WithSchema(routerMonitorServiceMethods.ByName("ListConfigDevices")),
-			connect.WithClientOptions(opts...),
-		),
 		upsertConfigDevice: connect.NewClient[v1.UpsertConfigDeviceRequest, v1.UpsertConfigDeviceResponse](
 			httpClient,
 			baseURL+RouterMonitorServiceUpsertConfigDeviceProcedure,
@@ -229,7 +218,6 @@ type routerMonitorServiceClient struct {
 	wakeOnLan             *connect.Client[v1.WakeOnLanRequest, v1.WakeOnLanResponse]
 	getDDNSStatus         *connect.Client[v1.GetDDNSStatusRequest, v1.GetDDNSStatusResponse]
 	syncDDNS              *connect.Client[v1.SyncDDNSRequest, v1.SyncDDNSResponse]
-	listConfigDevices     *connect.Client[v1.ListConfigDevicesRequest, v1.ListConfigDevicesResponse]
 	upsertConfigDevice    *connect.Client[v1.UpsertConfigDeviceRequest, v1.UpsertConfigDeviceResponse]
 	deleteConfigDevice    *connect.Client[v1.DeleteConfigDeviceRequest, v1.DeleteConfigDeviceResponse]
 	listConfigDnsRecords  *connect.Client[v1.ListConfigDnsRecordsRequest, v1.ListConfigDnsRecordsResponse]
@@ -282,11 +270,6 @@ func (c *routerMonitorServiceClient) SyncDDNS(ctx context.Context, req *connect.
 	return c.syncDDNS.CallUnary(ctx, req)
 }
 
-// ListConfigDevices calls routermonitor.v1.RouterMonitorService.ListConfigDevices.
-func (c *routerMonitorServiceClient) ListConfigDevices(ctx context.Context, req *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error) {
-	return c.listConfigDevices.CallUnary(ctx, req)
-}
-
 // UpsertConfigDevice calls routermonitor.v1.RouterMonitorService.UpsertConfigDevice.
 func (c *routerMonitorServiceClient) UpsertConfigDevice(ctx context.Context, req *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error) {
 	return c.upsertConfigDevice.CallUnary(ctx, req)
@@ -333,8 +316,6 @@ type RouterMonitorServiceHandler interface {
 	GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error)
 	// Trigger an immediate dynamic DNS synchronization.
 	SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error)
-	// List configured devices from devices.yaml
-	ListConfigDevices(context.Context, *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error)
 	// Create or update a configured device in devices.yaml
 	UpsertConfigDevice(context.Context, *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error)
 	// Delete a configured device from devices.yaml
@@ -408,12 +389,6 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 		connect.WithSchema(routerMonitorServiceMethods.ByName("SyncDDNS")),
 		connect.WithHandlerOptions(opts...),
 	)
-	routerMonitorServiceListConfigDevicesHandler := connect.NewUnaryHandler(
-		RouterMonitorServiceListConfigDevicesProcedure,
-		svc.ListConfigDevices,
-		connect.WithSchema(routerMonitorServiceMethods.ByName("ListConfigDevices")),
-		connect.WithHandlerOptions(opts...),
-	)
 	routerMonitorServiceUpsertConfigDeviceHandler := connect.NewUnaryHandler(
 		RouterMonitorServiceUpsertConfigDeviceProcedure,
 		svc.UpsertConfigDevice,
@@ -464,8 +439,6 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 			routerMonitorServiceGetDDNSStatusHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceSyncDDNSProcedure:
 			routerMonitorServiceSyncDDNSHandler.ServeHTTP(w, r)
-		case RouterMonitorServiceListConfigDevicesProcedure:
-			routerMonitorServiceListConfigDevicesHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceUpsertConfigDeviceProcedure:
 			routerMonitorServiceUpsertConfigDeviceHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceDeleteConfigDeviceProcedure:
@@ -519,10 +492,6 @@ func (UnimplementedRouterMonitorServiceHandler) GetDDNSStatus(context.Context, *
 
 func (UnimplementedRouterMonitorServiceHandler) SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.SyncDDNS is not implemented"))
-}
-
-func (UnimplementedRouterMonitorServiceHandler) ListConfigDevices(context.Context, *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.ListConfigDevices is not implemented"))
 }
 
 func (UnimplementedRouterMonitorServiceHandler) UpsertConfigDevice(context.Context, *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error) {

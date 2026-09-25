@@ -32,9 +32,6 @@ service RouterMonitorService {
   // Trigger an immediate dynamic DNS synchronization.
   rpc SyncDDNS(SyncDDNSRequest) returns (SyncDDNSResponse);
 
-  // List configured devices from devices.yaml
-  rpc ListConfigDevices(ListConfigDevicesRequest) returns (ListConfigDevicesResponse);
-
   // Create or update a configured device in devices.yaml
   rpc UpsertConfigDevice(UpsertConfigDeviceRequest) returns (UpsertConfigDeviceResponse);
 
@@ -175,6 +172,9 @@ message Device {
   repeated string tags = 17;
   string vlan = 18;
   string config_name = 19;
+  string config_id = 20;
+  repeated string config_hostnames = 21;
+  bool is_configured = 22;
 }
 
 message ListDevicesResponse {
@@ -308,12 +308,6 @@ message ConfigDevice {
   string ip = 5;
   repeated string hostnames = 6;
   repeated string tags = 7;
-}
-
-message ListConfigDevicesRequest {}
-
-message ListConfigDevicesResponse {
-  repeated ConfigDevice devices = 1;
 }
 
 message UpsertConfigDeviceRequest {

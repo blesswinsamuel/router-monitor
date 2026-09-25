@@ -920,28 +920,31 @@ func (x *DhcpLeaseInfo) GetState() int64 {
 }
 
 type Device struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	IpAddr        string                 `protobuf:"bytes,1,opt,name=ip_addr,json=ipAddr,proto3" json:"ip_addr,omitempty"`
-	MacAddr       string                 `protobuf:"bytes,2,opt,name=mac_addr,json=macAddr,proto3" json:"mac_addr,omitempty"`
-	Hostname      string                 `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Interface     string                 `protobuf:"bytes,4,opt,name=interface,proto3" json:"interface,omitempty"`
-	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"` // "active", "static", "unreachable", "offline"
-	FirstSeenUnix int64                  `protobuf:"varint,6,opt,name=first_seen_unix,json=firstSeenUnix,proto3" json:"first_seen_unix,omitempty"`
-	LastSeenUnix  int64                  `protobuf:"varint,7,opt,name=last_seen_unix,json=lastSeenUnix,proto3" json:"last_seen_unix,omitempty"`
-	Arp           *ArpInfo               `protobuf:"bytes,8,opt,name=arp,proto3" json:"arp,omitempty"`
-	Total         *DirectionalTraffic    `protobuf:"bytes,9,opt,name=total,proto3" json:"total,omitempty"`
-	Wan           *DirectionalTraffic    `protobuf:"bytes,10,opt,name=wan,proto3" json:"wan,omitempty"`
-	Lan           *DirectionalTraffic    `protobuf:"bytes,11,opt,name=lan,proto3" json:"lan,omitempty"`
-	Protocols     []*ProtocolTraffic     `protobuf:"bytes,12,rep,name=protocols,proto3" json:"protocols,omitempty"`
-	Peers         []*PeerTraffic         `protobuf:"bytes,13,rep,name=peers,proto3" json:"peers,omitempty"`
-	Vendor        string                 `protobuf:"bytes,14,opt,name=vendor,proto3" json:"vendor,omitempty"`
-	IsKnown       bool                   `protobuf:"varint,15,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
-	DhcpLease     *DhcpLeaseInfo         `protobuf:"bytes,16,opt,name=dhcp_lease,json=dhcpLease,proto3" json:"dhcp_lease,omitempty"`
-	Tags          []string               `protobuf:"bytes,17,rep,name=tags,proto3" json:"tags,omitempty"`
-	Vlan          string                 `protobuf:"bytes,18,opt,name=vlan,proto3" json:"vlan,omitempty"`
-	ConfigName    string                 `protobuf:"bytes,19,opt,name=config_name,json=configName,proto3" json:"config_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	IpAddr          string                 `protobuf:"bytes,1,opt,name=ip_addr,json=ipAddr,proto3" json:"ip_addr,omitempty"`
+	MacAddr         string                 `protobuf:"bytes,2,opt,name=mac_addr,json=macAddr,proto3" json:"mac_addr,omitempty"`
+	Hostname        string                 `protobuf:"bytes,3,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Interface       string                 `protobuf:"bytes,4,opt,name=interface,proto3" json:"interface,omitempty"`
+	Status          string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"` // "active", "static", "unreachable", "offline"
+	FirstSeenUnix   int64                  `protobuf:"varint,6,opt,name=first_seen_unix,json=firstSeenUnix,proto3" json:"first_seen_unix,omitempty"`
+	LastSeenUnix    int64                  `protobuf:"varint,7,opt,name=last_seen_unix,json=lastSeenUnix,proto3" json:"last_seen_unix,omitempty"`
+	Arp             *ArpInfo               `protobuf:"bytes,8,opt,name=arp,proto3" json:"arp,omitempty"`
+	Total           *DirectionalTraffic    `protobuf:"bytes,9,opt,name=total,proto3" json:"total,omitempty"`
+	Wan             *DirectionalTraffic    `protobuf:"bytes,10,opt,name=wan,proto3" json:"wan,omitempty"`
+	Lan             *DirectionalTraffic    `protobuf:"bytes,11,opt,name=lan,proto3" json:"lan,omitempty"`
+	Protocols       []*ProtocolTraffic     `protobuf:"bytes,12,rep,name=protocols,proto3" json:"protocols,omitempty"`
+	Peers           []*PeerTraffic         `protobuf:"bytes,13,rep,name=peers,proto3" json:"peers,omitempty"`
+	Vendor          string                 `protobuf:"bytes,14,opt,name=vendor,proto3" json:"vendor,omitempty"`
+	IsKnown         bool                   `protobuf:"varint,15,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
+	DhcpLease       *DhcpLeaseInfo         `protobuf:"bytes,16,opt,name=dhcp_lease,json=dhcpLease,proto3" json:"dhcp_lease,omitempty"`
+	Tags            []string               `protobuf:"bytes,17,rep,name=tags,proto3" json:"tags,omitempty"`
+	Vlan            string                 `protobuf:"bytes,18,opt,name=vlan,proto3" json:"vlan,omitempty"`
+	ConfigName      string                 `protobuf:"bytes,19,opt,name=config_name,json=configName,proto3" json:"config_name,omitempty"`
+	ConfigId        string                 `protobuf:"bytes,20,opt,name=config_id,json=configId,proto3" json:"config_id,omitempty"`
+	ConfigHostnames []string               `protobuf:"bytes,21,rep,name=config_hostnames,json=configHostnames,proto3" json:"config_hostnames,omitempty"`
+	IsConfigured    bool                   `protobuf:"varint,22,opt,name=is_configured,json=isConfigured,proto3" json:"is_configured,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Device) Reset() {
@@ -1105,6 +1108,27 @@ func (x *Device) GetConfigName() string {
 		return x.ConfigName
 	}
 	return ""
+}
+
+func (x *Device) GetConfigId() string {
+	if x != nil {
+		return x.ConfigId
+	}
+	return ""
+}
+
+func (x *Device) GetConfigHostnames() []string {
+	if x != nil {
+		return x.ConfigHostnames
+	}
+	return nil
+}
+
+func (x *Device) GetIsConfigured() bool {
+	if x != nil {
+		return x.IsConfigured
+	}
+	return false
 }
 
 type ListDevicesResponse struct {
@@ -2387,86 +2411,6 @@ func (x *ConfigDevice) GetTags() []string {
 	return nil
 }
 
-type ListConfigDevicesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListConfigDevicesRequest) Reset() {
-	*x = ListConfigDevicesRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[31]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListConfigDevicesRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListConfigDevicesRequest) ProtoMessage() {}
-
-func (x *ListConfigDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[31]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListConfigDevicesRequest.ProtoReflect.Descriptor instead.
-func (*ListConfigDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{31}
-}
-
-type ListConfigDevicesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Devices       []*ConfigDevice        `protobuf:"bytes,1,rep,name=devices,proto3" json:"devices,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListConfigDevicesResponse) Reset() {
-	*x = ListConfigDevicesResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[32]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListConfigDevicesResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListConfigDevicesResponse) ProtoMessage() {}
-
-func (x *ListConfigDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[32]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListConfigDevicesResponse.ProtoReflect.Descriptor instead.
-func (*ListConfigDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{32}
-}
-
-func (x *ListConfigDevicesResponse) GetDevices() []*ConfigDevice {
-	if x != nil {
-		return x.Devices
-	}
-	return nil
-}
-
 type UpsertConfigDeviceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Device        *ConfigDevice          `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
@@ -2476,7 +2420,7 @@ type UpsertConfigDeviceRequest struct {
 
 func (x *UpsertConfigDeviceRequest) Reset() {
 	*x = UpsertConfigDeviceRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[33]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2488,7 +2432,7 @@ func (x *UpsertConfigDeviceRequest) String() string {
 func (*UpsertConfigDeviceRequest) ProtoMessage() {}
 
 func (x *UpsertConfigDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[33]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2501,7 +2445,7 @@ func (x *UpsertConfigDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertConfigDeviceRequest.ProtoReflect.Descriptor instead.
 func (*UpsertConfigDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{33}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *UpsertConfigDeviceRequest) GetDevice() *ConfigDevice {
@@ -2520,7 +2464,7 @@ type UpsertConfigDeviceResponse struct {
 
 func (x *UpsertConfigDeviceResponse) Reset() {
 	*x = UpsertConfigDeviceResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[34]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2532,7 +2476,7 @@ func (x *UpsertConfigDeviceResponse) String() string {
 func (*UpsertConfigDeviceResponse) ProtoMessage() {}
 
 func (x *UpsertConfigDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[34]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2545,7 +2489,7 @@ func (x *UpsertConfigDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertConfigDeviceResponse.ProtoReflect.Descriptor instead.
 func (*UpsertConfigDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{34}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UpsertConfigDeviceResponse) GetDevice() *ConfigDevice {
@@ -2564,7 +2508,7 @@ type DeleteConfigDeviceRequest struct {
 
 func (x *DeleteConfigDeviceRequest) Reset() {
 	*x = DeleteConfigDeviceRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[35]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2576,7 +2520,7 @@ func (x *DeleteConfigDeviceRequest) String() string {
 func (*DeleteConfigDeviceRequest) ProtoMessage() {}
 
 func (x *DeleteConfigDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[35]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2589,7 +2533,7 @@ func (x *DeleteConfigDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConfigDeviceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteConfigDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{35}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *DeleteConfigDeviceRequest) GetId() string {
@@ -2608,7 +2552,7 @@ type DeleteConfigDeviceResponse struct {
 
 func (x *DeleteConfigDeviceResponse) Reset() {
 	*x = DeleteConfigDeviceResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[36]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2620,7 +2564,7 @@ func (x *DeleteConfigDeviceResponse) String() string {
 func (*DeleteConfigDeviceResponse) ProtoMessage() {}
 
 func (x *DeleteConfigDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[36]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2633,7 +2577,7 @@ func (x *DeleteConfigDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConfigDeviceResponse.ProtoReflect.Descriptor instead.
 func (*DeleteConfigDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{36}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *DeleteConfigDeviceResponse) GetSuccess() bool {
@@ -2654,7 +2598,7 @@ type ConfigDnsRecord struct {
 
 func (x *ConfigDnsRecord) Reset() {
 	*x = ConfigDnsRecord{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[37]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2666,7 +2610,7 @@ func (x *ConfigDnsRecord) String() string {
 func (*ConfigDnsRecord) ProtoMessage() {}
 
 func (x *ConfigDnsRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[37]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2679,7 +2623,7 @@ func (x *ConfigDnsRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigDnsRecord.ProtoReflect.Descriptor instead.
 func (*ConfigDnsRecord) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{37}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ConfigDnsRecord) GetName() string {
@@ -2711,7 +2655,7 @@ type ListConfigDnsRecordsRequest struct {
 
 func (x *ListConfigDnsRecordsRequest) Reset() {
 	*x = ListConfigDnsRecordsRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[38]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2723,7 +2667,7 @@ func (x *ListConfigDnsRecordsRequest) String() string {
 func (*ListConfigDnsRecordsRequest) ProtoMessage() {}
 
 func (x *ListConfigDnsRecordsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[38]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2736,7 +2680,7 @@ func (x *ListConfigDnsRecordsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConfigDnsRecordsRequest.ProtoReflect.Descriptor instead.
 func (*ListConfigDnsRecordsRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{38}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{36}
 }
 
 type ListConfigDnsRecordsResponse struct {
@@ -2748,7 +2692,7 @@ type ListConfigDnsRecordsResponse struct {
 
 func (x *ListConfigDnsRecordsResponse) Reset() {
 	*x = ListConfigDnsRecordsResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[39]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2760,7 +2704,7 @@ func (x *ListConfigDnsRecordsResponse) String() string {
 func (*ListConfigDnsRecordsResponse) ProtoMessage() {}
 
 func (x *ListConfigDnsRecordsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[39]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2773,7 +2717,7 @@ func (x *ListConfigDnsRecordsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConfigDnsRecordsResponse.ProtoReflect.Descriptor instead.
 func (*ListConfigDnsRecordsResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{39}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListConfigDnsRecordsResponse) GetRecords() []*ConfigDnsRecord {
@@ -2792,7 +2736,7 @@ type UpsertConfigDnsRecordRequest struct {
 
 func (x *UpsertConfigDnsRecordRequest) Reset() {
 	*x = UpsertConfigDnsRecordRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[40]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2804,7 +2748,7 @@ func (x *UpsertConfigDnsRecordRequest) String() string {
 func (*UpsertConfigDnsRecordRequest) ProtoMessage() {}
 
 func (x *UpsertConfigDnsRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[40]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2817,7 +2761,7 @@ func (x *UpsertConfigDnsRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertConfigDnsRecordRequest.ProtoReflect.Descriptor instead.
 func (*UpsertConfigDnsRecordRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{40}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *UpsertConfigDnsRecordRequest) GetRecord() *ConfigDnsRecord {
@@ -2836,7 +2780,7 @@ type UpsertConfigDnsRecordResponse struct {
 
 func (x *UpsertConfigDnsRecordResponse) Reset() {
 	*x = UpsertConfigDnsRecordResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[41]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2848,7 +2792,7 @@ func (x *UpsertConfigDnsRecordResponse) String() string {
 func (*UpsertConfigDnsRecordResponse) ProtoMessage() {}
 
 func (x *UpsertConfigDnsRecordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[41]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2861,7 +2805,7 @@ func (x *UpsertConfigDnsRecordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertConfigDnsRecordResponse.ProtoReflect.Descriptor instead.
 func (*UpsertConfigDnsRecordResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{41}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *UpsertConfigDnsRecordResponse) GetRecord() *ConfigDnsRecord {
@@ -2880,7 +2824,7 @@ type DeleteConfigDnsRecordRequest struct {
 
 func (x *DeleteConfigDnsRecordRequest) Reset() {
 	*x = DeleteConfigDnsRecordRequest{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[42]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2892,7 +2836,7 @@ func (x *DeleteConfigDnsRecordRequest) String() string {
 func (*DeleteConfigDnsRecordRequest) ProtoMessage() {}
 
 func (x *DeleteConfigDnsRecordRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[42]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2905,7 +2849,7 @@ func (x *DeleteConfigDnsRecordRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConfigDnsRecordRequest.ProtoReflect.Descriptor instead.
 func (*DeleteConfigDnsRecordRequest) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{42}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *DeleteConfigDnsRecordRequest) GetName() string {
@@ -2924,7 +2868,7 @@ type DeleteConfigDnsRecordResponse struct {
 
 func (x *DeleteConfigDnsRecordResponse) Reset() {
 	*x = DeleteConfigDnsRecordResponse{}
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[43]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2936,7 +2880,7 @@ func (x *DeleteConfigDnsRecordResponse) String() string {
 func (*DeleteConfigDnsRecordResponse) ProtoMessage() {}
 
 func (x *DeleteConfigDnsRecordResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[43]
+	mi := &file_routermonitor_v1_router_monitor_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2949,7 +2893,7 @@ func (x *DeleteConfigDnsRecordResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteConfigDnsRecordResponse.ProtoReflect.Descriptor instead.
 func (*DeleteConfigDnsRecordResponse) Descriptor() ([]byte, []int) {
-	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{43}
+	return file_routermonitor_v1_router_monitor_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *DeleteConfigDnsRecordResponse) GetSuccess() bool {
@@ -3035,7 +2979,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\vexpire_unix\x18\x04 \x01(\x03R\n" +
 	"expireUnix\x12\x1b\n" +
 	"\tsubnet_id\x18\x05 \x01(\x03R\bsubnetId\x12\x14\n" +
-	"\x05state\x18\x06 \x01(\x03R\x05state\"\xe7\x05\n" +
+	"\x05state\x18\x06 \x01(\x03R\x05state\"\xd4\x06\n" +
 	"\x06Device\x12\x17\n" +
 	"\aip_addr\x18\x01 \x01(\tR\x06ipAddr\x12\x19\n" +
 	"\bmac_addr\x18\x02 \x01(\tR\amacAddr\x12\x1a\n" +
@@ -3058,7 +3002,10 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x04tags\x18\x11 \x03(\tR\x04tags\x12\x12\n" +
 	"\x04vlan\x18\x12 \x01(\tR\x04vlan\x12\x1f\n" +
 	"\vconfig_name\x18\x13 \x01(\tR\n" +
-	"configName\"I\n" +
+	"configName\x12\x1b\n" +
+	"\tconfig_id\x18\x14 \x01(\tR\bconfigId\x12)\n" +
+	"\x10config_hostnames\x18\x15 \x03(\tR\x0fconfigHostnames\x12#\n" +
+	"\ris_configured\x18\x16 \x01(\bR\fisConfigured\"I\n" +
 	"\x13ListDevicesResponse\x122\n" +
 	"\adevices\x18\x01 \x03(\v2\x18.routermonitor.v1.DeviceR\adevices\"\x1a\n" +
 	"\x18GetInternetHealthRequest\"\xc5\x03\n" +
@@ -3170,10 +3117,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x04vlan\x18\x04 \x01(\tR\x04vlan\x12\x0e\n" +
 	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x1c\n" +
 	"\thostnames\x18\x06 \x03(\tR\thostnames\x12\x12\n" +
-	"\x04tags\x18\a \x03(\tR\x04tags\"\x1a\n" +
-	"\x18ListConfigDevicesRequest\"U\n" +
-	"\x19ListConfigDevicesResponse\x128\n" +
-	"\adevices\x18\x01 \x03(\v2\x1e.routermonitor.v1.ConfigDeviceR\adevices\"S\n" +
+	"\x04tags\x18\a \x03(\tR\x04tags\"S\n" +
 	"\x19UpsertConfigDeviceRequest\x126\n" +
 	"\x06device\x18\x01 \x01(\v2\x1e.routermonitor.v1.ConfigDeviceR\x06device\"T\n" +
 	"\x1aUpsertConfigDeviceResponse\x126\n" +
@@ -3196,7 +3140,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"\x1cDeleteConfigDnsRecordRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"9\n" +
 	"\x1dDeleteConfigDnsRecordResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xa7\f\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb9\v\n" +
 	"\x14RouterMonitorService\x12Z\n" +
 	"\vGetOverview\x12$.routermonitor.v1.GetOverviewRequest\x1a%.routermonitor.v1.GetOverviewResponse\x12Z\n" +
 	"\vListDevices\x12$.routermonitor.v1.ListDevicesRequest\x1a%.routermonitor.v1.ListDevicesResponse\x12l\n" +
@@ -3207,8 +3151,7 @@ const file_routermonitor_v1_router_monitor_proto_rawDesc = "" +
 	"PingDevice\x12#.routermonitor.v1.PingDeviceRequest\x1a$.routermonitor.v1.PingDeviceResponse\x12T\n" +
 	"\tWakeOnLan\x12\".routermonitor.v1.WakeOnLanRequest\x1a#.routermonitor.v1.WakeOnLanResponse\x12`\n" +
 	"\rGetDDNSStatus\x12&.routermonitor.v1.GetDDNSStatusRequest\x1a'.routermonitor.v1.GetDDNSStatusResponse\x12Q\n" +
-	"\bSyncDDNS\x12!.routermonitor.v1.SyncDDNSRequest\x1a\".routermonitor.v1.SyncDDNSResponse\x12l\n" +
-	"\x11ListConfigDevices\x12*.routermonitor.v1.ListConfigDevicesRequest\x1a+.routermonitor.v1.ListConfigDevicesResponse\x12o\n" +
+	"\bSyncDDNS\x12!.routermonitor.v1.SyncDDNSRequest\x1a\".routermonitor.v1.SyncDDNSResponse\x12o\n" +
 	"\x12UpsertConfigDevice\x12+.routermonitor.v1.UpsertConfigDeviceRequest\x1a,.routermonitor.v1.UpsertConfigDeviceResponse\x12o\n" +
 	"\x12DeleteConfigDevice\x12+.routermonitor.v1.DeleteConfigDeviceRequest\x1a,.routermonitor.v1.DeleteConfigDeviceResponse\x12u\n" +
 	"\x14ListConfigDnsRecords\x12-.routermonitor.v1.ListConfigDnsRecordsRequest\x1a..routermonitor.v1.ListConfigDnsRecordsResponse\x12x\n" +
@@ -3227,7 +3170,7 @@ func file_routermonitor_v1_router_monitor_proto_rawDescGZIP() []byte {
 	return file_routermonitor_v1_router_monitor_proto_rawDescData
 }
 
-var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_routermonitor_v1_router_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
 var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*DirectionalTraffic)(nil),            // 0: routermonitor.v1.DirectionalTraffic
 	(*ProtocolTraffic)(nil),               // 1: routermonitor.v1.ProtocolTraffic
@@ -3260,21 +3203,19 @@ var file_routermonitor_v1_router_monitor_proto_goTypes = []any{
 	(*SyncDDNSRequest)(nil),               // 28: routermonitor.v1.SyncDDNSRequest
 	(*SyncDDNSResponse)(nil),              // 29: routermonitor.v1.SyncDDNSResponse
 	(*ConfigDevice)(nil),                  // 30: routermonitor.v1.ConfigDevice
-	(*ListConfigDevicesRequest)(nil),      // 31: routermonitor.v1.ListConfigDevicesRequest
-	(*ListConfigDevicesResponse)(nil),     // 32: routermonitor.v1.ListConfigDevicesResponse
-	(*UpsertConfigDeviceRequest)(nil),     // 33: routermonitor.v1.UpsertConfigDeviceRequest
-	(*UpsertConfigDeviceResponse)(nil),    // 34: routermonitor.v1.UpsertConfigDeviceResponse
-	(*DeleteConfigDeviceRequest)(nil),     // 35: routermonitor.v1.DeleteConfigDeviceRequest
-	(*DeleteConfigDeviceResponse)(nil),    // 36: routermonitor.v1.DeleteConfigDeviceResponse
-	(*ConfigDnsRecord)(nil),               // 37: routermonitor.v1.ConfigDnsRecord
-	(*ListConfigDnsRecordsRequest)(nil),   // 38: routermonitor.v1.ListConfigDnsRecordsRequest
-	(*ListConfigDnsRecordsResponse)(nil),  // 39: routermonitor.v1.ListConfigDnsRecordsResponse
-	(*UpsertConfigDnsRecordRequest)(nil),  // 40: routermonitor.v1.UpsertConfigDnsRecordRequest
-	(*UpsertConfigDnsRecordResponse)(nil), // 41: routermonitor.v1.UpsertConfigDnsRecordResponse
-	(*DeleteConfigDnsRecordRequest)(nil),  // 42: routermonitor.v1.DeleteConfigDnsRecordRequest
-	(*DeleteConfigDnsRecordResponse)(nil), // 43: routermonitor.v1.DeleteConfigDnsRecordResponse
-	nil,                                   // 44: routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
-	nil,                                   // 45: routermonitor.v1.TimeSeries.LabelsEntry
+	(*UpsertConfigDeviceRequest)(nil),     // 31: routermonitor.v1.UpsertConfigDeviceRequest
+	(*UpsertConfigDeviceResponse)(nil),    // 32: routermonitor.v1.UpsertConfigDeviceResponse
+	(*DeleteConfigDeviceRequest)(nil),     // 33: routermonitor.v1.DeleteConfigDeviceRequest
+	(*DeleteConfigDeviceResponse)(nil),    // 34: routermonitor.v1.DeleteConfigDeviceResponse
+	(*ConfigDnsRecord)(nil),               // 35: routermonitor.v1.ConfigDnsRecord
+	(*ListConfigDnsRecordsRequest)(nil),   // 36: routermonitor.v1.ListConfigDnsRecordsRequest
+	(*ListConfigDnsRecordsResponse)(nil),  // 37: routermonitor.v1.ListConfigDnsRecordsResponse
+	(*UpsertConfigDnsRecordRequest)(nil),  // 38: routermonitor.v1.UpsertConfigDnsRecordRequest
+	(*UpsertConfigDnsRecordResponse)(nil), // 39: routermonitor.v1.UpsertConfigDnsRecordResponse
+	(*DeleteConfigDnsRecordRequest)(nil),  // 40: routermonitor.v1.DeleteConfigDnsRecordRequest
+	(*DeleteConfigDnsRecordResponse)(nil), // 41: routermonitor.v1.DeleteConfigDnsRecordResponse
+	nil,                                   // 42: routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
+	nil,                                   // 43: routermonitor.v1.TimeSeries.LabelsEntry
 }
 var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 0: routermonitor.v1.ProtocolTraffic.traffic:type_name -> routermonitor.v1.DirectionalTraffic
@@ -3295,54 +3236,51 @@ var file_routermonitor_v1_router_monitor_proto_depIdxs = []int32{
 	0,  // 15: routermonitor.v1.LiveStatsResponse.total:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 16: routermonitor.v1.LiveStatsResponse.wan:type_name -> routermonitor.v1.DirectionalTraffic
 	0,  // 17: routermonitor.v1.LiveStatsResponse.lan:type_name -> routermonitor.v1.DirectionalTraffic
-	44, // 18: routermonitor.v1.TimeSeriesQuery.match_labels:type_name -> routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
+	42, // 18: routermonitor.v1.TimeSeriesQuery.match_labels:type_name -> routermonitor.v1.TimeSeriesQuery.MatchLabelsEntry
 	20, // 19: routermonitor.v1.QueryTimeSeriesRequest.queries:type_name -> routermonitor.v1.TimeSeriesQuery
-	45, // 20: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
+	43, // 20: routermonitor.v1.TimeSeries.labels:type_name -> routermonitor.v1.TimeSeries.LabelsEntry
 	22, // 21: routermonitor.v1.TimeSeries.points:type_name -> routermonitor.v1.TimeSeriesPoint
 	23, // 22: routermonitor.v1.QueryTimeSeriesResponse.series:type_name -> routermonitor.v1.TimeSeries
 	26, // 23: routermonitor.v1.GetDDNSStatusResponse.history:type_name -> routermonitor.v1.DDNSHistoryRecord
 	27, // 24: routermonitor.v1.SyncDDNSResponse.status:type_name -> routermonitor.v1.GetDDNSStatusResponse
-	30, // 25: routermonitor.v1.ListConfigDevicesResponse.devices:type_name -> routermonitor.v1.ConfigDevice
-	30, // 26: routermonitor.v1.UpsertConfigDeviceRequest.device:type_name -> routermonitor.v1.ConfigDevice
-	30, // 27: routermonitor.v1.UpsertConfigDeviceResponse.device:type_name -> routermonitor.v1.ConfigDevice
-	37, // 28: routermonitor.v1.ListConfigDnsRecordsResponse.records:type_name -> routermonitor.v1.ConfigDnsRecord
-	37, // 29: routermonitor.v1.UpsertConfigDnsRecordRequest.record:type_name -> routermonitor.v1.ConfigDnsRecord
-	37, // 30: routermonitor.v1.UpsertConfigDnsRecordResponse.record:type_name -> routermonitor.v1.ConfigDnsRecord
-	7,  // 31: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
-	9,  // 32: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
-	14, // 33: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
-	18, // 34: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
-	21, // 35: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
-	3,  // 36: routermonitor.v1.RouterMonitorService.PingDevice:input_type -> routermonitor.v1.PingDeviceRequest
-	5,  // 37: routermonitor.v1.RouterMonitorService.WakeOnLan:input_type -> routermonitor.v1.WakeOnLanRequest
-	25, // 38: routermonitor.v1.RouterMonitorService.GetDDNSStatus:input_type -> routermonitor.v1.GetDDNSStatusRequest
-	28, // 39: routermonitor.v1.RouterMonitorService.SyncDDNS:input_type -> routermonitor.v1.SyncDDNSRequest
-	31, // 40: routermonitor.v1.RouterMonitorService.ListConfigDevices:input_type -> routermonitor.v1.ListConfigDevicesRequest
-	33, // 41: routermonitor.v1.RouterMonitorService.UpsertConfigDevice:input_type -> routermonitor.v1.UpsertConfigDeviceRequest
-	35, // 42: routermonitor.v1.RouterMonitorService.DeleteConfigDevice:input_type -> routermonitor.v1.DeleteConfigDeviceRequest
-	38, // 43: routermonitor.v1.RouterMonitorService.ListConfigDnsRecords:input_type -> routermonitor.v1.ListConfigDnsRecordsRequest
-	40, // 44: routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord:input_type -> routermonitor.v1.UpsertConfigDnsRecordRequest
-	42, // 45: routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord:input_type -> routermonitor.v1.DeleteConfigDnsRecordRequest
-	8,  // 46: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
-	13, // 47: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
-	17, // 48: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
-	19, // 49: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
-	24, // 50: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
-	4,  // 51: routermonitor.v1.RouterMonitorService.PingDevice:output_type -> routermonitor.v1.PingDeviceResponse
-	6,  // 52: routermonitor.v1.RouterMonitorService.WakeOnLan:output_type -> routermonitor.v1.WakeOnLanResponse
-	27, // 53: routermonitor.v1.RouterMonitorService.GetDDNSStatus:output_type -> routermonitor.v1.GetDDNSStatusResponse
-	29, // 54: routermonitor.v1.RouterMonitorService.SyncDDNS:output_type -> routermonitor.v1.SyncDDNSResponse
-	32, // 55: routermonitor.v1.RouterMonitorService.ListConfigDevices:output_type -> routermonitor.v1.ListConfigDevicesResponse
-	34, // 56: routermonitor.v1.RouterMonitorService.UpsertConfigDevice:output_type -> routermonitor.v1.UpsertConfigDeviceResponse
-	36, // 57: routermonitor.v1.RouterMonitorService.DeleteConfigDevice:output_type -> routermonitor.v1.DeleteConfigDeviceResponse
-	39, // 58: routermonitor.v1.RouterMonitorService.ListConfigDnsRecords:output_type -> routermonitor.v1.ListConfigDnsRecordsResponse
-	41, // 59: routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord:output_type -> routermonitor.v1.UpsertConfigDnsRecordResponse
-	43, // 60: routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord:output_type -> routermonitor.v1.DeleteConfigDnsRecordResponse
-	46, // [46:61] is the sub-list for method output_type
-	31, // [31:46] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	30, // 25: routermonitor.v1.UpsertConfigDeviceRequest.device:type_name -> routermonitor.v1.ConfigDevice
+	30, // 26: routermonitor.v1.UpsertConfigDeviceResponse.device:type_name -> routermonitor.v1.ConfigDevice
+	35, // 27: routermonitor.v1.ListConfigDnsRecordsResponse.records:type_name -> routermonitor.v1.ConfigDnsRecord
+	35, // 28: routermonitor.v1.UpsertConfigDnsRecordRequest.record:type_name -> routermonitor.v1.ConfigDnsRecord
+	35, // 29: routermonitor.v1.UpsertConfigDnsRecordResponse.record:type_name -> routermonitor.v1.ConfigDnsRecord
+	7,  // 30: routermonitor.v1.RouterMonitorService.GetOverview:input_type -> routermonitor.v1.GetOverviewRequest
+	9,  // 31: routermonitor.v1.RouterMonitorService.ListDevices:input_type -> routermonitor.v1.ListDevicesRequest
+	14, // 32: routermonitor.v1.RouterMonitorService.GetInternetHealth:input_type -> routermonitor.v1.GetInternetHealthRequest
+	18, // 33: routermonitor.v1.RouterMonitorService.StreamLiveStats:input_type -> routermonitor.v1.StreamLiveStatsRequest
+	21, // 34: routermonitor.v1.RouterMonitorService.QueryTimeSeries:input_type -> routermonitor.v1.QueryTimeSeriesRequest
+	3,  // 35: routermonitor.v1.RouterMonitorService.PingDevice:input_type -> routermonitor.v1.PingDeviceRequest
+	5,  // 36: routermonitor.v1.RouterMonitorService.WakeOnLan:input_type -> routermonitor.v1.WakeOnLanRequest
+	25, // 37: routermonitor.v1.RouterMonitorService.GetDDNSStatus:input_type -> routermonitor.v1.GetDDNSStatusRequest
+	28, // 38: routermonitor.v1.RouterMonitorService.SyncDDNS:input_type -> routermonitor.v1.SyncDDNSRequest
+	31, // 39: routermonitor.v1.RouterMonitorService.UpsertConfigDevice:input_type -> routermonitor.v1.UpsertConfigDeviceRequest
+	33, // 40: routermonitor.v1.RouterMonitorService.DeleteConfigDevice:input_type -> routermonitor.v1.DeleteConfigDeviceRequest
+	36, // 41: routermonitor.v1.RouterMonitorService.ListConfigDnsRecords:input_type -> routermonitor.v1.ListConfigDnsRecordsRequest
+	38, // 42: routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord:input_type -> routermonitor.v1.UpsertConfigDnsRecordRequest
+	40, // 43: routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord:input_type -> routermonitor.v1.DeleteConfigDnsRecordRequest
+	8,  // 44: routermonitor.v1.RouterMonitorService.GetOverview:output_type -> routermonitor.v1.GetOverviewResponse
+	13, // 45: routermonitor.v1.RouterMonitorService.ListDevices:output_type -> routermonitor.v1.ListDevicesResponse
+	17, // 46: routermonitor.v1.RouterMonitorService.GetInternetHealth:output_type -> routermonitor.v1.GetInternetHealthResponse
+	19, // 47: routermonitor.v1.RouterMonitorService.StreamLiveStats:output_type -> routermonitor.v1.LiveStatsResponse
+	24, // 48: routermonitor.v1.RouterMonitorService.QueryTimeSeries:output_type -> routermonitor.v1.QueryTimeSeriesResponse
+	4,  // 49: routermonitor.v1.RouterMonitorService.PingDevice:output_type -> routermonitor.v1.PingDeviceResponse
+	6,  // 50: routermonitor.v1.RouterMonitorService.WakeOnLan:output_type -> routermonitor.v1.WakeOnLanResponse
+	27, // 51: routermonitor.v1.RouterMonitorService.GetDDNSStatus:output_type -> routermonitor.v1.GetDDNSStatusResponse
+	29, // 52: routermonitor.v1.RouterMonitorService.SyncDDNS:output_type -> routermonitor.v1.SyncDDNSResponse
+	32, // 53: routermonitor.v1.RouterMonitorService.UpsertConfigDevice:output_type -> routermonitor.v1.UpsertConfigDeviceResponse
+	34, // 54: routermonitor.v1.RouterMonitorService.DeleteConfigDevice:output_type -> routermonitor.v1.DeleteConfigDeviceResponse
+	37, // 55: routermonitor.v1.RouterMonitorService.ListConfigDnsRecords:output_type -> routermonitor.v1.ListConfigDnsRecordsResponse
+	39, // 56: routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord:output_type -> routermonitor.v1.UpsertConfigDnsRecordResponse
+	41, // 57: routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord:output_type -> routermonitor.v1.DeleteConfigDnsRecordResponse
+	44, // [44:58] is the sub-list for method output_type
+	30, // [30:44] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_routermonitor_v1_router_monitor_proto_init() }
@@ -3356,7 +3294,7 @@ func file_routermonitor_v1_router_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_routermonitor_v1_router_monitor_proto_rawDesc), len(file_routermonitor_v1_router_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   46,
+			NumMessages:   44,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

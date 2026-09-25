@@ -4,20 +4,19 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
 import { rpcClient } from '@/lib/client'
-import type { Device, ConfigDevice } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
 
 interface EditDeviceModalProps {
   isOpen: boolean
   onClose: () => void
   device?: Device | null
-  configDevice?: ConfigDevice | null
   onSaved: () => void
 }
 
 const COMMON_TAGS = ['allow_internet', 'cast_target', 'kiosk']
 const COMMON_VLANS = ['trusted', 'iot', 'cameras', 'management', 'guest', 'lan']
 
-export function EditDeviceModal({ isOpen, onClose, device, configDevice, onSaved }: EditDeviceModalProps) {
+export function EditDeviceModal({ isOpen, onClose, device, onSaved }: EditDeviceModalProps) {
   const [name, setName] = useState('')
   const [mac, setMac] = useState('')
   const [ip, setIp] = useState('')
@@ -29,24 +28,21 @@ export function EditDeviceModal({ isOpen, onClose, device, configDevice, onSaved
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const isConfigured = Boolean(configDevice?.id || (device && device.configName))
+  const isConfigured = Boolean(device?.isConfigured || device?.configId || device?.configName)
 
   useEffect(() => {
     if (!isOpen) return
 
-    if (configDevice) {
-      setName(configDevice.name || '')
-      setMac(configDevice.mac || '')
-      setIp(configDevice.ip || '')
-      setVlan(configDevice.vlan || '')
-      setHostnamesStr(configDevice.hostnames?.join(', ') || '')
-      setTags(configDevice.tags ? [...configDevice.tags] : [])
-    } else if (device) {
+    if (device) {
       setName(device.configName || device.hostname || '')
       setMac(device.macAddr || '')
       setIp(device.ipAddr || '')
-      setVlan(device.vlan || '')
-      setHostnamesStr(device.hostname ? device.hostname : '')
+      setVlan(device.vlan || 'trusted')
+      setHostnamesStr(
+        device.configHostnames && device.configHostnames.length > 0
+          ? device.configHostnames.join(', ')
+          : device.hostname || ''
+      )
       setTags(device.tags ? [...device.tags] : [])
     } else {
       setName('')
@@ -58,7 +54,7 @@ export function EditDeviceModal({ isOpen, onClose, device, configDevice, onSaved
     }
     setNewTagInput('')
     setError(null)
-  }, [isOpen, device, configDevice])
+  }, [isOpen, device])
 
   if (!isOpen) return null
 
@@ -91,7 +87,7 @@ export function EditDeviceModal({ isOpen, onClose, device, configDevice, onSaved
         .map((s) => s.trim())
         .filter(Boolean)
 
-      const id = configDevice?.id || (name ? name.toLowerCase().replace(/[^a-z0-9_-]/g, '-') : mac.replace(/:/g, '-'))
+      const id = device?.configId || (name ? name.toLowerCase().replace(/[^a-z0-9_-]/g, '-') : mac.replace(/:/g, '-'))
 
       await rpcClient.upsertConfigDevice({
         device: {
@@ -115,7 +111,7 @@ export function EditDeviceModal({ isOpen, onClose, device, configDevice, onSaved
   }
 
   const handleDelete = async () => {
-    const id = configDevice?.id || (name ? name.toLowerCase().replace(/[^a-z0-9_-]/g, '-') : mac.replace(/:/g, '-'))
+    const id = device?.configId || (name ? name.toLowerCase().replace(/[^a-z0-9_-]/g, '-') : mac.replace(/:/g, '-'))
     if (!id) return
     if (!window.confirm(`Are you sure you want to remove reservation for "${name || mac || id}"?`)) {
       return

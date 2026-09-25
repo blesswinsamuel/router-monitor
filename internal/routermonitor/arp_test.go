@@ -4,53 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func newTestArpCollector(filename string) *ArpCollector {
-	return &ArpCollector{
-		filename:          filename,
-		stripDomainSuffix: "",
-		hostCacheTTL:      time.Minute,
-		lookupTimeout:     10 * time.Millisecond,
-		hostCache:         make(map[string]hostCacheValue),
-		pendingLookups:    make(map[string]struct{}),
-		lookupQueue:       make(chan string, 4),
-		arpDevices: prometheus.NewDesc("router_monitor_arp_devices", "ARP entries discovered from /proc/net/arp.",
-			[]string{"ip_addr", "hw_addr", "hostname", "device"}, nil,
-		),
-	}
-}
-
-func TestEnqueueLookup_Deduplicates(t *testing.T) {
-	collector := newTestArpCollector("")
-
-	collector.enqueueLookup("192.168.1.10")
-	collector.enqueueLookup("192.168.1.10")
-
-	if len(collector.lookupQueue) != 1 {
-		t.Fatalf("expected one queued lookup, got %d", len(collector.lookupQueue))
-	}
-	if _, ok := collector.pendingLookups["192.168.1.10"]; !ok {
-		t.Fatal("expected pending lookup entry")
-	}
-}
-
-func TestEnqueueLookup_DropsWhenQueueFull(t *testing.T) {
-	collector := newTestArpCollector("")
-	collector.lookupQueue = make(chan string, 1)
-	collector.lookupQueue <- "already-full"
-
-	collector.enqueueLookup("192.168.1.11")
-
-	if _, ok := collector.pendingLookups["192.168.1.11"]; ok {
-		t.Fatal("pending lookup should be removed when queue is full")
-	}
-}
-
-func TestCollect_EmitsMetricAndQueuesLookup(t *testing.T) {
+func TestCollect_EmitsMetric(t *testing.T) {
 	tmpDir := t.TempDir()
 	arpPath := filepath.Join(tmpDir, "arp")
 	contents := "IP address       HW type     Flags       HW address            Mask     Device\n192.168.1.20 0x1 0x2 aa:bb:cc:dd:ee:ff * eth0\n"
@@ -58,64 +16,36 @@ func TestCollect_EmitsMetricAndQueuesLookup(t *testing.T) {
 		t.Fatalf("write test arp file: %v", err)
 	}
 
-	collector := newTestArpCollector(arpPath)
+	collector := NewArpCollector(arpPath)
 	metrics := make(chan prometheus.Metric, 2)
 	collector.Collect(metrics)
 
 	if len(metrics) != 1 {
 		t.Fatalf("expected one metric, got %d", len(metrics))
 	}
-	if len(collector.lookupQueue) != 1 {
-		t.Fatalf("expected one queued lookup, got %d", len(collector.lookupQueue))
-	}
-	if _, ok := collector.pendingLookups["192.168.1.20"]; !ok {
-		t.Fatal("expected pending lookup after collect")
-	}
 }
 
-func TestCollect_UsesFreshCacheWithoutQueueingLookup(t *testing.T) {
+func TestGetDevices_IgnoresNullHWAddr(t *testing.T) {
 	tmpDir := t.TempDir()
 	arpPath := filepath.Join(tmpDir, "arp")
-	contents := "IP address       HW type     Flags       HW address            Mask     Device\n192.168.1.21 0x1 0x2 aa:bb:cc:dd:ee:01 * eth0\n"
+	contents := "IP address       HW type     Flags       HW address            Mask     Device\n192.168.1.20 0x1 0x2 aa:bb:cc:dd:ee:ff * eth0\n192.168.1.21 0x1 0x0 00:00:00:00:00:00 * eth0\n"
 	if err := os.WriteFile(arpPath, []byte(contents), 0o600); err != nil {
 		t.Fatalf("write test arp file: %v", err)
 	}
 
-	collector := newTestArpCollector(arpPath)
-	collector.hostCache["192.168.1.21"] = hostCacheValue{Hostname: "host1", Expiry: time.Now().Add(time.Minute)}
-	metrics := make(chan prometheus.Metric, 2)
-	collector.Collect(metrics)
+	collector := NewArpCollector(arpPath)
+	devices := collector.GetDevices()
 
-	if len(metrics) != 1 {
-		t.Fatalf("expected one metric, got %d", len(metrics))
+	if len(devices) != 1 {
+		t.Fatalf("expected 1 valid device, got %d", len(devices))
 	}
-	if len(collector.lookupQueue) != 0 {
-		t.Fatalf("expected no queued lookup, got %d", len(collector.lookupQueue))
+	if devices[0].IPAddr != "192.168.1.20" {
+		t.Errorf("expected IP 192.168.1.20, got %s", devices[0].IPAddr)
 	}
-	if len(collector.pendingLookups) != 0 {
-		t.Fatalf("expected no pending lookups, got %d", len(collector.pendingLookups))
+	if devices[0].HWAddr != "aa:bb:cc:dd:ee:ff" {
+		t.Errorf("expected MAC aa:bb:cc:dd:ee:ff, got %s", devices[0].HWAddr)
 	}
-}
-
-func TestCleanHostname(t *testing.T) {
-	tests := []struct {
-		raw    string
-		suffix string
-		want   string
-	}{
-		{"tp-link-eap-670.home.lan.", ".home.lan.", "tp-link-eap-670"},
-		{"tp-link-eap-670.home.lan.", ".home.lan", "tp-link-eap-670"},
-		{"tp-link-eap-670.home.lan.", "home.lan", "tp-link-eap-670"},
-		{"tp-link-eap-670.home.lan", ".home.lan", "tp-link-eap-670"},
-		{"iphone.", "", "iphone"},
-		{"iphone", ".home.lan", "iphone"},
-		{"server.other.domain.", ".home.lan", "server.other.domain"},
-	}
-
-	for _, tt := range tests {
-		got := CleanHostname(tt.raw, tt.suffix)
-		if got != tt.want {
-			t.Errorf("CleanHostname(%q, %q) = %q, want %q", tt.raw, tt.suffix, got, tt.want)
-		}
+	if !devices[0].IsValid {
+		t.Errorf("expected IsValid=true for flag 0x2")
 	}
 }
