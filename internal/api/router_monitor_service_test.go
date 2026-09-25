@@ -10,6 +10,7 @@ import (
 
 	"connectrpc.com/connect"
 	routermonitorv1 "github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1"
+	"github.com/blesswinsamuel/router-monitor/internal/networkmgr"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor/ddns"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
@@ -32,7 +33,7 @@ func TestRouterMonitorService_Endpoints(t *testing.T) {
 	}, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
-	svc := NewRouterMonitorService("eth0", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil)
+	svc := NewRouterMonitorService("eth0", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil, nil)
 
 	ctx := context.Background()
 
@@ -108,7 +109,7 @@ func TestRouterMonitorService_DeviceTrafficAndPersistence(t *testing.T) {
 	}, db)
 	sampler := tsdb.NewSampler(db, ebpf, arp, checker, 1*time.Second)
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil, nil)
 	ctx := context.Background()
 
 	res, err := svc.ListDevices(ctx, connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
@@ -209,7 +210,7 @@ func TestListDevices_KnownAndUnknownWithDHCP(t *testing.T) {
 		t.Fatalf("UpsertDevice failed: %v", err)
 	}
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, mockDHCP, nil)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, mockDHCP, nil, nil)
 	res, err := svc.ListDevices(context.Background(), connect.NewRequest(&routermonitorv1.ListDevicesRequest{}))
 	if err != nil {
 		t.Fatalf("ListDevices failed: %v", err)
@@ -272,7 +273,7 @@ func TestRouterMonitorService_WakeOnLan(t *testing.T) {
 	// Persist a device to verify MAC auto-lookup by IP
 	_ = db.UpsertDevice("aa:bb:cc:dd:ee:88", "10.100.1.88", "desktop-pc", "lan", time.Now())
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", ebpf, arp, checker, db, sampler, nil, nil, nil)
 	ctx := context.Background()
 
 	// 1. Successful WoL with explicit MAC
@@ -352,7 +353,7 @@ func TestRouterMonitorService_DDNS(t *testing.T) {
 	ctx := context.Background()
 
 	// 1. Service without DDNS manager
-	svcNoDDNS := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, nil)
+	svcNoDDNS := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, nil, nil)
 	stNoDDNS, err := svcNoDDNS.GetDDNSStatus(ctx, connect.NewRequest(&routermonitorv1.GetDDNSStatusRequest{}))
 	if err != nil {
 		t.Fatalf("GetDDNSStatus failed: %v", err)
@@ -384,7 +385,7 @@ func TestRouterMonitorService_DDNS(t *testing.T) {
 		Store:     db,
 	})
 
-	svc := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, mgr)
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, mgr, nil)
 
 	// Sync via RPC
 	syncRes, err := svc.SyncDDNS(ctx, connect.NewRequest(&routermonitorv1.SyncDDNSRequest{Force: true}))
@@ -417,6 +418,110 @@ func TestRouterMonitorService_DDNS(t *testing.T) {
 	}
 	if len(stRes.Msg.History) != 1 {
 		t.Errorf("expected 1 history record, got %d", len(stRes.Msg.History))
+	}
+}
+
+func TestRouterMonitorService_NetworkMgr(t *testing.T) {
+	tmpDir := t.TempDir()
+	devicesPath := filepath.Join(tmpDir, "devices.yaml")
+
+	nm, err := networkmgr.NewManager(networkmgr.Options{
+		DevicesPath: devicesPath,
+	})
+	if err != nil {
+		t.Fatalf("NewManager failed: %v", err)
+	}
+
+	db, err := tsdb.Open(":memory:")
+	if err != nil {
+		t.Fatalf("tsdb.Open failed: %v", err)
+	}
+	defer db.Close()
+
+	svc := NewRouterMonitorService("lan", "10.100.0.0/16", nil, nil, nil, db, nil, nil, nil, nm)
+	ctx := context.Background()
+
+	// 1. UpsertConfigDevice
+	upsertDevRes, err := svc.UpsertConfigDevice(ctx, connect.NewRequest(&routermonitorv1.UpsertConfigDeviceRequest{
+		Device: &routermonitorv1.ConfigDevice{
+			Id:        "test-apple-tv",
+			Name:      "Living Room Apple TV",
+			Mac:       "aa:bb:cc:dd:ee:ff",
+			Vlan:      "trusted",
+			Ip:        "10.100.1.55",
+			Hostnames: []string{"apple-tv", "living-room"},
+			Tags:      []string{"cast_target"},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("UpsertConfigDevice failed: %v", err)
+	}
+	if upsertDevRes.Msg.Device.Name != "Living Room Apple TV" {
+		t.Errorf("expected name Living Room Apple TV, got %s", upsertDevRes.Msg.Device.Name)
+	}
+
+	// 2. ListConfigDevices
+	listDevRes, err := svc.ListConfigDevices(ctx, connect.NewRequest(&routermonitorv1.ListConfigDevicesRequest{}))
+	if err != nil {
+		t.Fatalf("ListConfigDevices failed: %v", err)
+	}
+	if len(listDevRes.Msg.Devices) != 1 {
+		t.Fatalf("expected 1 device, got %d", len(listDevRes.Msg.Devices))
+	}
+	if listDevRes.Msg.Devices[0].Vlan != "trusted" {
+		t.Errorf("expected vlan trusted, got %s", listDevRes.Msg.Devices[0].Vlan)
+	}
+
+	// 3. UpsertConfigDnsRecord
+	upsertDnsRes, err := svc.UpsertConfigDnsRecord(ctx, connect.NewRequest(&routermonitorv1.UpsertConfigDnsRecordRequest{
+		Record: &routermonitorv1.ConfigDnsRecord{
+			Name:    "photos",
+			Ip:      "10.100.1.200",
+			Aliases: []string{"photos.home.lan", "immich.home.lan"},
+		},
+	}))
+	if err != nil {
+		t.Fatalf("UpsertConfigDnsRecord failed: %v", err)
+	}
+	if upsertDnsRes.Msg.Record.Name != "photos" {
+		t.Errorf("expected record name photos, got %s", upsertDnsRes.Msg.Record.Name)
+	}
+
+	// 4. ListConfigDnsRecords
+	listDnsRes, err := svc.ListConfigDnsRecords(ctx, connect.NewRequest(&routermonitorv1.ListConfigDnsRecordsRequest{}))
+	if err != nil {
+		t.Fatalf("ListConfigDnsRecords failed: %v", err)
+	}
+	if len(listDnsRes.Msg.Records) != 1 {
+		t.Fatalf("expected 1 dns record, got %d", len(listDnsRes.Msg.Records))
+	}
+
+	// 5. DeleteConfigDnsRecord
+	delDnsRes, err := svc.DeleteConfigDnsRecord(ctx, connect.NewRequest(&routermonitorv1.DeleteConfigDnsRecordRequest{
+		Name: "photos",
+	}))
+	if err != nil {
+		t.Fatalf("DeleteConfigDnsRecord failed: %v", err)
+	}
+	if !delDnsRes.Msg.Success {
+		t.Errorf("expected delete dns success=true")
+	}
+
+	// 6. DeleteConfigDevice
+	delDevRes, err := svc.DeleteConfigDevice(ctx, connect.NewRequest(&routermonitorv1.DeleteConfigDeviceRequest{
+		Id: "test-apple-tv",
+	}))
+	if err != nil {
+		t.Fatalf("DeleteConfigDevice failed: %v", err)
+	}
+	if !delDevRes.Msg.Success {
+		t.Errorf("expected delete device success=true")
+	}
+
+	// 7. Verify empty lists
+	listDevResAfter, _ := svc.ListConfigDevices(ctx, connect.NewRequest(&routermonitorv1.ListConfigDevicesRequest{}))
+	if len(listDevResAfter.Msg.Devices) != 0 {
+		t.Errorf("expected 0 devices after delete, got %d", len(listDevResAfter.Msg.Devices))
 	}
 }
 

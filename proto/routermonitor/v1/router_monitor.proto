@@ -31,6 +31,24 @@ service RouterMonitorService {
 
   // Trigger an immediate dynamic DNS synchronization.
   rpc SyncDDNS(SyncDDNSRequest) returns (SyncDDNSResponse);
+
+  // List configured devices from devices.yaml
+  rpc ListConfigDevices(ListConfigDevicesRequest) returns (ListConfigDevicesResponse);
+
+  // Create or update a configured device in devices.yaml
+  rpc UpsertConfigDevice(UpsertConfigDeviceRequest) returns (UpsertConfigDeviceResponse);
+
+  // Delete a configured device from devices.yaml
+  rpc DeleteConfigDevice(DeleteConfigDeviceRequest) returns (DeleteConfigDeviceResponse);
+
+  // List custom static DNS records from devices.yaml
+  rpc ListConfigDnsRecords(ListConfigDnsRecordsRequest) returns (ListConfigDnsRecordsResponse);
+
+  // Create or update a custom DNS record in devices.yaml
+  rpc UpsertConfigDnsRecord(UpsertConfigDnsRecordRequest) returns (UpsertConfigDnsRecordResponse);
+
+  // Delete a custom DNS record from devices.yaml
+  rpc DeleteConfigDnsRecord(DeleteConfigDnsRecordRequest) returns (DeleteConfigDnsRecordResponse);
 }
 
 message DirectionalTraffic {
@@ -153,6 +171,10 @@ message Device {
 
   bool is_known = 15;
   DhcpLeaseInfo dhcp_lease = 16;
+
+  repeated string tags = 17;
+  string vlan = 18;
+  string config_name = 19;
 }
 
 message ListDevicesResponse {
@@ -276,4 +298,64 @@ message SyncDDNSResponse {
   bool success = 1;
   string message = 2;
   GetDDNSStatusResponse status = 3;
+}
+
+message ConfigDevice {
+  string id = 1;
+  string name = 2;
+  string mac = 3;
+  string vlan = 4;
+  string ip = 5;
+  repeated string hostnames = 6;
+  repeated string tags = 7;
+}
+
+message ListConfigDevicesRequest {}
+
+message ListConfigDevicesResponse {
+  repeated ConfigDevice devices = 1;
+}
+
+message UpsertConfigDeviceRequest {
+  ConfigDevice device = 1;
+}
+
+message UpsertConfigDeviceResponse {
+  ConfigDevice device = 1;
+}
+
+message DeleteConfigDeviceRequest {
+  string id = 1;
+}
+
+message DeleteConfigDeviceResponse {
+  bool success = 1;
+}
+
+message ConfigDnsRecord {
+  string name = 1;
+  string ip = 2;
+  repeated string aliases = 3;
+}
+
+message ListConfigDnsRecordsRequest {}
+
+message ListConfigDnsRecordsResponse {
+  repeated ConfigDnsRecord records = 1;
+}
+
+message UpsertConfigDnsRecordRequest {
+  ConfigDnsRecord record = 1;
+}
+
+message UpsertConfigDnsRecordResponse {
+  ConfigDnsRecord record = 1;
+}
+
+message DeleteConfigDnsRecordRequest {
+  string name = 1;
+}
+
+message DeleteConfigDnsRecordResponse {
+  bool success = 1;
 }

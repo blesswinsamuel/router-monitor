@@ -3,7 +3,7 @@ import { Outlet, NavLink, useOutletContext, useSearchParams } from 'react-router
 import { Header } from './Header'
 import { rpcClient } from '@/lib/client'
 import { cn } from '@/lib/utils'
-import { LayoutDashboard, Laptop, Activity, Globe } from 'lucide-react'
+import { LayoutDashboard, Laptop, Activity, Globe, Server } from 'lucide-react'
 import { type Period, isPeriod, getPeriodRange } from '@/lib/period'
 
 export interface RootOutletContext {
@@ -184,6 +184,20 @@ export function RootLayout() {
                 ddns.lastSyncStatus === 'failure' ? "bg-destructive" : "bg-amber-500"
               )} />
             )}
+          </NavLink>
+          <NavLink
+            to="/dns"
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-md transition-all whitespace-nowrap",
+                isActive
+                  ? "bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              )
+            }
+          >
+            <Server className="w-4 h-4" />
+            <span>DNS Records</span>
           </NavLink>
         </nav>
 

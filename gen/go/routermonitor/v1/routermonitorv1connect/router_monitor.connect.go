@@ -60,6 +60,24 @@ const (
 	// RouterMonitorServiceSyncDDNSProcedure is the fully-qualified name of the RouterMonitorService's
 	// SyncDDNS RPC.
 	RouterMonitorServiceSyncDDNSProcedure = "/routermonitor.v1.RouterMonitorService/SyncDDNS"
+	// RouterMonitorServiceListConfigDevicesProcedure is the fully-qualified name of the
+	// RouterMonitorService's ListConfigDevices RPC.
+	RouterMonitorServiceListConfigDevicesProcedure = "/routermonitor.v1.RouterMonitorService/ListConfigDevices"
+	// RouterMonitorServiceUpsertConfigDeviceProcedure is the fully-qualified name of the
+	// RouterMonitorService's UpsertConfigDevice RPC.
+	RouterMonitorServiceUpsertConfigDeviceProcedure = "/routermonitor.v1.RouterMonitorService/UpsertConfigDevice"
+	// RouterMonitorServiceDeleteConfigDeviceProcedure is the fully-qualified name of the
+	// RouterMonitorService's DeleteConfigDevice RPC.
+	RouterMonitorServiceDeleteConfigDeviceProcedure = "/routermonitor.v1.RouterMonitorService/DeleteConfigDevice"
+	// RouterMonitorServiceListConfigDnsRecordsProcedure is the fully-qualified name of the
+	// RouterMonitorService's ListConfigDnsRecords RPC.
+	RouterMonitorServiceListConfigDnsRecordsProcedure = "/routermonitor.v1.RouterMonitorService/ListConfigDnsRecords"
+	// RouterMonitorServiceUpsertConfigDnsRecordProcedure is the fully-qualified name of the
+	// RouterMonitorService's UpsertConfigDnsRecord RPC.
+	RouterMonitorServiceUpsertConfigDnsRecordProcedure = "/routermonitor.v1.RouterMonitorService/UpsertConfigDnsRecord"
+	// RouterMonitorServiceDeleteConfigDnsRecordProcedure is the fully-qualified name of the
+	// RouterMonitorService's DeleteConfigDnsRecord RPC.
+	RouterMonitorServiceDeleteConfigDnsRecordProcedure = "/routermonitor.v1.RouterMonitorService/DeleteConfigDnsRecord"
 )
 
 // RouterMonitorServiceClient is a client for the routermonitor.v1.RouterMonitorService service.
@@ -82,6 +100,18 @@ type RouterMonitorServiceClient interface {
 	GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error)
 	// Trigger an immediate dynamic DNS synchronization.
 	SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error)
+	// List configured devices from devices.yaml
+	ListConfigDevices(context.Context, *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error)
+	// Create or update a configured device in devices.yaml
+	UpsertConfigDevice(context.Context, *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error)
+	// Delete a configured device from devices.yaml
+	DeleteConfigDevice(context.Context, *connect.Request[v1.DeleteConfigDeviceRequest]) (*connect.Response[v1.DeleteConfigDeviceResponse], error)
+	// List custom static DNS records from devices.yaml
+	ListConfigDnsRecords(context.Context, *connect.Request[v1.ListConfigDnsRecordsRequest]) (*connect.Response[v1.ListConfigDnsRecordsResponse], error)
+	// Create or update a custom DNS record in devices.yaml
+	UpsertConfigDnsRecord(context.Context, *connect.Request[v1.UpsertConfigDnsRecordRequest]) (*connect.Response[v1.UpsertConfigDnsRecordResponse], error)
+	// Delete a custom DNS record from devices.yaml
+	DeleteConfigDnsRecord(context.Context, *connect.Request[v1.DeleteConfigDnsRecordRequest]) (*connect.Response[v1.DeleteConfigDnsRecordResponse], error)
 }
 
 // NewRouterMonitorServiceClient constructs a client for the routermonitor.v1.RouterMonitorService
@@ -149,20 +179,62 @@ func NewRouterMonitorServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(routerMonitorServiceMethods.ByName("SyncDDNS")),
 			connect.WithClientOptions(opts...),
 		),
+		listConfigDevices: connect.NewClient[v1.ListConfigDevicesRequest, v1.ListConfigDevicesResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceListConfigDevicesProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("ListConfigDevices")),
+			connect.WithClientOptions(opts...),
+		),
+		upsertConfigDevice: connect.NewClient[v1.UpsertConfigDeviceRequest, v1.UpsertConfigDeviceResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceUpsertConfigDeviceProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("UpsertConfigDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteConfigDevice: connect.NewClient[v1.DeleteConfigDeviceRequest, v1.DeleteConfigDeviceResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceDeleteConfigDeviceProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("DeleteConfigDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		listConfigDnsRecords: connect.NewClient[v1.ListConfigDnsRecordsRequest, v1.ListConfigDnsRecordsResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceListConfigDnsRecordsProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("ListConfigDnsRecords")),
+			connect.WithClientOptions(opts...),
+		),
+		upsertConfigDnsRecord: connect.NewClient[v1.UpsertConfigDnsRecordRequest, v1.UpsertConfigDnsRecordResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceUpsertConfigDnsRecordProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("UpsertConfigDnsRecord")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteConfigDnsRecord: connect.NewClient[v1.DeleteConfigDnsRecordRequest, v1.DeleteConfigDnsRecordResponse](
+			httpClient,
+			baseURL+RouterMonitorServiceDeleteConfigDnsRecordProcedure,
+			connect.WithSchema(routerMonitorServiceMethods.ByName("DeleteConfigDnsRecord")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // routerMonitorServiceClient implements RouterMonitorServiceClient.
 type routerMonitorServiceClient struct {
-	getOverview       *connect.Client[v1.GetOverviewRequest, v1.GetOverviewResponse]
-	listDevices       *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
-	getInternetHealth *connect.Client[v1.GetInternetHealthRequest, v1.GetInternetHealthResponse]
-	streamLiveStats   *connect.Client[v1.StreamLiveStatsRequest, v1.LiveStatsResponse]
-	queryTimeSeries   *connect.Client[v1.QueryTimeSeriesRequest, v1.QueryTimeSeriesResponse]
-	pingDevice        *connect.Client[v1.PingDeviceRequest, v1.PingDeviceResponse]
-	wakeOnLan         *connect.Client[v1.WakeOnLanRequest, v1.WakeOnLanResponse]
-	getDDNSStatus     *connect.Client[v1.GetDDNSStatusRequest, v1.GetDDNSStatusResponse]
-	syncDDNS          *connect.Client[v1.SyncDDNSRequest, v1.SyncDDNSResponse]
+	getOverview           *connect.Client[v1.GetOverviewRequest, v1.GetOverviewResponse]
+	listDevices           *connect.Client[v1.ListDevicesRequest, v1.ListDevicesResponse]
+	getInternetHealth     *connect.Client[v1.GetInternetHealthRequest, v1.GetInternetHealthResponse]
+	streamLiveStats       *connect.Client[v1.StreamLiveStatsRequest, v1.LiveStatsResponse]
+	queryTimeSeries       *connect.Client[v1.QueryTimeSeriesRequest, v1.QueryTimeSeriesResponse]
+	pingDevice            *connect.Client[v1.PingDeviceRequest, v1.PingDeviceResponse]
+	wakeOnLan             *connect.Client[v1.WakeOnLanRequest, v1.WakeOnLanResponse]
+	getDDNSStatus         *connect.Client[v1.GetDDNSStatusRequest, v1.GetDDNSStatusResponse]
+	syncDDNS              *connect.Client[v1.SyncDDNSRequest, v1.SyncDDNSResponse]
+	listConfigDevices     *connect.Client[v1.ListConfigDevicesRequest, v1.ListConfigDevicesResponse]
+	upsertConfigDevice    *connect.Client[v1.UpsertConfigDeviceRequest, v1.UpsertConfigDeviceResponse]
+	deleteConfigDevice    *connect.Client[v1.DeleteConfigDeviceRequest, v1.DeleteConfigDeviceResponse]
+	listConfigDnsRecords  *connect.Client[v1.ListConfigDnsRecordsRequest, v1.ListConfigDnsRecordsResponse]
+	upsertConfigDnsRecord *connect.Client[v1.UpsertConfigDnsRecordRequest, v1.UpsertConfigDnsRecordResponse]
+	deleteConfigDnsRecord *connect.Client[v1.DeleteConfigDnsRecordRequest, v1.DeleteConfigDnsRecordResponse]
 }
 
 // GetOverview calls routermonitor.v1.RouterMonitorService.GetOverview.
@@ -210,6 +282,36 @@ func (c *routerMonitorServiceClient) SyncDDNS(ctx context.Context, req *connect.
 	return c.syncDDNS.CallUnary(ctx, req)
 }
 
+// ListConfigDevices calls routermonitor.v1.RouterMonitorService.ListConfigDevices.
+func (c *routerMonitorServiceClient) ListConfigDevices(ctx context.Context, req *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error) {
+	return c.listConfigDevices.CallUnary(ctx, req)
+}
+
+// UpsertConfigDevice calls routermonitor.v1.RouterMonitorService.UpsertConfigDevice.
+func (c *routerMonitorServiceClient) UpsertConfigDevice(ctx context.Context, req *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error) {
+	return c.upsertConfigDevice.CallUnary(ctx, req)
+}
+
+// DeleteConfigDevice calls routermonitor.v1.RouterMonitorService.DeleteConfigDevice.
+func (c *routerMonitorServiceClient) DeleteConfigDevice(ctx context.Context, req *connect.Request[v1.DeleteConfigDeviceRequest]) (*connect.Response[v1.DeleteConfigDeviceResponse], error) {
+	return c.deleteConfigDevice.CallUnary(ctx, req)
+}
+
+// ListConfigDnsRecords calls routermonitor.v1.RouterMonitorService.ListConfigDnsRecords.
+func (c *routerMonitorServiceClient) ListConfigDnsRecords(ctx context.Context, req *connect.Request[v1.ListConfigDnsRecordsRequest]) (*connect.Response[v1.ListConfigDnsRecordsResponse], error) {
+	return c.listConfigDnsRecords.CallUnary(ctx, req)
+}
+
+// UpsertConfigDnsRecord calls routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord.
+func (c *routerMonitorServiceClient) UpsertConfigDnsRecord(ctx context.Context, req *connect.Request[v1.UpsertConfigDnsRecordRequest]) (*connect.Response[v1.UpsertConfigDnsRecordResponse], error) {
+	return c.upsertConfigDnsRecord.CallUnary(ctx, req)
+}
+
+// DeleteConfigDnsRecord calls routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord.
+func (c *routerMonitorServiceClient) DeleteConfigDnsRecord(ctx context.Context, req *connect.Request[v1.DeleteConfigDnsRecordRequest]) (*connect.Response[v1.DeleteConfigDnsRecordResponse], error) {
+	return c.deleteConfigDnsRecord.CallUnary(ctx, req)
+}
+
 // RouterMonitorServiceHandler is an implementation of the routermonitor.v1.RouterMonitorService
 // service.
 type RouterMonitorServiceHandler interface {
@@ -231,6 +333,18 @@ type RouterMonitorServiceHandler interface {
 	GetDDNSStatus(context.Context, *connect.Request[v1.GetDDNSStatusRequest]) (*connect.Response[v1.GetDDNSStatusResponse], error)
 	// Trigger an immediate dynamic DNS synchronization.
 	SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error)
+	// List configured devices from devices.yaml
+	ListConfigDevices(context.Context, *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error)
+	// Create or update a configured device in devices.yaml
+	UpsertConfigDevice(context.Context, *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error)
+	// Delete a configured device from devices.yaml
+	DeleteConfigDevice(context.Context, *connect.Request[v1.DeleteConfigDeviceRequest]) (*connect.Response[v1.DeleteConfigDeviceResponse], error)
+	// List custom static DNS records from devices.yaml
+	ListConfigDnsRecords(context.Context, *connect.Request[v1.ListConfigDnsRecordsRequest]) (*connect.Response[v1.ListConfigDnsRecordsResponse], error)
+	// Create or update a custom DNS record in devices.yaml
+	UpsertConfigDnsRecord(context.Context, *connect.Request[v1.UpsertConfigDnsRecordRequest]) (*connect.Response[v1.UpsertConfigDnsRecordResponse], error)
+	// Delete a custom DNS record from devices.yaml
+	DeleteConfigDnsRecord(context.Context, *connect.Request[v1.DeleteConfigDnsRecordRequest]) (*connect.Response[v1.DeleteConfigDnsRecordResponse], error)
 }
 
 // NewRouterMonitorServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -294,6 +408,42 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 		connect.WithSchema(routerMonitorServiceMethods.ByName("SyncDDNS")),
 		connect.WithHandlerOptions(opts...),
 	)
+	routerMonitorServiceListConfigDevicesHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceListConfigDevicesProcedure,
+		svc.ListConfigDevices,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("ListConfigDevices")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routerMonitorServiceUpsertConfigDeviceHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceUpsertConfigDeviceProcedure,
+		svc.UpsertConfigDevice,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("UpsertConfigDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routerMonitorServiceDeleteConfigDeviceHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceDeleteConfigDeviceProcedure,
+		svc.DeleteConfigDevice,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("DeleteConfigDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routerMonitorServiceListConfigDnsRecordsHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceListConfigDnsRecordsProcedure,
+		svc.ListConfigDnsRecords,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("ListConfigDnsRecords")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routerMonitorServiceUpsertConfigDnsRecordHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceUpsertConfigDnsRecordProcedure,
+		svc.UpsertConfigDnsRecord,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("UpsertConfigDnsRecord")),
+		connect.WithHandlerOptions(opts...),
+	)
+	routerMonitorServiceDeleteConfigDnsRecordHandler := connect.NewUnaryHandler(
+		RouterMonitorServiceDeleteConfigDnsRecordProcedure,
+		svc.DeleteConfigDnsRecord,
+		connect.WithSchema(routerMonitorServiceMethods.ByName("DeleteConfigDnsRecord")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/routermonitor.v1.RouterMonitorService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RouterMonitorServiceGetOverviewProcedure:
@@ -314,6 +464,18 @@ func NewRouterMonitorServiceHandler(svc RouterMonitorServiceHandler, opts ...con
 			routerMonitorServiceGetDDNSStatusHandler.ServeHTTP(w, r)
 		case RouterMonitorServiceSyncDDNSProcedure:
 			routerMonitorServiceSyncDDNSHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceListConfigDevicesProcedure:
+			routerMonitorServiceListConfigDevicesHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceUpsertConfigDeviceProcedure:
+			routerMonitorServiceUpsertConfigDeviceHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceDeleteConfigDeviceProcedure:
+			routerMonitorServiceDeleteConfigDeviceHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceListConfigDnsRecordsProcedure:
+			routerMonitorServiceListConfigDnsRecordsHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceUpsertConfigDnsRecordProcedure:
+			routerMonitorServiceUpsertConfigDnsRecordHandler.ServeHTTP(w, r)
+		case RouterMonitorServiceDeleteConfigDnsRecordProcedure:
+			routerMonitorServiceDeleteConfigDnsRecordHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -357,4 +519,28 @@ func (UnimplementedRouterMonitorServiceHandler) GetDDNSStatus(context.Context, *
 
 func (UnimplementedRouterMonitorServiceHandler) SyncDDNS(context.Context, *connect.Request[v1.SyncDDNSRequest]) (*connect.Response[v1.SyncDDNSResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.SyncDDNS is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) ListConfigDevices(context.Context, *connect.Request[v1.ListConfigDevicesRequest]) (*connect.Response[v1.ListConfigDevicesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.ListConfigDevices is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) UpsertConfigDevice(context.Context, *connect.Request[v1.UpsertConfigDeviceRequest]) (*connect.Response[v1.UpsertConfigDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.UpsertConfigDevice is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) DeleteConfigDevice(context.Context, *connect.Request[v1.DeleteConfigDeviceRequest]) (*connect.Response[v1.DeleteConfigDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.DeleteConfigDevice is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) ListConfigDnsRecords(context.Context, *connect.Request[v1.ListConfigDnsRecordsRequest]) (*connect.Response[v1.ListConfigDnsRecordsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.ListConfigDnsRecords is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) UpsertConfigDnsRecord(context.Context, *connect.Request[v1.UpsertConfigDnsRecordRequest]) (*connect.Response[v1.UpsertConfigDnsRecordResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord is not implemented"))
+}
+
+func (UnimplementedRouterMonitorServiceHandler) DeleteConfigDnsRecord(context.Context, *connect.Request[v1.DeleteConfigDnsRecordRequest]) (*connect.Response[v1.DeleteConfigDnsRecordResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord is not implemented"))
 }

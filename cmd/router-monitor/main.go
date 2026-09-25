@@ -17,6 +17,7 @@ import (
 
 	"github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1/routermonitorv1connect"
 	"github.com/blesswinsamuel/router-monitor/internal/api"
+	"github.com/blesswinsamuel/router-monitor/internal/networkmgr"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor/ddns"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
@@ -271,6 +272,21 @@ func main() {
 	dhcpReader := routermonitor.NewDHCPLeaseReader(os.Getenv("DHCP_LEASES_FILE"), os.Getenv("DHCP_TYPE"))
 	ddnsManager := setupDDNS(ctx, tsdbDB)
 
+	networkMgr, err := networkmgr.NewManager(networkmgr.Options{
+		DevicesPath:          os.Getenv("DEVICES_CONFIG_PATH"),
+		DnsmasqDhcpHostsPath: os.Getenv("DNSMASQ_DHCP_HOSTS_PATH"),
+		DnsmasqHostsPath:     os.Getenv("DNSMASQ_HOSTS_PATH"),
+		NftablesSetsPath:     os.Getenv("NFTABLES_SETS_PATH"),
+		SearchDomain:         os.Getenv("DOMAIN_SUFFIX"),
+	})
+	if err != nil {
+		log.Printf("warn: failed to initialize network manager: %v", err)
+	} else {
+		if err := networkMgr.StartWatcher(ctx); err != nil {
+			log.Printf("warn: failed to start config file watcher: %v", err)
+		}
+	}
+
 	routerService := api.NewRouterMonitorService(
 		iface.Name,
 		os.Getenv("LAN_SUBNET_CIDR"),
@@ -281,6 +297,7 @@ func main() {
 		sampler,
 		dhcpReader,
 		ddnsManager,
+		networkMgr,
 	)
 	rpcPath, rpcHandler := routermonitorv1connect.NewRouterMonitorServiceHandler(routerService)
 

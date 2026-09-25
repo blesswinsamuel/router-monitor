@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file routermonitor/v1/router_monitor.proto.
  */
 export const file_routermonitor_v1_router_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASJaCg9Qcm90b2NvbFRyYWZmaWMSEAoIcHJvdG9jb2wYASABKAkSNQoHdHJhZmZpYxgCIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljImcKC1BlZXJUcmFmZmljEg8KB2lwX2FkZHIYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSNQoHdHJhZmZpYxgDIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIjoKEVBpbmdEZXZpY2VSZXF1ZXN0Eg8KB2lwX2FkZHIYASABKAkSFAoMcGFja2V0X2NvdW50GAIgASgFIvkBChJQaW5nRGV2aWNlUmVzcG9uc2USDwoHaXBfYWRkchgBIAEoCRIUCgxpc19yZWFjaGFibGUYAiABKAgSGQoRcGFja2V0X2xvc3NfcmF0aW8YAyABKAESGwoTbWluX2xhdGVuY3lfc2Vjb25kcxgEIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAUgASgBEhsKE21heF9sYXRlbmN5X3NlY29uZHMYBiABKAESFgoOaml0dGVyX3NlY29uZHMYByABKAESGwoTcm91bmRfdHJpcF90aW1lc19tcxgIIAMoARIVCg1lcnJvcl9tZXNzYWdlGAkgASgJImgKEFdha2VPbkxhblJlcXVlc3QSEAoIbWFjX2FkZHIYASABKAkSDwoHaXBfYWRkchgCIAEoCRIRCglpbnRlcmZhY2UYAyABKAkSDAoEcG9ydBgEIAEoBRIQCghwYXNzd29yZBgFIAEoCSJ4ChFXYWtlT25MYW5SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEhAKCG1hY19hZGRyGAIgASgJEhYKDmJyb2FkY2FzdF9hZGRyGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAUgASgJIjgKEkdldE92ZXJ2aWV3UmVxdWVzdBIRCglmcm9tX3VuaXgYASABKAMSDwoHdG9fdW5peBgCIAEoAyKaAwoTR2V0T3ZlcnZpZXdSZXNwb25zZRIWCg5pbnRlcmZhY2VfbmFtZRgBIAEoCRIXCg9sYW5fc3VibmV0X2NpZHIYAiABKAkSFgoOaW50ZXJuZXRfaXNfdXAYAyABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAQgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAUgASgFEjMKBXRvdGFsGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAggASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSFwoPaW50ZXJuZXRfc3RhdHVzGAkgASgJEiIKGmludGVybmV0X3BhY2tldF9sb3NzX3JhdGlvGAogASgBEh8KF2ludGVybmV0X2ppdHRlcl9zZWNvbmRzGAsgASgBIjgKEkxpc3REZXZpY2VzUmVxdWVzdBIRCglmcm9tX3VuaXgYASABKAMSDwoHdG9fdW5peBgCIAEoAyI9CgdBcnBJbmZvEg0KBWZsYWdzGAEgASgDEhAKCGlzX3ZhbGlkGAIgASgIEhEKCWludGVyZmFjZRgDIAEoCSKLAQoNRGhjcExlYXNlSW5mbxIQCghob3N0bmFtZRgBIAEoCRIRCgljbGllbnRfaWQYAiABKAkSHgoWdmFsaWRfbGlmZXRpbWVfc2Vjb25kcxgDIAEoAxITCgtleHBpcmVfdW5peBgEIAEoAxIRCglzdWJuZXRfaWQYBSABKAMSDQoFc3RhdGUYBiABKAMijwQKBkRldmljZRIPCgdpcF9hZGRyGAEgASgJEhAKCG1hY19hZGRyGAIgASgJEhAKCGhvc3RuYW1lGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIOCgZzdGF0dXMYBSABKAkSFwoPZmlyc3Rfc2Vlbl91bml4GAYgASgDEhYKDmxhc3Rfc2Vlbl91bml4GAcgASgDEiYKA2FycBgIIAEoCzIZLnJvdXRlcm1vbml0b3IudjEuQXJwSW5mbxIzCgV0b3RhbBgJIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgKIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgLIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjQKCXByb3RvY29scxgMIAMoCzIhLnJvdXRlcm1vbml0b3IudjEuUHJvdG9jb2xUcmFmZmljEiwKBXBlZXJzGA0gAygLMh0ucm91dGVybW9uaXRvci52MS5QZWVyVHJhZmZpYxIOCgZ2ZW5kb3IYDiABKAkSEAoIaXNfa25vd24YDyABKAgSMwoKZGhjcF9sZWFzZRgQIAEoCzIfLnJvdXRlcm1vbml0b3IudjEuRGhjcExlYXNlSW5mbyJAChNMaXN0RGV2aWNlc1Jlc3BvbnNlEikKB2RldmljZXMYASADKAsyGC5yb3V0ZXJtb25pdG9yLnYxLkRldmljZSIaChhHZXRJbnRlcm5ldEhlYWx0aFJlcXVlc3QioQIKDFRhcmdldEhlYWx0aBIMCgRuYW1lGAEgASgJEg4KBnRhcmdldBgCIAEoCRISCgpwcm9iZV90eXBlGAMgASgJEg0KBWlzX3VwGAQgASgIEhcKD2xhdGVuY3lfc2Vjb25kcxgFIAEoARIbChNtaW5fbGF0ZW5jeV9zZWNvbmRzGAYgASgBEhsKE21heF9sYXRlbmN5X3NlY29uZHMYByABKAESGwoTYXZnX2xhdGVuY3lfc2Vjb25kcxgIIAEoARIWCg5qaXR0ZXJfc2Vjb25kcxgJIAEoARIZChFwYWNrZXRfbG9zc19yYXRpbxgKIAEoARISCgpsYXN0X2Vycm9yGAsgASgJEhkKEWxhc3RfY2hlY2tlZF91bml4GAwgASgDInoKDE91dGFnZVJlY29yZBIKCgJpZBgBIAEoAxISCgpzdGFydF91bml4GAIgASgDEhAKCGVuZF91bml4GAMgASgDEhgKEGR1cmF0aW9uX3NlY29uZHMYBCABKAESDgoGc3RhdHVzGAUgASgJEg4KBnJlYXNvbhgGIAEoCSKXAgoZR2V0SW50ZXJuZXRIZWFsdGhSZXNwb25zZRIWCg5vdmVyYWxsX3N0YXR1cxgBIAEoCRIVCg1vdmVyYWxsX2lzX3VwGAIgASgIEh8KF292ZXJhbGxfbGF0ZW5jeV9zZWNvbmRzGAMgASgBEiEKGW92ZXJhbGxfcGFja2V0X2xvc3NfcmF0aW8YBCABKAESHgoWb3ZlcmFsbF9qaXR0ZXJfc2Vjb25kcxgFIAEoARIvCgd0YXJnZXRzGAYgAygLMh4ucm91dGVybW9uaXRvci52MS5UYXJnZXRIZWFsdGgSNgoOcmVjZW50X291dGFnZXMYByADKAsyHi5yb3V0ZXJtb25pdG9yLnYxLk91dGFnZVJlY29yZCIyChZTdHJlYW1MaXZlU3RhdHNSZXF1ZXN0EhgKEGludGVydmFsX3NlY29uZHMYASABKAUi/wIKEUxpdmVTdGF0c1Jlc3BvbnNlEhYKDnRpbWVzdGFtcF91bml4GAEgASgDEhYKDmludGVybmV0X2lzX3VwGAIgASgIEiAKGGludGVybmV0X2xhdGVuY3lfc2Vjb25kcxgDIAEoARIfChdjb25uZWN0ZWRfZGV2aWNlc19jb3VudBgEIAEoBRIzCgV0b3RhbBgFIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgGIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgHIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEhcKD2ludGVybmV0X3N0YXR1cxgIIAEoCRIiChppbnRlcm5ldF9wYWNrZXRfbG9zc19yYXRpbxgJIAEoARIfChdpbnRlcm5ldF9qaXR0ZXJfc2Vjb25kcxgKIAEoASKkAQoPVGltZVNlcmllc1F1ZXJ5EhMKC21ldHJpY19uYW1lGAEgASgJEkgKDG1hdGNoX2xhYmVscxgCIAMoCzIyLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllc1F1ZXJ5Lk1hdGNoTGFiZWxzRW50cnkaMgoQTWF0Y2hMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIoYBChZRdWVyeVRpbWVTZXJpZXNSZXF1ZXN0EjIKB3F1ZXJpZXMYASADKAsyIS5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXNRdWVyeRIRCglmcm9tX3VuaXgYAiABKAMSDwoHdG9fdW5peBgDIAEoAxIUCgxzdGVwX3NlY29uZHMYBCABKAUiXgoPVGltZVNlcmllc1BvaW50EhYKDnRpbWVzdGFtcF91bml4GAEgASgDEg0KBXZhbHVlGAIgASgBEhEKCW1pbl92YWx1ZRgDIAEoARIRCgltYXhfdmFsdWUYBCABKAEivQEKClRpbWVTZXJpZXMSEwoLbWV0cmljX25hbWUYASABKAkSOAoGbGFiZWxzGAIgAygLMigucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzLkxhYmVsc0VudHJ5EjEKBnBvaW50cxgDIAMoCzIhLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllc1BvaW50Gi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiRwoXUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2USLAoGc2VyaWVzGAEgAygLMhwucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzIhYKFEdldERETlNTdGF0dXNSZXF1ZXN0IoYBChFERE5TSGlzdG9yeVJlY29yZBIKCgJpZBgBIAEoAxIWCg50aW1lc3RhbXBfdW5peBgCIAEoAxIQCghwcm92aWRlchgDIAEoCRIMCgRpcHY0GAQgASgJEgwKBGlwdjYYBSABKAkSDgoGc3RhdHVzGAYgASgJEg8KB21lc3NhZ2UYByABKAkimgIKFUdldERETlNTdGF0dXNSZXNwb25zZRIPCgdlbmFibGVkGAEgASgIEhAKCHByb3ZpZGVyGAIgASgJEg8KB2RvbWFpbnMYAyADKAkSFAoMY3VycmVudF9pcHY0GAQgASgJEhQKDGN1cnJlbnRfaXB2NhgFIAEoCRIWCg5sYXN0X3N5bmNfdW5peBgGIAEoAxIYChBsYXN0X3N5bmNfc3RhdHVzGAcgASgJEhkKEWxhc3Rfc3luY19tZXNzYWdlGAggASgJEh4KFmNoZWNrX2ludGVydmFsX3NlY29uZHMYCSABKAMSNAoHaGlzdG9yeRgKIAMoCzIjLnJvdXRlcm1vbml0b3IudjEuREROU0hpc3RvcnlSZWNvcmQiIAoPU3luY0RETlNSZXF1ZXN0Eg0KBWZvcmNlGAEgASgIIm0KEFN5bmNERE5TUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJEjcKBnN0YXR1cxgDIAEoCzInLnJvdXRlcm1vbml0b3IudjEuR2V0REROU1N0YXR1c1Jlc3BvbnNlMuwGChRSb3V0ZXJNb25pdG9yU2VydmljZRJaCgtHZXRPdmVydmlldxIkLnJvdXRlcm1vbml0b3IudjEuR2V0T3ZlcnZpZXdSZXF1ZXN0GiUucm91dGVybW9uaXRvci52MS5HZXRPdmVydmlld1Jlc3BvbnNlEloKC0xpc3REZXZpY2VzEiQucm91dGVybW9uaXRvci52MS5MaXN0RGV2aWNlc1JlcXVlc3QaJS5yb3V0ZXJtb25pdG9yLnYxLkxpc3REZXZpY2VzUmVzcG9uc2USbAoRR2V0SW50ZXJuZXRIZWFsdGgSKi5yb3V0ZXJtb25pdG9yLnYxLkdldEludGVybmV0SGVhbHRoUmVxdWVzdBorLnJvdXRlcm1vbml0b3IudjEuR2V0SW50ZXJuZXRIZWFsdGhSZXNwb25zZRJiCg9TdHJlYW1MaXZlU3RhdHMSKC5yb3V0ZXJtb25pdG9yLnYxLlN0cmVhbUxpdmVTdGF0c1JlcXVlc3QaIy5yb3V0ZXJtb25pdG9yLnYxLkxpdmVTdGF0c1Jlc3BvbnNlMAESZgoPUXVlcnlUaW1lU2VyaWVzEigucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXF1ZXN0Gikucm91dGVybW9uaXRvci52MS5RdWVyeVRpbWVTZXJpZXNSZXNwb25zZRJXCgpQaW5nRGV2aWNlEiMucm91dGVybW9uaXRvci52MS5QaW5nRGV2aWNlUmVxdWVzdBokLnJvdXRlcm1vbml0b3IudjEuUGluZ0RldmljZVJlc3BvbnNlElQKCVdha2VPbkxhbhIiLnJvdXRlcm1vbml0b3IudjEuV2FrZU9uTGFuUmVxdWVzdBojLnJvdXRlcm1vbml0b3IudjEuV2FrZU9uTGFuUmVzcG9uc2USYAoNR2V0REROU1N0YXR1cxImLnJvdXRlcm1vbml0b3IudjEuR2V0REROU1N0YXR1c1JlcXVlc3QaJy5yb3V0ZXJtb25pdG9yLnYxLkdldERETlNTdGF0dXNSZXNwb25zZRJRCghTeW5jREROUxIhLnJvdXRlcm1vbml0b3IudjEuU3luY0RETlNSZXF1ZXN0GiIucm91dGVybW9uaXRvci52MS5TeW5jREROU1Jlc3BvbnNlQlJaUGdpdGh1Yi5jb20vYmxlc3N3aW5zYW11ZWwvcm91dGVyLW1vbml0b3IvZ2VuL2dvL3JvdXRlcm1vbml0b3IvdjE7cm91dGVybW9uaXRvcnYxYgZwcm90bzM");
+  fileDesc("CiVyb3V0ZXJtb25pdG9yL3YxL3JvdXRlcl9tb25pdG9yLnByb3RvEhByb3V0ZXJtb25pdG9yLnYxIvQBChJEaXJlY3Rpb25hbFRyYWZmaWMSFgoOZG93bmxvYWRfYnl0ZXMYASABKAQSFAoMdXBsb2FkX2J5dGVzGAIgASgEEhgKEGRvd25sb2FkX3BhY2tldHMYAyABKAQSFgoOdXBsb2FkX3BhY2tldHMYBCABKAQSHgoWZG93bmxvYWRfYnl0ZXNfcGVyX3NlYxgFIAEoARIcChR1cGxvYWRfYnl0ZXNfcGVyX3NlYxgGIAEoARIgChhkb3dubG9hZF9wYWNrZXRzX3Blcl9zZWMYByABKAESHgoWdXBsb2FkX3BhY2tldHNfcGVyX3NlYxgIIAEoASJaCg9Qcm90b2NvbFRyYWZmaWMSEAoIcHJvdG9jb2wYASABKAkSNQoHdHJhZmZpYxgCIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljImcKC1BlZXJUcmFmZmljEg8KB2lwX2FkZHIYASABKAkSEAoIaG9zdG5hbWUYAiABKAkSNQoHdHJhZmZpYxgDIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljIjoKEVBpbmdEZXZpY2VSZXF1ZXN0Eg8KB2lwX2FkZHIYASABKAkSFAoMcGFja2V0X2NvdW50GAIgASgFIvkBChJQaW5nRGV2aWNlUmVzcG9uc2USDwoHaXBfYWRkchgBIAEoCRIUCgxpc19yZWFjaGFibGUYAiABKAgSGQoRcGFja2V0X2xvc3NfcmF0aW8YAyABKAESGwoTbWluX2xhdGVuY3lfc2Vjb25kcxgEIAEoARIbChNhdmdfbGF0ZW5jeV9zZWNvbmRzGAUgASgBEhsKE21heF9sYXRlbmN5X3NlY29uZHMYBiABKAESFgoOaml0dGVyX3NlY29uZHMYByABKAESGwoTcm91bmRfdHJpcF90aW1lc19tcxgIIAMoARIVCg1lcnJvcl9tZXNzYWdlGAkgASgJImgKEFdha2VPbkxhblJlcXVlc3QSEAoIbWFjX2FkZHIYASABKAkSDwoHaXBfYWRkchgCIAEoCRIRCglpbnRlcmZhY2UYAyABKAkSDAoEcG9ydBgEIAEoBRIQCghwYXNzd29yZBgFIAEoCSJ4ChFXYWtlT25MYW5SZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIEhAKCG1hY19hZGRyGAIgASgJEhYKDmJyb2FkY2FzdF9hZGRyGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIVCg1lcnJvcl9tZXNzYWdlGAUgASgJIjgKEkdldE92ZXJ2aWV3UmVxdWVzdBIRCglmcm9tX3VuaXgYASABKAMSDwoHdG9fdW5peBgCIAEoAyKaAwoTR2V0T3ZlcnZpZXdSZXNwb25zZRIWCg5pbnRlcmZhY2VfbmFtZRgBIAEoCRIXCg9sYW5fc3VibmV0X2NpZHIYAiABKAkSFgoOaW50ZXJuZXRfaXNfdXAYAyABKAgSIAoYaW50ZXJuZXRfbGF0ZW5jeV9zZWNvbmRzGAQgASgBEh8KF2Nvbm5lY3RlZF9kZXZpY2VzX2NvdW50GAUgASgFEjMKBXRvdGFsGAYgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDd2FuGAcgASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSMQoDbGFuGAggASgLMiQucm91dGVybW9uaXRvci52MS5EaXJlY3Rpb25hbFRyYWZmaWMSFwoPaW50ZXJuZXRfc3RhdHVzGAkgASgJEiIKGmludGVybmV0X3BhY2tldF9sb3NzX3JhdGlvGAogASgBEh8KF2ludGVybmV0X2ppdHRlcl9zZWNvbmRzGAsgASgBIjgKEkxpc3REZXZpY2VzUmVxdWVzdBIRCglmcm9tX3VuaXgYASABKAMSDwoHdG9fdW5peBgCIAEoAyI9CgdBcnBJbmZvEg0KBWZsYWdzGAEgASgDEhAKCGlzX3ZhbGlkGAIgASgIEhEKCWludGVyZmFjZRgDIAEoCSKLAQoNRGhjcExlYXNlSW5mbxIQCghob3N0bmFtZRgBIAEoCRIRCgljbGllbnRfaWQYAiABKAkSHgoWdmFsaWRfbGlmZXRpbWVfc2Vjb25kcxgDIAEoAxITCgtleHBpcmVfdW5peBgEIAEoAxIRCglzdWJuZXRfaWQYBSABKAMSDQoFc3RhdGUYBiABKAMiwAQKBkRldmljZRIPCgdpcF9hZGRyGAEgASgJEhAKCG1hY19hZGRyGAIgASgJEhAKCGhvc3RuYW1lGAMgASgJEhEKCWludGVyZmFjZRgEIAEoCRIOCgZzdGF0dXMYBSABKAkSFwoPZmlyc3Rfc2Vlbl91bml4GAYgASgDEhYKDmxhc3Rfc2Vlbl91bml4GAcgASgDEiYKA2FycBgIIAEoCzIZLnJvdXRlcm1vbml0b3IudjEuQXJwSW5mbxIzCgV0b3RhbBgJIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA3dhbhgKIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjEKA2xhbhgLIAEoCzIkLnJvdXRlcm1vbml0b3IudjEuRGlyZWN0aW9uYWxUcmFmZmljEjQKCXByb3RvY29scxgMIAMoCzIhLnJvdXRlcm1vbml0b3IudjEuUHJvdG9jb2xUcmFmZmljEiwKBXBlZXJzGA0gAygLMh0ucm91dGVybW9uaXRvci52MS5QZWVyVHJhZmZpYxIOCgZ2ZW5kb3IYDiABKAkSEAoIaXNfa25vd24YDyABKAgSMwoKZGhjcF9sZWFzZRgQIAEoCzIfLnJvdXRlcm1vbml0b3IudjEuRGhjcExlYXNlSW5mbxIMCgR0YWdzGBEgAygJEgwKBHZsYW4YEiABKAkSEwoLY29uZmlnX25hbWUYEyABKAkiQAoTTGlzdERldmljZXNSZXNwb25zZRIpCgdkZXZpY2VzGAEgAygLMhgucm91dGVybW9uaXRvci52MS5EZXZpY2UiGgoYR2V0SW50ZXJuZXRIZWFsdGhSZXF1ZXN0IqECCgxUYXJnZXRIZWFsdGgSDAoEbmFtZRgBIAEoCRIOCgZ0YXJnZXQYAiABKAkSEgoKcHJvYmVfdHlwZRgDIAEoCRINCgVpc191cBgEIAEoCBIXCg9sYXRlbmN5X3NlY29uZHMYBSABKAESGwoTbWluX2xhdGVuY3lfc2Vjb25kcxgGIAEoARIbChNtYXhfbGF0ZW5jeV9zZWNvbmRzGAcgASgBEhsKE2F2Z19sYXRlbmN5X3NlY29uZHMYCCABKAESFgoOaml0dGVyX3NlY29uZHMYCSABKAESGQoRcGFja2V0X2xvc3NfcmF0aW8YCiABKAESEgoKbGFzdF9lcnJvchgLIAEoCRIZChFsYXN0X2NoZWNrZWRfdW5peBgMIAEoAyJ6CgxPdXRhZ2VSZWNvcmQSCgoCaWQYASABKAMSEgoKc3RhcnRfdW5peBgCIAEoAxIQCghlbmRfdW5peBgDIAEoAxIYChBkdXJhdGlvbl9zZWNvbmRzGAQgASgBEg4KBnN0YXR1cxgFIAEoCRIOCgZyZWFzb24YBiABKAkilwIKGUdldEludGVybmV0SGVhbHRoUmVzcG9uc2USFgoOb3ZlcmFsbF9zdGF0dXMYASABKAkSFQoNb3ZlcmFsbF9pc191cBgCIAEoCBIfChdvdmVyYWxsX2xhdGVuY3lfc2Vjb25kcxgDIAEoARIhChlvdmVyYWxsX3BhY2tldF9sb3NzX3JhdGlvGAQgASgBEh4KFm92ZXJhbGxfaml0dGVyX3NlY29uZHMYBSABKAESLwoHdGFyZ2V0cxgGIAMoCzIeLnJvdXRlcm1vbml0b3IudjEuVGFyZ2V0SGVhbHRoEjYKDnJlY2VudF9vdXRhZ2VzGAcgAygLMh4ucm91dGVybW9uaXRvci52MS5PdXRhZ2VSZWNvcmQiMgoWU3RyZWFtTGl2ZVN0YXRzUmVxdWVzdBIYChBpbnRlcnZhbF9zZWNvbmRzGAEgASgFIv8CChFMaXZlU3RhdHNSZXNwb25zZRIWCg50aW1lc3RhbXBfdW5peBgBIAEoAxIWCg5pbnRlcm5ldF9pc191cBgCIAEoCBIgChhpbnRlcm5ldF9sYXRlbmN5X3NlY29uZHMYAyABKAESHwoXY29ubmVjdGVkX2RldmljZXNfY291bnQYBCABKAUSMwoFdG90YWwYBSABKAsyJC5yb3V0ZXJtb25pdG9yLnYxLkRpcmVjdGlvbmFsVHJhZmZpYxIxCgN3YW4YBiABKAsyJC5yb3V0ZXJtb25pdG9yLnYxLkRpcmVjdGlvbmFsVHJhZmZpYxIxCgNsYW4YByABKAsyJC5yb3V0ZXJtb25pdG9yLnYxLkRpcmVjdGlvbmFsVHJhZmZpYxIXCg9pbnRlcm5ldF9zdGF0dXMYCCABKAkSIgoaaW50ZXJuZXRfcGFja2V0X2xvc3NfcmF0aW8YCSABKAESHwoXaW50ZXJuZXRfaml0dGVyX3NlY29uZHMYCiABKAEipAEKD1RpbWVTZXJpZXNRdWVyeRITCgttZXRyaWNfbmFtZRgBIAEoCRJICgxtYXRjaF9sYWJlbHMYAiADKAsyMi5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXNRdWVyeS5NYXRjaExhYmVsc0VudHJ5GjIKEE1hdGNoTGFiZWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASKGAQoWUXVlcnlUaW1lU2VyaWVzUmVxdWVzdBIyCgdxdWVyaWVzGAEgAygLMiEucm91dGVybW9uaXRvci52MS5UaW1lU2VyaWVzUXVlcnkSEQoJZnJvbV91bml4GAIgASgDEg8KB3RvX3VuaXgYAyABKAMSFAoMc3RlcF9zZWNvbmRzGAQgASgFIl4KD1RpbWVTZXJpZXNQb2ludBIWCg50aW1lc3RhbXBfdW5peBgBIAEoAxINCgV2YWx1ZRgCIAEoARIRCgltaW5fdmFsdWUYAyABKAESEQoJbWF4X3ZhbHVlGAQgASgBIr0BCgpUaW1lU2VyaWVzEhMKC21ldHJpY19uYW1lGAEgASgJEjgKBmxhYmVscxgCIAMoCzIoLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllcy5MYWJlbHNFbnRyeRIxCgZwb2ludHMYAyADKAsyIS5yb3V0ZXJtb25pdG9yLnYxLlRpbWVTZXJpZXNQb2ludBotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIkcKF1F1ZXJ5VGltZVNlcmllc1Jlc3BvbnNlEiwKBnNlcmllcxgBIAMoCzIcLnJvdXRlcm1vbml0b3IudjEuVGltZVNlcmllcyIWChRHZXRERE5TU3RhdHVzUmVxdWVzdCKGAQoRREROU0hpc3RvcnlSZWNvcmQSCgoCaWQYASABKAMSFgoOdGltZXN0YW1wX3VuaXgYAiABKAMSEAoIcHJvdmlkZXIYAyABKAkSDAoEaXB2NBgEIAEoCRIMCgRpcHY2GAUgASgJEg4KBnN0YXR1cxgGIAEoCRIPCgdtZXNzYWdlGAcgASgJIpoCChVHZXRERE5TU3RhdHVzUmVzcG9uc2USDwoHZW5hYmxlZBgBIAEoCBIQCghwcm92aWRlchgCIAEoCRIPCgdkb21haW5zGAMgAygJEhQKDGN1cnJlbnRfaXB2NBgEIAEoCRIUCgxjdXJyZW50X2lwdjYYBSABKAkSFgoObGFzdF9zeW5jX3VuaXgYBiABKAMSGAoQbGFzdF9zeW5jX3N0YXR1cxgHIAEoCRIZChFsYXN0X3N5bmNfbWVzc2FnZRgIIAEoCRIeChZjaGVja19pbnRlcnZhbF9zZWNvbmRzGAkgASgDEjQKB2hpc3RvcnkYCiADKAsyIy5yb3V0ZXJtb25pdG9yLnYxLkRETlNIaXN0b3J5UmVjb3JkIiAKD1N5bmNERE5TUmVxdWVzdBINCgVmb3JjZRgBIAEoCCJtChBTeW5jREROU1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCRI3CgZzdGF0dXMYAyABKAsyJy5yb3V0ZXJtb25pdG9yLnYxLkdldERETlNTdGF0dXNSZXNwb25zZSJwCgxDb25maWdEZXZpY2USCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRILCgNtYWMYAyABKAkSDAoEdmxhbhgEIAEoCRIKCgJpcBgFIAEoCRIRCglob3N0bmFtZXMYBiADKAkSDAoEdGFncxgHIAMoCSIaChhMaXN0Q29uZmlnRGV2aWNlc1JlcXVlc3QiTAoZTGlzdENvbmZpZ0RldmljZXNSZXNwb25zZRIvCgdkZXZpY2VzGAEgAygLMh4ucm91dGVybW9uaXRvci52MS5Db25maWdEZXZpY2UiSwoZVXBzZXJ0Q29uZmlnRGV2aWNlUmVxdWVzdBIuCgZkZXZpY2UYASABKAsyHi5yb3V0ZXJtb25pdG9yLnYxLkNvbmZpZ0RldmljZSJMChpVcHNlcnRDb25maWdEZXZpY2VSZXNwb25zZRIuCgZkZXZpY2UYASABKAsyHi5yb3V0ZXJtb25pdG9yLnYxLkNvbmZpZ0RldmljZSInChlEZWxldGVDb25maWdEZXZpY2VSZXF1ZXN0EgoKAmlkGAEgASgJIi0KGkRlbGV0ZUNvbmZpZ0RldmljZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgiPAoPQ29uZmlnRG5zUmVjb3JkEgwKBG5hbWUYASABKAkSCgoCaXAYAiABKAkSDwoHYWxpYXNlcxgDIAMoCSIdChtMaXN0Q29uZmlnRG5zUmVjb3Jkc1JlcXVlc3QiUgocTGlzdENvbmZpZ0Ruc1JlY29yZHNSZXNwb25zZRIyCgdyZWNvcmRzGAEgAygLMiEucm91dGVybW9uaXRvci52MS5Db25maWdEbnNSZWNvcmQiUQocVXBzZXJ0Q29uZmlnRG5zUmVjb3JkUmVxdWVzdBIxCgZyZWNvcmQYASABKAsyIS5yb3V0ZXJtb25pdG9yLnYxLkNvbmZpZ0Ruc1JlY29yZCJSCh1VcHNlcnRDb25maWdEbnNSZWNvcmRSZXNwb25zZRIxCgZyZWNvcmQYASABKAsyIS5yb3V0ZXJtb25pdG9yLnYxLkNvbmZpZ0Ruc1JlY29yZCIsChxEZWxldGVDb25maWdEbnNSZWNvcmRSZXF1ZXN0EgwKBG5hbWUYASABKAkiMAodRGVsZXRlQ29uZmlnRG5zUmVjb3JkUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCDKnDAoUUm91dGVyTW9uaXRvclNlcnZpY2USWgoLR2V0T3ZlcnZpZXcSJC5yb3V0ZXJtb25pdG9yLnYxLkdldE92ZXJ2aWV3UmVxdWVzdBolLnJvdXRlcm1vbml0b3IudjEuR2V0T3ZlcnZpZXdSZXNwb25zZRJaCgtMaXN0RGV2aWNlcxIkLnJvdXRlcm1vbml0b3IudjEuTGlzdERldmljZXNSZXF1ZXN0GiUucm91dGVybW9uaXRvci52MS5MaXN0RGV2aWNlc1Jlc3BvbnNlEmwKEUdldEludGVybmV0SGVhbHRoEioucm91dGVybW9uaXRvci52MS5HZXRJbnRlcm5ldEhlYWx0aFJlcXVlc3QaKy5yb3V0ZXJtb25pdG9yLnYxLkdldEludGVybmV0SGVhbHRoUmVzcG9uc2USYgoPU3RyZWFtTGl2ZVN0YXRzEigucm91dGVybW9uaXRvci52MS5TdHJlYW1MaXZlU3RhdHNSZXF1ZXN0GiMucm91dGVybW9uaXRvci52MS5MaXZlU3RhdHNSZXNwb25zZTABEmYKD1F1ZXJ5VGltZVNlcmllcxIoLnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVxdWVzdBopLnJvdXRlcm1vbml0b3IudjEuUXVlcnlUaW1lU2VyaWVzUmVzcG9uc2USVwoKUGluZ0RldmljZRIjLnJvdXRlcm1vbml0b3IudjEuUGluZ0RldmljZVJlcXVlc3QaJC5yb3V0ZXJtb25pdG9yLnYxLlBpbmdEZXZpY2VSZXNwb25zZRJUCglXYWtlT25MYW4SIi5yb3V0ZXJtb25pdG9yLnYxLldha2VPbkxhblJlcXVlc3QaIy5yb3V0ZXJtb25pdG9yLnYxLldha2VPbkxhblJlc3BvbnNlEmAKDUdldERETlNTdGF0dXMSJi5yb3V0ZXJtb25pdG9yLnYxLkdldERETlNTdGF0dXNSZXF1ZXN0Gicucm91dGVybW9uaXRvci52MS5HZXRERE5TU3RhdHVzUmVzcG9uc2USUQoIU3luY0RETlMSIS5yb3V0ZXJtb25pdG9yLnYxLlN5bmNERE5TUmVxdWVzdBoiLnJvdXRlcm1vbml0b3IudjEuU3luY0RETlNSZXNwb25zZRJsChFMaXN0Q29uZmlnRGV2aWNlcxIqLnJvdXRlcm1vbml0b3IudjEuTGlzdENvbmZpZ0RldmljZXNSZXF1ZXN0Gisucm91dGVybW9uaXRvci52MS5MaXN0Q29uZmlnRGV2aWNlc1Jlc3BvbnNlEm8KElVwc2VydENvbmZpZ0RldmljZRIrLnJvdXRlcm1vbml0b3IudjEuVXBzZXJ0Q29uZmlnRGV2aWNlUmVxdWVzdBosLnJvdXRlcm1vbml0b3IudjEuVXBzZXJ0Q29uZmlnRGV2aWNlUmVzcG9uc2USbwoSRGVsZXRlQ29uZmlnRGV2aWNlEisucm91dGVybW9uaXRvci52MS5EZWxldGVDb25maWdEZXZpY2VSZXF1ZXN0Giwucm91dGVybW9uaXRvci52MS5EZWxldGVDb25maWdEZXZpY2VSZXNwb25zZRJ1ChRMaXN0Q29uZmlnRG5zUmVjb3JkcxItLnJvdXRlcm1vbml0b3IudjEuTGlzdENvbmZpZ0Ruc1JlY29yZHNSZXF1ZXN0Gi4ucm91dGVybW9uaXRvci52MS5MaXN0Q29uZmlnRG5zUmVjb3Jkc1Jlc3BvbnNlEngKFVVwc2VydENvbmZpZ0Ruc1JlY29yZBIuLnJvdXRlcm1vbml0b3IudjEuVXBzZXJ0Q29uZmlnRG5zUmVjb3JkUmVxdWVzdBovLnJvdXRlcm1vbml0b3IudjEuVXBzZXJ0Q29uZmlnRG5zUmVjb3JkUmVzcG9uc2USeAoVRGVsZXRlQ29uZmlnRG5zUmVjb3JkEi4ucm91dGVybW9uaXRvci52MS5EZWxldGVDb25maWdEbnNSZWNvcmRSZXF1ZXN0Gi8ucm91dGVybW9uaXRvci52MS5EZWxldGVDb25maWdEbnNSZWNvcmRSZXNwb25zZUJSWlBnaXRodWIuY29tL2JsZXNzd2luc2FtdWVsL3JvdXRlci1tb25pdG9yL2dlbi9nby9yb3V0ZXJtb25pdG9yL3YxO3JvdXRlcm1vbml0b3J2MWIGcHJvdG8z");
 
 /**
  * @generated from message routermonitor.v1.DirectionalTraffic
@@ -559,6 +559,21 @@ export type Device = Message<"routermonitor.v1.Device"> & {
    * @generated from field: routermonitor.v1.DhcpLeaseInfo dhcp_lease = 16;
    */
   dhcpLease?: DhcpLeaseInfo | undefined;
+
+  /**
+   * @generated from field: repeated string tags = 17;
+   */
+  tags: string[];
+
+  /**
+   * @generated from field: string vlan = 18;
+   */
+  vlan: string;
+
+  /**
+   * @generated from field: string config_name = 19;
+   */
+  configName: string;
 };
 
 /**
@@ -1155,6 +1170,276 @@ export const SyncDDNSResponseSchema: GenMessage<SyncDDNSResponse> = /*@__PURE__*
   messageDesc(file_routermonitor_v1_router_monitor, 29);
 
 /**
+ * @generated from message routermonitor.v1.ConfigDevice
+ */
+export type ConfigDevice = Message<"routermonitor.v1.ConfigDevice"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string mac = 3;
+   */
+  mac: string;
+
+  /**
+   * @generated from field: string vlan = 4;
+   */
+  vlan: string;
+
+  /**
+   * @generated from field: string ip = 5;
+   */
+  ip: string;
+
+  /**
+   * @generated from field: repeated string hostnames = 6;
+   */
+  hostnames: string[];
+
+  /**
+   * @generated from field: repeated string tags = 7;
+   */
+  tags: string[];
+};
+
+/**
+ * Describes the message routermonitor.v1.ConfigDevice.
+ * Use `create(ConfigDeviceSchema)` to create a new message.
+ */
+export const ConfigDeviceSchema: GenMessage<ConfigDevice> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 30);
+
+/**
+ * @generated from message routermonitor.v1.ListConfigDevicesRequest
+ */
+export type ListConfigDevicesRequest = Message<"routermonitor.v1.ListConfigDevicesRequest"> & {
+};
+
+/**
+ * Describes the message routermonitor.v1.ListConfigDevicesRequest.
+ * Use `create(ListConfigDevicesRequestSchema)` to create a new message.
+ */
+export const ListConfigDevicesRequestSchema: GenMessage<ListConfigDevicesRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 31);
+
+/**
+ * @generated from message routermonitor.v1.ListConfigDevicesResponse
+ */
+export type ListConfigDevicesResponse = Message<"routermonitor.v1.ListConfigDevicesResponse"> & {
+  /**
+   * @generated from field: repeated routermonitor.v1.ConfigDevice devices = 1;
+   */
+  devices: ConfigDevice[];
+};
+
+/**
+ * Describes the message routermonitor.v1.ListConfigDevicesResponse.
+ * Use `create(ListConfigDevicesResponseSchema)` to create a new message.
+ */
+export const ListConfigDevicesResponseSchema: GenMessage<ListConfigDevicesResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 32);
+
+/**
+ * @generated from message routermonitor.v1.UpsertConfigDeviceRequest
+ */
+export type UpsertConfigDeviceRequest = Message<"routermonitor.v1.UpsertConfigDeviceRequest"> & {
+  /**
+   * @generated from field: routermonitor.v1.ConfigDevice device = 1;
+   */
+  device?: ConfigDevice | undefined;
+};
+
+/**
+ * Describes the message routermonitor.v1.UpsertConfigDeviceRequest.
+ * Use `create(UpsertConfigDeviceRequestSchema)` to create a new message.
+ */
+export const UpsertConfigDeviceRequestSchema: GenMessage<UpsertConfigDeviceRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 33);
+
+/**
+ * @generated from message routermonitor.v1.UpsertConfigDeviceResponse
+ */
+export type UpsertConfigDeviceResponse = Message<"routermonitor.v1.UpsertConfigDeviceResponse"> & {
+  /**
+   * @generated from field: routermonitor.v1.ConfigDevice device = 1;
+   */
+  device?: ConfigDevice | undefined;
+};
+
+/**
+ * Describes the message routermonitor.v1.UpsertConfigDeviceResponse.
+ * Use `create(UpsertConfigDeviceResponseSchema)` to create a new message.
+ */
+export const UpsertConfigDeviceResponseSchema: GenMessage<UpsertConfigDeviceResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 34);
+
+/**
+ * @generated from message routermonitor.v1.DeleteConfigDeviceRequest
+ */
+export type DeleteConfigDeviceRequest = Message<"routermonitor.v1.DeleteConfigDeviceRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message routermonitor.v1.DeleteConfigDeviceRequest.
+ * Use `create(DeleteConfigDeviceRequestSchema)` to create a new message.
+ */
+export const DeleteConfigDeviceRequestSchema: GenMessage<DeleteConfigDeviceRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 35);
+
+/**
+ * @generated from message routermonitor.v1.DeleteConfigDeviceResponse
+ */
+export type DeleteConfigDeviceResponse = Message<"routermonitor.v1.DeleteConfigDeviceResponse"> & {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message routermonitor.v1.DeleteConfigDeviceResponse.
+ * Use `create(DeleteConfigDeviceResponseSchema)` to create a new message.
+ */
+export const DeleteConfigDeviceResponseSchema: GenMessage<DeleteConfigDeviceResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 36);
+
+/**
+ * @generated from message routermonitor.v1.ConfigDnsRecord
+ */
+export type ConfigDnsRecord = Message<"routermonitor.v1.ConfigDnsRecord"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string ip = 2;
+   */
+  ip: string;
+
+  /**
+   * @generated from field: repeated string aliases = 3;
+   */
+  aliases: string[];
+};
+
+/**
+ * Describes the message routermonitor.v1.ConfigDnsRecord.
+ * Use `create(ConfigDnsRecordSchema)` to create a new message.
+ */
+export const ConfigDnsRecordSchema: GenMessage<ConfigDnsRecord> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 37);
+
+/**
+ * @generated from message routermonitor.v1.ListConfigDnsRecordsRequest
+ */
+export type ListConfigDnsRecordsRequest = Message<"routermonitor.v1.ListConfigDnsRecordsRequest"> & {
+};
+
+/**
+ * Describes the message routermonitor.v1.ListConfigDnsRecordsRequest.
+ * Use `create(ListConfigDnsRecordsRequestSchema)` to create a new message.
+ */
+export const ListConfigDnsRecordsRequestSchema: GenMessage<ListConfigDnsRecordsRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 38);
+
+/**
+ * @generated from message routermonitor.v1.ListConfigDnsRecordsResponse
+ */
+export type ListConfigDnsRecordsResponse = Message<"routermonitor.v1.ListConfigDnsRecordsResponse"> & {
+  /**
+   * @generated from field: repeated routermonitor.v1.ConfigDnsRecord records = 1;
+   */
+  records: ConfigDnsRecord[];
+};
+
+/**
+ * Describes the message routermonitor.v1.ListConfigDnsRecordsResponse.
+ * Use `create(ListConfigDnsRecordsResponseSchema)` to create a new message.
+ */
+export const ListConfigDnsRecordsResponseSchema: GenMessage<ListConfigDnsRecordsResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 39);
+
+/**
+ * @generated from message routermonitor.v1.UpsertConfigDnsRecordRequest
+ */
+export type UpsertConfigDnsRecordRequest = Message<"routermonitor.v1.UpsertConfigDnsRecordRequest"> & {
+  /**
+   * @generated from field: routermonitor.v1.ConfigDnsRecord record = 1;
+   */
+  record?: ConfigDnsRecord | undefined;
+};
+
+/**
+ * Describes the message routermonitor.v1.UpsertConfigDnsRecordRequest.
+ * Use `create(UpsertConfigDnsRecordRequestSchema)` to create a new message.
+ */
+export const UpsertConfigDnsRecordRequestSchema: GenMessage<UpsertConfigDnsRecordRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 40);
+
+/**
+ * @generated from message routermonitor.v1.UpsertConfigDnsRecordResponse
+ */
+export type UpsertConfigDnsRecordResponse = Message<"routermonitor.v1.UpsertConfigDnsRecordResponse"> & {
+  /**
+   * @generated from field: routermonitor.v1.ConfigDnsRecord record = 1;
+   */
+  record?: ConfigDnsRecord | undefined;
+};
+
+/**
+ * Describes the message routermonitor.v1.UpsertConfigDnsRecordResponse.
+ * Use `create(UpsertConfigDnsRecordResponseSchema)` to create a new message.
+ */
+export const UpsertConfigDnsRecordResponseSchema: GenMessage<UpsertConfigDnsRecordResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 41);
+
+/**
+ * @generated from message routermonitor.v1.DeleteConfigDnsRecordRequest
+ */
+export type DeleteConfigDnsRecordRequest = Message<"routermonitor.v1.DeleteConfigDnsRecordRequest"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message routermonitor.v1.DeleteConfigDnsRecordRequest.
+ * Use `create(DeleteConfigDnsRecordRequestSchema)` to create a new message.
+ */
+export const DeleteConfigDnsRecordRequestSchema: GenMessage<DeleteConfigDnsRecordRequest> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 42);
+
+/**
+ * @generated from message routermonitor.v1.DeleteConfigDnsRecordResponse
+ */
+export type DeleteConfigDnsRecordResponse = Message<"routermonitor.v1.DeleteConfigDnsRecordResponse"> & {
+  /**
+   * @generated from field: bool success = 1;
+   */
+  success: boolean;
+};
+
+/**
+ * Describes the message routermonitor.v1.DeleteConfigDnsRecordResponse.
+ * Use `create(DeleteConfigDnsRecordResponseSchema)` to create a new message.
+ */
+export const DeleteConfigDnsRecordResponseSchema: GenMessage<DeleteConfigDnsRecordResponse> = /*@__PURE__*/
+  messageDesc(file_routermonitor_v1_router_monitor, 43);
+
+/**
  * @generated from service routermonitor.v1.RouterMonitorService
  */
 export const RouterMonitorService: GenService<{
@@ -1247,6 +1532,66 @@ export const RouterMonitorService: GenService<{
     methodKind: "unary";
     input: typeof SyncDDNSRequestSchema;
     output: typeof SyncDDNSResponseSchema;
+  },
+  /**
+   * List configured devices from devices.yaml
+   *
+   * @generated from rpc routermonitor.v1.RouterMonitorService.ListConfigDevices
+   */
+  listConfigDevices: {
+    methodKind: "unary";
+    input: typeof ListConfigDevicesRequestSchema;
+    output: typeof ListConfigDevicesResponseSchema;
+  },
+  /**
+   * Create or update a configured device in devices.yaml
+   *
+   * @generated from rpc routermonitor.v1.RouterMonitorService.UpsertConfigDevice
+   */
+  upsertConfigDevice: {
+    methodKind: "unary";
+    input: typeof UpsertConfigDeviceRequestSchema;
+    output: typeof UpsertConfigDeviceResponseSchema;
+  },
+  /**
+   * Delete a configured device from devices.yaml
+   *
+   * @generated from rpc routermonitor.v1.RouterMonitorService.DeleteConfigDevice
+   */
+  deleteConfigDevice: {
+    methodKind: "unary";
+    input: typeof DeleteConfigDeviceRequestSchema;
+    output: typeof DeleteConfigDeviceResponseSchema;
+  },
+  /**
+   * List custom static DNS records from devices.yaml
+   *
+   * @generated from rpc routermonitor.v1.RouterMonitorService.ListConfigDnsRecords
+   */
+  listConfigDnsRecords: {
+    methodKind: "unary";
+    input: typeof ListConfigDnsRecordsRequestSchema;
+    output: typeof ListConfigDnsRecordsResponseSchema;
+  },
+  /**
+   * Create or update a custom DNS record in devices.yaml
+   *
+   * @generated from rpc routermonitor.v1.RouterMonitorService.UpsertConfigDnsRecord
+   */
+  upsertConfigDnsRecord: {
+    methodKind: "unary";
+    input: typeof UpsertConfigDnsRecordRequestSchema;
+    output: typeof UpsertConfigDnsRecordResponseSchema;
+  },
+  /**
+   * Delete a custom DNS record from devices.yaml
+   *
+   * @generated from rpc routermonitor.v1.RouterMonitorService.DeleteConfigDnsRecord
+   */
+  deleteConfigDnsRecord: {
+    methodKind: "unary";
+    input: typeof DeleteConfigDnsRecordRequestSchema;
+    output: typeof DeleteConfigDnsRecordResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_routermonitor_v1_router_monitor, 0);

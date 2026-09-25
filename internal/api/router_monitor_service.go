@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strings"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"connectrpc.com/connect"
 	routermonitorv1 "github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1"
 	"github.com/blesswinsamuel/router-monitor/gen/go/routermonitor/v1/routermonitorv1connect"
+	"github.com/blesswinsamuel/router-monitor/internal/networkmgr"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
 	"github.com/blesswinsamuel/router-monitor/internal/routermonitor/ddns"
 	"github.com/blesswinsamuel/router-monitor/internal/tsdb"
@@ -28,6 +30,7 @@ type RouterMonitorService struct {
 	sampler         *tsdb.Sampler
 	dhcpReader      routermonitor.DHCPLeaseReader
 	ddnsManager     *ddns.Manager
+	networkMgr      *networkmgr.Manager
 }
 
 func NewRouterMonitorService(
@@ -40,6 +43,7 @@ func NewRouterMonitorService(
 	sampler *tsdb.Sampler,
 	dhcpReader routermonitor.DHCPLeaseReader,
 	ddnsMgr *ddns.Manager,
+	networkMgr *networkmgr.Manager,
 ) *RouterMonitorService {
 	return &RouterMonitorService{
 		interfaceName:   ifaceName,
@@ -51,6 +55,7 @@ func NewRouterMonitorService(
 		sampler:         sampler,
 		dhcpReader:      dhcpReader,
 		ddnsManager:     ddnsMgr,
+		networkMgr:      networkMgr,
 	}
 }
 
@@ -177,10 +182,25 @@ func (s *RouterMonitorService) ListDevices(
 	}
 	periodUsage, _ := s.tsdbDB.GetDeviceUsageByPeriod(from, to)
 
+	var configDevices []networkmgr.Device
+	if s.networkMgr != nil {
+		configDevices = s.networkMgr.GetDevices()
+	}
+	cfgByIP := make(map[string]networkmgr.Device, len(configDevices))
+	cfgByMAC := make(map[string]networkmgr.Device, len(configDevices))
+	for _, cd := range configDevices {
+		if cd.IP != "" {
+			cfgByIP[cd.IP] = cd
+		}
+		if cd.MAC != "" {
+			cfgByMAC[strings.ToLower(cd.MAC)] = cd
+		}
+	}
+
 	now := time.Now().Unix()
 	seenMACs := make(map[string]bool)
 	seenIPs := make(map[string]bool)
-	devices := make([]*routermonitorv1.Device, 0, len(rawDevices)+len(persistedDevices))
+	devices := make([]*routermonitorv1.Device, 0, len(rawDevices)+len(persistedDevices)+len(configDevices))
 
 	createDevice := func(
 		ip, mac, rawHostname, iface, status string,
@@ -189,7 +209,25 @@ func (s *RouterMonitorService) ListDevices(
 		rate tsdb.DeviceRate,
 		pu *tsdb.DevicePeriodUsage,
 	) *routermonitorv1.Device {
-		isKnown := rawHostname != ""
+		var matchedCfg *networkmgr.Device
+		if cd, ok := cfgByIP[ip]; ok {
+			matchedCfg = &cd
+		} else if mac != "" && mac != "00:00:00:00:00:00" {
+			if cd, ok := cfgByMAC[strings.ToLower(mac)]; ok {
+				matchedCfg = &cd
+			}
+		}
+
+		var tags []string
+		var vlan string
+		var configName string
+		if matchedCfg != nil {
+			tags = matchedCfg.Tags
+			vlan = matchedCfg.Vlan
+			configName = matchedCfg.Name
+		}
+
+		isKnown := rawHostname != "" || matchedCfg != nil
 
 		var dhcpLeaseProto *routermonitorv1.DhcpLeaseInfo
 		var lease routermonitor.DHCPLease
@@ -213,8 +251,12 @@ func (s *RouterMonitorService) ListDevices(
 		}
 
 		displayHostname := ""
-		if isKnown {
+		if rawHostname != "" {
 			displayHostname = rawHostname
+		} else if configName != "" {
+			displayHostname = configName
+		} else if matchedCfg != nil && len(matchedCfg.Hostnames) > 0 {
+			displayHostname = matchedCfg.Hostnames[0]
 		} else if dhcpLeaseProto != nil && dhcpLeaseProto.Hostname != "" {
 			displayHostname = dhcpLeaseProto.Hostname
 		}
@@ -370,6 +412,9 @@ func (s *RouterMonitorService) ListDevices(
 			Vendor:    vendor,
 			IsKnown:   isKnown,
 			DhcpLease: dhcpLeaseProto,
+			Tags:      tags,
+			Vlan:      vlan,
+			ConfigName: configName,
 		}
 	}
 
@@ -433,6 +478,25 @@ func (s *RouterMonitorService) ListDevices(
 			pd.IPAddr, pd.HWAddr, pd.Hostname, pd.Device, "offline",
 			pd.FirstSeen.Unix(), pd.LastSeen.Unix(), nil,
 			rate, periodUsage[pd.IPAddr],
+		)
+		devices = append(devices, dev)
+	}
+
+	// 4.5. Add configured devices that haven't been seen in ARP or SQLite
+	for _, cd := range configDevices {
+		if (cd.MAC != "" && seenMACs[cd.MAC]) || (cd.IP != "" && seenIPs[cd.IP]) {
+			continue
+		}
+		if cd.MAC != "" {
+			seenMACs[cd.MAC] = true
+		}
+		if cd.IP != "" {
+			seenIPs[cd.IP] = true
+		}
+		dev := createDevice(
+			cd.IP, cd.MAC, cd.Name, "", "offline",
+			0, 0, nil,
+			tsdb.DeviceRate{}, nil,
 		)
 		devices = append(devices, dev)
 	}
@@ -796,6 +860,145 @@ func (s *RouterMonitorService) SyncDDNS(
 		Message: res.Message,
 		Status:  status,
 	}), nil
+}
+
+func (s *RouterMonitorService) ListConfigDevices(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.ListConfigDevicesRequest],
+) (*connect.Response[routermonitorv1.ListConfigDevicesResponse], error) {
+	if s.networkMgr == nil {
+		return connect.NewResponse(&routermonitorv1.ListConfigDevicesResponse{}), nil
+	}
+	devs := s.networkMgr.GetDevices()
+	res := make([]*routermonitorv1.ConfigDevice, len(devs))
+	for i, d := range devs {
+		res[i] = &routermonitorv1.ConfigDevice{
+			Id:        d.ID,
+			Name:      d.Name,
+			Mac:       d.MAC,
+			Vlan:      d.Vlan,
+			Ip:        d.IP,
+			Hostnames: d.Hostnames,
+			Tags:      d.Tags,
+		}
+	}
+	return connect.NewResponse(&routermonitorv1.ListConfigDevicesResponse{Devices: res}), nil
+}
+
+func (s *RouterMonitorService) UpsertConfigDevice(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.UpsertConfigDeviceRequest],
+) (*connect.Response[routermonitorv1.UpsertConfigDeviceResponse], error) {
+	if s.networkMgr == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("network manager not configured"))
+	}
+	d := req.Msg.Device
+	if d == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("device is required"))
+	}
+	dev := networkmgr.Device{
+		ID:        d.Id,
+		Name:      d.Name,
+		MAC:       d.Mac,
+		Vlan:      d.Vlan,
+		IP:        d.Ip,
+		Hostnames: d.Hostnames,
+		Tags:      d.Tags,
+	}
+	if dev.ID == "" {
+		if dev.Name != "" {
+			dev.ID = dev.Name
+		} else {
+			dev.ID = strings.ReplaceAll(strings.ToLower(dev.MAC), ":", "-")
+		}
+	}
+	if err := s.networkMgr.UpsertDevice(dev); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&routermonitorv1.UpsertConfigDeviceResponse{
+		Device: &routermonitorv1.ConfigDevice{
+			Id:        dev.ID,
+			Name:      dev.Name,
+			Mac:       dev.MAC,
+			Vlan:      dev.Vlan,
+			Ip:        dev.IP,
+			Hostnames: dev.Hostnames,
+			Tags:      dev.Tags,
+		},
+	}), nil
+}
+
+func (s *RouterMonitorService) DeleteConfigDevice(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.DeleteConfigDeviceRequest],
+) (*connect.Response[routermonitorv1.DeleteConfigDeviceResponse], error) {
+	if s.networkMgr == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("network manager not configured"))
+	}
+	if err := s.networkMgr.DeleteDevice(req.Msg.Id); err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
+	return connect.NewResponse(&routermonitorv1.DeleteConfigDeviceResponse{Success: true}), nil
+}
+
+func (s *RouterMonitorService) ListConfigDnsRecords(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.ListConfigDnsRecordsRequest],
+) (*connect.Response[routermonitorv1.ListConfigDnsRecordsResponse], error) {
+	if s.networkMgr == nil {
+		return connect.NewResponse(&routermonitorv1.ListConfigDnsRecordsResponse{}), nil
+	}
+	recs := s.networkMgr.GetDnsRecords()
+	res := make([]*routermonitorv1.ConfigDnsRecord, len(recs))
+	for i, r := range recs {
+		res[i] = &routermonitorv1.ConfigDnsRecord{
+			Name:    r.Name,
+			Ip:      r.IP,
+			Aliases: r.Aliases,
+		}
+	}
+	return connect.NewResponse(&routermonitorv1.ListConfigDnsRecordsResponse{Records: res}), nil
+}
+
+func (s *RouterMonitorService) UpsertConfigDnsRecord(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.UpsertConfigDnsRecordRequest],
+) (*connect.Response[routermonitorv1.UpsertConfigDnsRecordResponse], error) {
+	if s.networkMgr == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("network manager not configured"))
+	}
+	r := req.Msg.Record
+	if r == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("record is required"))
+	}
+	rec := networkmgr.DnsRecord{
+		Name:    r.Name,
+		IP:      r.Ip,
+		Aliases: r.Aliases,
+	}
+	if err := s.networkMgr.UpsertDnsRecord(rec); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&routermonitorv1.UpsertConfigDnsRecordResponse{
+		Record: &routermonitorv1.ConfigDnsRecord{
+			Name:    rec.Name,
+			Ip:      rec.IP,
+			Aliases: rec.Aliases,
+		},
+	}), nil
+}
+
+func (s *RouterMonitorService) DeleteConfigDnsRecord(
+	ctx context.Context,
+	req *connect.Request[routermonitorv1.DeleteConfigDnsRecordRequest],
+) (*connect.Response[routermonitorv1.DeleteConfigDnsRecordResponse], error) {
+	if s.networkMgr == nil {
+		return nil, connect.NewError(connect.CodeUnavailable, errors.New("network manager not configured"))
+	}
+	if err := s.networkMgr.DeleteDnsRecord(req.Msg.Name); err != nil {
+		return nil, connect.NewError(connect.CodeNotFound, err)
+	}
+	return connect.NewResponse(&routermonitorv1.DeleteConfigDnsRecordResponse{Success: true}), nil
 }
 
 

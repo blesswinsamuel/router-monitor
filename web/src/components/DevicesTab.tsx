@@ -12,6 +12,9 @@ import {
   PieChart as PieChartIcon,
   XCircle,
   Power,
+  Pencil,
+  Plus,
+  Tag,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { Button } from './ui/button'
@@ -22,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 import { cn } from '@/lib/utils'
 import { DeviceTrafficCharts } from './DeviceTrafficCharts'
+import { EditDeviceModal } from './EditDeviceModal'
 import {
   formatBytes,
   formatRate,
@@ -41,14 +45,17 @@ interface DevicesTabProps {
 }
 
 export function DevicesTab({ devices }: DevicesTabProps) {
-  const { period } = useRootOutletContext()
+  const { period, fetchAllData } = useRootOutletContext()
   const [search, setSearch] = useState('')
   const [selectedInterface, setSelectedInterface] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
+  const [selectedTag, setSelectedTag] = useState<string>('all')
   const [trafficScope, setTrafficScope] = useState<'total' | 'wan' | 'lan' | 'split'>('total')
   const [showUnknownOnly, setShowUnknownOnly] = useState(false)
   const [selectedDeviceIp, setSelectedDeviceIp] = useState<string | null>(null)
   const [showCharts, setShowCharts] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingDevice, setEditingDevice] = useState<Device | null>(null)
   const [wakingMacs, setWakingMacs] = useState<Record<string, 'loading' | 'success' | 'error'>>({})
   const navigate = useNavigate()
 
@@ -121,6 +128,19 @@ export function DevicesTab({ devices }: DevicesTabProps) {
     return { active, offline, all: activeDeviceList.length }
   }, [activeDeviceList])
 
+  // Extract unique tags across devices
+  const availableTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const d of activeDeviceList) {
+      if (d.tags) {
+        for (const t of d.tags) {
+          if (t) set.add(t)
+        }
+      }
+    }
+    return Array.from(set).sort()
+  }, [activeDeviceList])
+
   // Fallback to 'all' if selected interface is no longer present
   const currentInterface =
     selectedInterface === 'all' || interfaces.includes(selectedInterface)
@@ -146,6 +166,10 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         return false
       }
 
+      if (selectedTag !== 'all' && (!d.tags || !d.tags.includes(selectedTag))) {
+        return false
+      }
+
       if (showUnknownOnly && d.isKnown) {
         return false
       }
@@ -154,6 +178,9 @@ export function DevicesTab({ devices }: DevicesTabProps) {
       const q = search.toLowerCase()
       return (
         d.hostname?.toLowerCase().includes(q) ||
+        d.configName?.toLowerCase().includes(q) ||
+        d.vlan?.toLowerCase().includes(q) ||
+        d.tags?.some((t) => t.toLowerCase().includes(q)) ||
         d.dhcpLease?.hostname?.toLowerCase().includes(q) ||
         d.ipAddr?.toLowerCase().includes(q) ||
         d.macAddr?.toLowerCase().includes(q) ||
@@ -162,7 +189,7 @@ export function DevicesTab({ devices }: DevicesTabProps) {
         d.vendor?.toLowerCase().includes(q)
       )
     })
-  }, [activeDeviceList, currentInterface, statusFilter, showUnknownOnly, search, selectedDeviceIp])
+  }, [activeDeviceList, currentInterface, statusFilter, selectedTag, showUnknownOnly, search, selectedDeviceIp])
 
   const totalDl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.downloadBytes || 0), 0)
   const totalUl = activeDeviceList.reduce((acc, d) => acc + Number(d.total?.uploadBytes || 0), 0)
@@ -203,6 +230,17 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                 <PieChartIcon className="w-3.5 h-3.5 text-primary" />
                 <span>{showCharts ? 'Hide Charts' : 'Show Charts'}</span>
               </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setEditingDevice(null)
+                  setModalOpen(true)
+                }}
+                className="h-9 text-xs gap-1.5 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Reservation</span>
+              </Button>
               <div className="relative w-full sm:w-72">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -236,6 +274,28 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                   </TabsList>
                 </Tabs>
               </div>
+
+              {/* Tag Filter */}
+              {availableTags.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground shrink-0 flex items-center gap-1">
+                    <Tag className="w-3 h-3 text-muted-foreground" />
+                    Tag:
+                  </span>
+                  <Tabs value={selectedTag} onValueChange={(v: any) => setSelectedTag(v)} className="shrink-0">
+                    <TabsList className="h-8">
+                      <TabsTrigger value="all" className="text-xs px-2 py-1">
+                        All
+                      </TabsTrigger>
+                      {availableTags.map((t) => (
+                        <TabsTrigger key={t} value={t} className="text-xs px-2 py-1">
+                          {t}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
+              )}
 
               {/* Unknown Only Quick Filter */}
               <Button
@@ -468,34 +528,30 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                             </div>
                             <div className="flex flex-col">
                               <span className="font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap">
-                                {device.isKnown ? (
-                                  <span>{device.hostname || 'Known Device'}</span>
-                                ) : device.hostname ? (
-                                  <>
-                                    <span>{device.hostname}</span>
-                                    <Badge
-                                      variant="outline"
-                                      className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0"
-                                      title="Dynamic device not configured in static reverse DNS. Name reported via DHCP lease."
-                                    >
-                                      Unknown • DHCP
-                                    </Badge>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>{device.vendor ? `${device.vendor} Device` : 'Unknown Device'}</span>
-                                    <Badge
-                                      variant="outline"
-                                      className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0"
-                                      title="Unmanaged device without static DNS entry or DHCP hostname."
-                                    >
-                                      Unknown
-                                    </Badge>
-                                  </>
+                                <span>{device.configName || device.hostname || (device.vendor ? `${device.vendor} Device` : 'Unknown Device')}</span>
+                                {device.vlan && (
+                                  <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 border-primary/30 text-primary">
+                                    {device.vlan}
+                                  </Badge>
+                                )}
+                                {!device.isKnown && !device.configName && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-normal px-1.5 py-0"
+                                    title="Unmanaged device without static DNS entry or DHCP hostname."
+                                  >
+                                    {device.hostname ? 'Unknown • DHCP' : 'Unknown'}
+                                  </Badge>
                                 )}
                               </span>
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
                                 <span>{device.ipAddr}</span>
+                                {device.configName && device.hostname && device.hostname !== device.configName && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-[11px] text-muted-foreground/80 font-sans">{device.hostname}</span>
+                                  </>
+                                )}
                                 {device.vendor && (
                                   <>
                                     <span>•</span>
@@ -505,6 +561,15 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                                   </>
                                 )}
                               </div>
+                              {device.tags && device.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {device.tags.map((t) => (
+                                    <Badge key={t} variant="secondary" className="text-[9px] font-mono px-1.5 py-0">
+                                      {t}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </TableCell>
@@ -512,7 +577,12 @@ export function DevicesTab({ devices }: DevicesTabProps) {
                         <TableCell className="font-mono text-xs text-muted-foreground">{device.macAddr}</TableCell>
                         {trafficScope !== 'split' && (
                           <TableCell className="font-mono text-xs">
-                            <Badge variant="outline">{device.interface || device.arp?.interface || 'lan'}</Badge>
+                            <div className="flex flex-col gap-1 items-start">
+                              <Badge variant="outline">{device.interface || device.arp?.interface || 'lan'}</Badge>
+                              {device.vlan && (
+                                <span className="text-[10px] text-muted-foreground font-mono">{device.vlan}</span>
+                              )}
+                            </div>
                           </TableCell>
                         )}
                         <TableCell>
@@ -699,6 +769,26 @@ export function DevicesTab({ devices }: DevicesTabProps) {
 
                         <TableCell className="text-right p-0 pr-2">
                           <div className="flex items-center justify-end gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditingDevice(device)
+                                    setModalOpen(true)
+                                  }}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="text-xs">
+                                {device.configName ? 'Edit DHCP Reservation & Tags' : 'Add DHCP Reservation'}
+                              </TooltipContent>
+                            </Tooltip>
+
                             {device.macAddr && device.macAddr !== '00:00:00:00:00:00' && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -757,6 +847,13 @@ export function DevicesTab({ devices }: DevicesTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      <EditDeviceModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        device={editingDevice}
+        onSaved={fetchAllData}
+      />
     </div>
   )
 }
