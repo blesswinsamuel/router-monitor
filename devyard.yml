@@ -1,4 +1,4 @@
-# Local development for router-monitor.
+# Local development for lanpilot.
 #
 # Usage (from repo root):
 #
@@ -15,7 +15,7 @@
 #   devyard run test
 
 version: "1"
-name: router-monitor
+name: lanpilot
 
 services:
   web:

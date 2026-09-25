@@ -1,4 +1,4 @@
-module github.com/blesswinsamuel/router-monitor
+module github.com/blesswinsamuel/lanpilot
 
 go 1.26.0
 

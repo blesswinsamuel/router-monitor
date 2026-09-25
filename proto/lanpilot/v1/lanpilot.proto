@@ -1,0 +1,355 @@
+syntax = "proto3";
+
+package lanpilot.v1;
+
+option go_package = "github.com/blesswinsamuel/lanpilot/gen/go/lanpilot/v1;lanpilotv1";
+
+service LanpilotService {
+  // Get overview status, summary counters, and current bandwidth rates.
+  rpc GetOverview(GetOverviewRequest) returns (GetOverviewResponse);
+
+  // List discovered ARP devices with cached hostnames and per-device traffic stats.
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse);
+
+  // Get internet connectivity targets, status, and latency diagnostics.
+  rpc GetInternetHealth(GetInternetHealthRequest) returns (GetInternetHealthResponse);
+
+  // Server-streaming RPC emitting periodic snapshots for real-time live graphs.
+  rpc StreamLiveStats(StreamLiveStatsRequest) returns (stream LiveStatsResponse);
+
+  // Query historical time series from the embedded SQLite TSDB with server-side downsampling.
+  rpc QueryTimeSeries(QueryTimeSeriesRequest) returns (QueryTimeSeriesResponse);
+
+  // Ping a specific LAN device on-demand and measure round-trip latency, jitter, and packet loss.
+  rpc PingDevice(PingDeviceRequest) returns (PingDeviceResponse);
+
+  // Send Wake-on-LAN magic packet to wake up a sleeping LAN device.
+  rpc WakeOnLan(WakeOnLanRequest) returns (WakeOnLanResponse);
+
+  // Get dynamic DNS status, current WAN IPs, and update history.
+  rpc GetDDNSStatus(GetDDNSStatusRequest) returns (GetDDNSStatusResponse);
+
+  // Trigger an immediate dynamic DNS synchronization.
+  rpc SyncDDNS(SyncDDNSRequest) returns (SyncDDNSResponse);
+
+  // Create or update a configured device in devices.yaml
+  rpc UpsertConfigDevice(UpsertConfigDeviceRequest) returns (UpsertConfigDeviceResponse);
+
+  // Delete a configured device from devices.yaml
+  rpc DeleteConfigDevice(DeleteConfigDeviceRequest) returns (DeleteConfigDeviceResponse);
+
+  // List custom static DNS records from devices.yaml
+  rpc ListConfigDnsRecords(ListConfigDnsRecordsRequest) returns (ListConfigDnsRecordsResponse);
+
+  // Create or update a custom DNS record in devices.yaml
+  rpc UpsertConfigDnsRecord(UpsertConfigDnsRecordRequest) returns (UpsertConfigDnsRecordResponse);
+
+  // Delete a custom DNS record from devices.yaml
+  rpc DeleteConfigDnsRecord(DeleteConfigDnsRecordRequest) returns (DeleteConfigDnsRecordResponse);
+}
+
+message DirectionalTraffic {
+  // Volume over selected period
+  uint64 download_bytes = 1;
+  uint64 upload_bytes = 2;
+  uint64 download_packets = 3;
+  uint64 upload_packets = 4;
+
+  // Real-time rates
+  double download_bytes_per_sec = 5;
+  double upload_bytes_per_sec = 6;
+  double download_packets_per_sec = 7;
+  double upload_packets_per_sec = 8;
+}
+
+message ProtocolTraffic {
+  string protocol = 1; // "TCP", "UDP", "ICMP", "IGMP", "ESP", "GRE", "OTHER"
+  DirectionalTraffic traffic = 2;
+}
+
+message PeerTraffic {
+  string ip_addr = 1;
+  string hostname = 2;
+  DirectionalTraffic traffic = 3;
+}
+
+message PingDeviceRequest {
+  string ip_addr = 1;
+  int32 packet_count = 2; // Default 4
+}
+
+message PingDeviceResponse {
+  string ip_addr = 1;
+  bool is_reachable = 2;
+  double packet_loss_ratio = 3;
+  double min_latency_seconds = 4;
+  double avg_latency_seconds = 5;
+  double max_latency_seconds = 6;
+  double jitter_seconds = 7;
+  repeated double round_trip_times_ms = 8;
+  string error_message = 9;
+}
+
+message WakeOnLanRequest {
+  string mac_addr = 1;        // Target MAC address (e.g. "aa:bb:cc:dd:ee:ff")
+  string ip_addr = 2;         // Optional target IP to resolve subnet/interface
+  string interface = 3;       // Optional network interface (e.g. "lan")
+  int32 port = 4;             // Optional target UDP port (defaults to 9)
+  string password = 5;        // Optional SecureOn password (empty, 4 or 6 bytes hex)
+}
+
+message WakeOnLanResponse {
+  bool success = 1;
+  string mac_addr = 2;        // Formatted canonical MAC address
+  string broadcast_addr = 3;  // Address packet was sent to (e.g. "10.100.255.255:9")
+  string interface = 4;       // Network interface used
+  string error_message = 5;
+}
+
+message GetOverviewRequest {
+  int64 from_unix = 1;
+  int64 to_unix = 2;
+}
+
+message GetOverviewResponse {
+  string interface_name = 1;
+  string lan_subnet_cidr = 2;
+  bool internet_is_up = 3;
+  double internet_latency_seconds = 4;
+  int32 connected_devices_count = 5;
+
+  DirectionalTraffic total = 6;
+  DirectionalTraffic wan = 7;
+  DirectionalTraffic lan = 8;
+
+  string internet_status = 9; // "operational", "degraded", "down"
+  double internet_packet_loss_ratio = 10;
+  double internet_jitter_seconds = 11;
+}
+
+message ListDevicesRequest {
+  int64 from_unix = 1;
+  int64 to_unix = 2;
+}
+
+message ArpInfo {
+  int64 flags = 1; // ARP flags: e.g. 2 for dynamic/complete, 6 for static
+  bool is_valid = 2;
+  string interface = 3;
+}
+
+message DhcpLeaseInfo {
+  string hostname = 1;
+  string client_id = 2;
+  int64 valid_lifetime_seconds = 3;
+  int64 expire_unix = 4;
+  int64 subnet_id = 5;
+  int64 state = 6;
+}
+
+message Device {
+  string ip_addr = 1;
+  string mac_addr = 2;
+  string hostname = 3;
+  string interface = 4;
+  string status = 5; // "active", "static", "unreachable", "offline"
+  int64 first_seen_unix = 6;
+  int64 last_seen_unix = 7;
+
+  ArpInfo arp = 8;
+
+  DirectionalTraffic total = 9;
+  DirectionalTraffic wan = 10;
+  DirectionalTraffic lan = 11;
+
+  repeated ProtocolTraffic protocols = 12;
+  repeated PeerTraffic peers = 13;
+  string vendor = 14;
+
+  bool is_known = 15;
+  DhcpLeaseInfo dhcp_lease = 16;
+
+  repeated string tags = 17;
+  string vlan = 18;
+  string config_name = 19;
+  string config_id = 20;
+  repeated string config_hostnames = 21;
+  bool is_configured = 22;
+}
+
+message ListDevicesResponse {
+  repeated Device devices = 1;
+}
+
+message GetInternetHealthRequest {}
+
+message TargetHealth {
+  string name = 1;
+  string target = 2;
+  string probe_type = 3; // "icmp", "dns", "http", "tcp"
+  bool is_up = 4;
+  double latency_seconds = 5;
+  double min_latency_seconds = 6;
+  double max_latency_seconds = 7;
+  double avg_latency_seconds = 8;
+  double jitter_seconds = 9;
+  double packet_loss_ratio = 10;
+  string last_error = 11;
+  int64 last_checked_unix = 12;
+}
+
+message OutageRecord {
+  int64 id = 1;
+  int64 start_unix = 2;
+  int64 end_unix = 3;
+  double duration_seconds = 4;
+  string status = 5; // "degraded", "down"
+  string reason = 6;
+}
+
+message GetInternetHealthResponse {
+  string overall_status = 1; // "operational", "degraded", "down"
+  bool overall_is_up = 2;
+  double overall_latency_seconds = 3;
+  double overall_packet_loss_ratio = 4;
+  double overall_jitter_seconds = 5;
+  repeated TargetHealth targets = 6;
+  repeated OutageRecord recent_outages = 7;
+}
+
+message StreamLiveStatsRequest {
+  int32 interval_seconds = 1; // Default: 1 second
+}
+
+message LiveStatsResponse {
+  int64 timestamp_unix = 1;
+  bool internet_is_up = 2;
+  double internet_latency_seconds = 3;
+  int32 connected_devices_count = 4;
+
+  DirectionalTraffic total = 5;
+  DirectionalTraffic wan = 6;
+  DirectionalTraffic lan = 7;
+
+  string internet_status = 8; // "operational", "degraded", "down"
+  double internet_packet_loss_ratio = 9;
+  double internet_jitter_seconds = 10;
+}
+
+message TimeSeriesQuery {
+  string metric_name = 1;               // e.g. "traffic_bytes_rate", "wan_traffic_bytes_rate"
+  map<string, string> match_labels = 2; // e.g. {"direction": "ingress", "ip": "10.100.0.5"}
+}
+
+message QueryTimeSeriesRequest {
+  repeated TimeSeriesQuery queries = 1;
+  int64 from_unix = 2;
+  int64 to_unix = 3;
+  int32 step_seconds = 4;               // downsampling bucket (e.g. 5, 60, 300)
+}
+
+message TimeSeriesPoint {
+  int64 timestamp_unix = 1;
+  double value = 2;
+  double min_value = 3;
+  double max_value = 4;
+}
+
+message TimeSeries {
+  string metric_name = 1;
+  map<string, string> labels = 2;
+  repeated TimeSeriesPoint points = 3;
+}
+
+message QueryTimeSeriesResponse {
+  repeated TimeSeries series = 1;
+}
+
+message GetDDNSStatusRequest {}
+
+message DDNSHistoryRecord {
+  int64 id = 1;
+  int64 timestamp_unix = 2;
+  string provider = 3;
+  string ipv4 = 4;
+  string ipv6 = 5;
+  string status = 6; // "success", "failure"
+  string message = 7;
+}
+
+message GetDDNSStatusResponse {
+  bool enabled = 1;
+  string provider = 2;
+  repeated string domains = 3;
+  string current_ipv4 = 4;
+  string current_ipv6 = 5;
+  int64 last_sync_unix = 6;
+  string last_sync_status = 7; // "success", "failure", "pending", "disabled"
+  string last_sync_message = 8;
+  int64 check_interval_seconds = 9;
+  repeated DDNSHistoryRecord history = 10;
+}
+
+message SyncDDNSRequest {
+  bool force = 1;
+}
+
+message SyncDDNSResponse {
+  bool success = 1;
+  string message = 2;
+  GetDDNSStatusResponse status = 3;
+}
+
+message ConfigDevice {
+  string id = 1;
+  string name = 2;
+  string mac = 3;
+  string vlan = 4;
+  string ip = 5;
+  repeated string hostnames = 6;
+  repeated string tags = 7;
+}
+
+message UpsertConfigDeviceRequest {
+  ConfigDevice device = 1;
+}
+
+message UpsertConfigDeviceResponse {
+  ConfigDevice device = 1;
+}
+
+message DeleteConfigDeviceRequest {
+  string id = 1;
+}
+
+message DeleteConfigDeviceResponse {
+  bool success = 1;
+}
+
+message ConfigDnsRecord {
+  string name = 1;
+  string ip = 2;
+  repeated string aliases = 3;
+}
+
+message ListConfigDnsRecordsRequest {}
+
+message ListConfigDnsRecordsResponse {
+  repeated ConfigDnsRecord records = 1;
+}
+
+message UpsertConfigDnsRecordRequest {
+  ConfigDnsRecord record = 1;
+}
+
+message UpsertConfigDnsRecordResponse {
+  ConfigDnsRecord record = 1;
+}
+
+message DeleteConfigDnsRecordRequest {
+  string name = 1;
+}
+
+message DeleteConfigDnsRecordResponse {
+  bool success = 1;
+}

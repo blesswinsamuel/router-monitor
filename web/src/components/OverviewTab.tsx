@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 import { useRootOutletContext } from './RootLayout'
 import { getPeriodRange } from '@/lib/period'
 import { getDeviceCategory } from '@/lib/device-icons'
-import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device } from '@/gen/lanpilot/v1/lanpilot_pb'
 import {
   AreaChart,
   Area,

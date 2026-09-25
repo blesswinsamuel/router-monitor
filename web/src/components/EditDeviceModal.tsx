@@ -4,7 +4,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
 import { rpcClient } from '@/lib/client'
-import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device } from '@/gen/lanpilot/v1/lanpilot_pb'
 
 interface EditDeviceModalProps {
   isOpen: boolean
@@ -91,7 +91,7 @@ export function EditDeviceModal({ isOpen, onClose, device, onSaved }: EditDevice
 
       await rpcClient.upsertConfigDevice({
         device: {
-          $typeName: 'routermonitor.v1.ConfigDevice',
+          $typeName: 'lanpilot.v1.ConfigDevice',
           id,
           name: name.trim(),
           mac: mac.trim().toLowerCase(),

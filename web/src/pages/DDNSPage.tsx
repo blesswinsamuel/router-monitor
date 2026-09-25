@@ -260,7 +260,7 @@ export function DDNSPage() {
         <CardHeader>
           <CardTitle className="text-base">Configured Domains</CardTitle>
           <CardDescription>
-            DNS hostnames managed by router-monitor with provider <span className="font-semibold text-foreground capitalize">{provider}</span>
+            DNS hostnames managed by lanpilot with provider <span className="font-semibold text-foreground capitalize">{provider}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>

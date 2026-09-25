@@ -31,8 +31,8 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY internal/routermonitor ./internal/routermonitor
+COPY internal/lanpilot ./internal/lanpilot
 
 RUN go generate ./...
 
-RUN mkdir -p /generated/ && cp internal/routermonitor/ebpfcollector_* /generated/
+RUN mkdir -p /generated/ && cp internal/lanpilot/ebpfcollector_* /generated/

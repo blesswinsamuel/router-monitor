@@ -18,7 +18,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 9157,
     proxy: {
-      '/routermonitor.v1.': {
+      '/lanpilot.v1.': {
         target: process.env.VITE_ROUTER_URL || 'http://router:9156',
         changeOrigin: true,
       },

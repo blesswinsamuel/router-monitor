@@ -1,0 +1,248 @@
+package lanpilot
+
+import (
+	"encoding/binary"
+	"errors"
+	"fmt"
+	"log"
+	"net"
+	"sync/atomic"
+
+	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/features"
+	"github.com/cilium/ebpf/link"
+	"github.com/google/gopacket/layers"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+type EbpfCollector struct {
+	objs  *ebpfCollectorObjects
+	links []link.Link
+
+	lanSubnetIP   uint32
+	lanSubnetMask uint32
+
+	packetsTotal *prometheus.Desc
+	bytesTotal   *prometheus.Desc
+
+	collectErrorsTotal *prometheus.Desc
+	collectErrors      atomic.Uint64
+}
+
+func NewEbpfCollector() *EbpfCollector {
+	return &EbpfCollector{
+		lanSubnetIP:   0x0000640A,
+		lanSubnetMask: 0x0000FFFF,
+		packetsTotal: prometheus.NewDesc("lanpilot_packets_total",
+			"Number of observed packets by flow labels.",
+			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
+			nil,
+		),
+		bytesTotal: prometheus.NewDesc("lanpilot_bytes_total",
+			"Number of observed bytes by flow labels.",
+			[]string{"direction", "ethproto", "src", "dst", "ipproto"},
+			nil,
+		),
+		collectErrorsTotal: prometheus.NewDesc("lanpilot_ebpf_collect_errors_total",
+			"Number of eBPF map iteration errors while collecting metrics.",
+			nil,
+			nil,
+		),
+	}
+}
+
+func (collector *EbpfCollector) SetLANSubnet(lanSubnetIP uint32, lanSubnetMask uint32) {
+	collector.lanSubnetIP = lanSubnetIP
+	collector.lanSubnetMask = lanSubnetMask
+}
+
+func (collector *EbpfCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- collector.packetsTotal
+	ch <- collector.bytesTotal
+	ch <- collector.collectErrorsTotal
+}
+
+// Collect implements required collect function for all promehteus collectors
+func (collector *EbpfCollector) Collect(ch chan<- prometheus.Metric) {
+	collect := func(trafficDirection string, packetStats *ebpf.Map) {
+		iter := packetStats.Iterate()
+		var key ebpfCollectorPacketStatsKey
+		var value ebpfCollectorPacketStatsValue
+		for iter.Next(&key, &value) {
+			srcIP := ""
+			dstIP := ""
+			if layers.EthernetType(key.EthProto) == layers.EthernetTypeIPv6 {
+				srcIP = "ipv6"
+				dstIP = "ipv6"
+			} else {
+				srcIP = int2ip4(key.Srcip).String()
+				dstIP = int2ip4(key.Dstip).String()
+			}
+			if key.Srcip == 0 {
+				srcIP = "internet"
+			}
+			if key.Dstip == 0 {
+				dstIP = "internet"
+			}
+			ethProto := layers.EthernetType(key.EthProto).String()
+			ipProto := layers.IPProtocol(key.IpProto).String()
+			// fmt.Println(ethProto, srcIP, dstIP, ipProto, ethProto, value.Packets, value.Bytes)
+			ch <- prometheus.MustNewConstMetric(collector.packetsTotal, prometheus.CounterValue, float64(value.Packets), trafficDirection, ethProto, srcIP, dstIP, ipProto)
+			ch <- prometheus.MustNewConstMetric(collector.bytesTotal, prometheus.CounterValue, float64(value.Bytes), trafficDirection, ethProto, srcIP, dstIP, ipProto)
+		}
+
+		if err := iter.Err(); err != nil {
+			collector.collectErrors.Add(1)
+			log.Printf("Map lookup failed for %s traffic: %v", trafficDirection, err)
+		}
+	}
+	collect("ingress", collector.objs.PacketStatsIngress)
+	collect("egress", collector.objs.PacketStatsEgress)
+
+	ch <- prometheus.MustNewConstMetric(collector.collectErrorsTotal, prometheus.CounterValue, float64(collector.collectErrors.Load()))
+}
+
+type FlowStat struct {
+	Direction string
+	EthProto  string
+	IPProto   string
+	SrcIP     string
+	DstIP     string
+	Packets   uint64
+	Bytes     uint64
+}
+
+func (collector *EbpfCollector) GetFlowStats() []FlowStat {
+	if collector.objs == nil {
+		return nil
+	}
+	var flows []FlowStat
+	collect := func(trafficDirection string, packetStats *ebpf.Map) {
+		if packetStats == nil {
+			return
+		}
+		iter := packetStats.Iterate()
+		var key ebpfCollectorPacketStatsKey
+		var value ebpfCollectorPacketStatsValue
+		for iter.Next(&key, &value) {
+			srcIP := ""
+			dstIP := ""
+			if layers.EthernetType(key.EthProto) == layers.EthernetTypeIPv6 {
+				srcIP = "ipv6"
+				dstIP = "ipv6"
+			} else {
+				srcIP = int2ip4(key.Srcip).String()
+				dstIP = int2ip4(key.Dstip).String()
+			}
+			if key.Srcip == 0 {
+				srcIP = "internet"
+			}
+			if key.Dstip == 0 {
+				dstIP = "internet"
+			}
+			ethProto := layers.EthernetType(key.EthProto).String()
+			ipProto := layers.IPProtocol(key.IpProto).String()
+
+			flows = append(flows, FlowStat{
+				Direction: trafficDirection,
+				EthProto:  ethProto,
+				IPProto:   ipProto,
+				SrcIP:     srcIP,
+				DstIP:     dstIP,
+				Packets:   value.Packets,
+				Bytes:     value.Bytes,
+			})
+		}
+	}
+	collect("ingress", collector.objs.PacketStatsIngress)
+	collect("egress", collector.objs.PacketStatsEgress)
+	return flows
+}
+
+func (collector *EbpfCollector) Load() error {
+	// Load the compiled eBPF ELF and load it into the kernel.
+	spec, err := loadEbpfCollector()
+	if err != nil {
+		return err
+	}
+
+	lanSubnetIPVar, ok := spec.Variables["lan_subnet_ip"]
+	if !ok {
+		return fmt.Errorf("missing eBPF variable: lan_subnet_ip")
+	}
+	if err := lanSubnetIPVar.Set(collector.lanSubnetIP); err != nil {
+		return fmt.Errorf("set eBPF lan_subnet_ip: %w", err)
+	}
+
+	lanSubnetMaskVar, ok := spec.Variables["lan_subnet_mask"]
+	if !ok {
+		return fmt.Errorf("missing eBPF variable: lan_subnet_mask")
+	}
+	if err := lanSubnetMaskVar.Set(collector.lanSubnetMask); err != nil {
+		return fmt.Errorf("set eBPF lan_subnet_mask: %w", err)
+	}
+
+	collector.objs = &ebpfCollectorObjects{}
+	if err := spec.LoadAndAssign(collector.objs, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (collector *EbpfCollector) Close() {
+	for _, link := range collector.links {
+		link.Close()
+	}
+	collector.objs.Close()
+}
+
+func (collector *EbpfCollector) Attach(iface *net.Interface) error {
+	err := features.HaveProgramType(ebpf.SchedACT)
+	if errors.Is(err, ebpf.ErrNotSupported) {
+		return fmt.Errorf("SchedACT not supported on this kernel")
+	}
+	if err != nil {
+		return fmt.Errorf("error checking SchedACT support: %w", err)
+	}
+
+	// {
+	// 	link, err := link.AttachXDP(link.XDPOptions{
+	// 		Program:   objs.XdpFirewall,
+	// 		Interface: iface.Index,
+	// 	})
+	// 	if err != nil {
+	// 		log.Panicf("could not attach XDP program: %s", err)
+	// 	}
+	//  collector.links = append(collector.links, link)
+	// }
+
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   collector.objs.TcPacketCounterIngress,
+			Attach:    ebpf.AttachTCXIngress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			return fmt.Errorf("could not attach XDP program: %w", err)
+		}
+		collector.links = append(collector.links, link)
+	}
+	{
+		link, err := link.AttachTCX(link.TCXOptions{
+			Program:   collector.objs.TcPacketCounterEgress,
+			Attach:    ebpf.AttachTCXEgress,
+			Interface: iface.Index,
+		})
+		if err != nil {
+			return fmt.Errorf("could not attach XDP program: %w", err)
+		}
+		collector.links = append(collector.links, link)
+	}
+	return nil
+}
+
+func int2ip4(nn uint32) net.IP {
+	ip := make(net.IP, 4)
+	binary.NativeEndian.PutUint32(ip, nn)
+	return ip
+}

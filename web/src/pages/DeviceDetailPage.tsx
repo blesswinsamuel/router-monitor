@@ -39,7 +39,7 @@ import { rpcClient } from '@/lib/client'
 import { useRootOutletContext } from '@/components/RootLayout'
 import { getDeviceCategory, isLocallyAdministeredMac } from '@/lib/device-icons'
 import { getPeriodRange } from '@/lib/period'
-import type { Device, PingDeviceResponse, WakeOnLanResponse, ProtocolTraffic, PeerTraffic } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device, PingDeviceResponse, WakeOnLanResponse, ProtocolTraffic, PeerTraffic } from '@/gen/lanpilot/v1/lanpilot_pb'
 import {
   AreaChart,
   Area,

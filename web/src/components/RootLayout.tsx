@@ -68,8 +68,8 @@ export function RootLayout() {
       if (ddnsRes) setDdns(ddnsRes)
       setError(null)
     } catch (err: any) {
-      console.error('Failed to fetch router monitor data:', err)
-      setError(err?.message || 'Failed to connect to router monitor service')
+      console.error('Failed to fetch lanpilot data:', err)
+      setError(err?.message || 'Failed to connect to lanpilot service')
     } finally {
       setIsRefreshing(false)
     }
@@ -203,7 +203,7 @@ export function RootLayout() {
 
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center justify-between">
-            <span>Connection error: {error}. Check if router-monitor is running on the router.</span>
+            <span>Connection error: {error}. Check if lanpilot is running on the router.</span>
             <button
               onClick={fetchAllData}
               className="underline font-semibold hover:opacity-80 ml-4 cursor-pointer"
@@ -219,7 +219,7 @@ export function RootLayout() {
       </main>
 
       <footer className="border-t py-4 text-center text-xs text-muted-foreground">
-        Router Monitor &copy; <span className="font-mono">{new Date().getFullYear()}</span> • Connect-RPC over gRPC-Web • Pure-Go SQLite TSDB
+        Lanpilot &copy; <span className="font-mono">{new Date().getFullYear()}</span> • Connect-RPC over gRPC-Web • Pure-Go SQLite TSDB
       </footer>
     </div>
   )

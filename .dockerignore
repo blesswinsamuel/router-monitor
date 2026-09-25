@@ -8,4 +8,4 @@ flake.lock
 *_bpfel.go
 
 hello.c
-router-monitor
+lanpilot

@@ -1,6 +1,6 @@
 /result
-/router-monitor
-/router-monitor-dev
+/lanpilot
+/lanpilot-dev
 *_bpfel.o
 *_bpfel.go
 /bin

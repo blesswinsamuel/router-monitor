@@ -37,10 +37,10 @@ RUN go generate ./...
 
 COPY cmd ./cmd
 
-RUN go build -o /bin/router-monitor ./cmd/router-monitor
+RUN go build -o /bin/lanpilot ./cmd/lanpilot
 
 FROM debian:bullseye-slim
 
-COPY --from=builder /bin/router-monitor /bin/router-monitor
+COPY --from=builder /bin/lanpilot /bin/lanpilot
 
-CMD ["/bin/router-monitor"]
+CMD ["/bin/lanpilot"]

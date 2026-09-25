@@ -5,7 +5,7 @@ Read this before making changes.
 
 ## What this project is
 
-`router-monitor` is a lightweight network observability tool and daemon for Linux routers and gateways. It collects eBPF traffic counters at TC ingress/egress, ARP-based device discovery, and TCP internet reachability checks. It exposes Prometheus metrics, runs a Connect-RPC service with an embedded SQLite time-series database, and embeds a web dashboard SPA.
+`lanpilot` is a lightweight LAN control plane and observability daemon for Linux routers and gateways. It manages DHCP and DNS (dnsmasq) from a device inventory, performs dynamic DNS updates (Cloudflare/DuckDNS/generic HTTP), provides Wake-on-LAN, and renders managed nftables sets. For observability it collects eBPF traffic counters at TC ingress/egress, does ARP-based device discovery with DHCP lease resolution, and runs TCP internet reachability checks. It exposes Prometheus metrics, runs a Connect-RPC service with an embedded SQLite time-series database, and embeds a web dashboard SPA.
 
 ## Essential Commands
 
@@ -56,17 +56,20 @@ task web-build                      # builds web frontend and syncs to internal/
 ## Repo Structure
 
 ```
-cmd/router-monitor/           # CLI entrypoint
+cmd/lanpilot/                 # CLI entrypoint
 internal/
   api/                        # Connect-RPC service implementation
-  routermonitor/              # eBPF collector (C and Go), ARP discovery, internet reachability
+  lanpilot/                   # eBPF collector (C and Go), ARP discovery, DHCP leases, DDNS, internet reachability
+  networkmgr/                 # Device inventory, dnsmasq DHCP/hosts rendering, nftables sets, config watcher
   tsdb/                       # Embedded SQLite time-series database & background sampler
   web/                        # Embedded web SPA assets (dist/) and HTTP handler
 proto/                        # Protobuf definitions
+gen/go/                       # Generated Go protobuf/Connect code (do not edit)
 web/                          # React SPA frontend (Vite, Tailwind, shadcn/ui, Connect-RPC)
   src/
     components/ui/            # shadcn/ui components (generated via shadcn CLI)
     components/               # Domain-specific UI tabs and header
+    gen/                      # Generated TypeScript protobuf/Connect code (do not edit)
     lib/                      # Connect-RPC client and utilities
 dashboard/                    # Grafana dashboard source & generated JSON
 Taskfile.yaml                 # Task runner commands

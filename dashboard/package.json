@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "bun --watch router-monitor-dashboard.ts"
+    "dev": "bun --watch lanpilot-dashboard.ts"
   },
   "dependencies": {
     "@grafana/grafana-foundation-sdk": "^11.1.0-cogv0.0.x.1746458718",

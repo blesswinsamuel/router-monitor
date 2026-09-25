@@ -3,7 +3,7 @@ import { X, Check, Trash2, AlertCircle } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { rpcClient } from '@/lib/client'
-import type { ConfigDnsRecord } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { ConfigDnsRecord } from '@/gen/lanpilot/v1/lanpilot_pb'
 
 interface EditDnsRecordModalProps {
   isOpen: boolean
@@ -60,7 +60,7 @@ export function EditDnsRecordModal({ isOpen, onClose, record, onSaved }: EditDns
 
       await rpcClient.upsertConfigDnsRecord({
         record: {
-          $typeName: 'routermonitor.v1.ConfigDnsRecord',
+          $typeName: 'lanpilot.v1.ConfigDnsRecord',
           name: name.trim().toLowerCase(),
           ip: ip.trim(),
           aliases,

@@ -13,7 +13,7 @@
 }:
 
 buildGoApplication {
-  pname = "router-monitor";
+  pname = "lanpilot";
   version = "0.1";
   pwd = ./.;
   src = ./.;

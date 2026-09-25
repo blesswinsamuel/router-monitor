@@ -7,17 +7,17 @@ tasks:
 
   go-generate:
     sources:
-      - internal/routermonitor/ebpf-collector.c
+      - internal/lanpilot/ebpf-collector.c
       - Dockerfile.generate
     generates:
-      - internal/routermonitor/ebpfcollector_x86_bpfel.go
-      - internal/routermonitor/ebpfcollector_x86_bpfel.o
+      - internal/lanpilot/ebpfcollector_x86_bpfel.go
+      - internal/lanpilot/ebpfcollector_x86_bpfel.o
     cmds:
-      - docker build . -f Dockerfile.generate -t blesswinsamuel/router-monitor:generate
-      - docker create blesswinsamuel/router-monitor:generate > /tmp/container_id
+      - docker build . -f Dockerfile.generate -t blesswinsamuel/lanpilot:generate
+      - docker create blesswinsamuel/lanpilot:generate > /tmp/container_id
       - defer: rm /tmp/container_id
       - defer: docker rm -f $(cat /tmp/container_id)
-      - docker cp $(cat /tmp/container_id):/generated/. ./internal/routermonitor/
+      - docker cp $(cat /tmp/container_id):/generated/. ./internal/lanpilot/
 
   web-install:
     cmds:
@@ -37,14 +37,14 @@ tasks:
     deps:
       - go-generate
     cmds:
-      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o router-monitor ./cmd/router-monitor
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lanpilot ./cmd/lanpilot
 
   build:
     deps:
       - go-generate
       - web-build
     cmds:
-      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o router-monitor-dev ./cmd/router-monitor
+      - CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lanpilot-dev ./cmd/lanpilot
 
   deploy:
     deps:
@@ -54,11 +54,11 @@ tasks:
     deps:
       - build
     cmds:
-      - ssh root@router "systemctl stop router-monitor-dev 2>/dev/null || true"
-      - scp router-monitor-dev root@router:/root/router-monitor-dev
-      - ssh root@router "systemd-run --unit=router-monitor-dev --setenv=PORT=9156 --setenv=HOST=0.0.0.0 --setenv=DB_PATH=/var/lib/router-monitor/router-monitor-dev.db --property=AmbientCapabilities='CAP_NET_ADMIN CAP_NET_RAW CAP_BPF CAP_PERFMON' /root/router-monitor-dev lan"
+      - ssh root@router "systemctl stop lanpilot-dev 2>/dev/null || true"
+      - scp lanpilot-dev root@router:/root/lanpilot-dev
+      - ssh root@router "systemd-run --unit=lanpilot-dev --setenv=PORT=9156 --setenv=HOST=0.0.0.0 --setenv=DB_PATH=/var/lib/lanpilot/lanpilot-dev.db --property=AmbientCapabilities='CAP_NET_ADMIN CAP_NET_RAW CAP_BPF CAP_PERFMON' /root/lanpilot-dev lan"
       - sleep 1
-      - ssh root@router "systemctl is-active router-monitor-dev"
+      - ssh root@router "systemctl is-active lanpilot-dev"
 
   logs:
     deps:
@@ -66,7 +66,7 @@ tasks:
 
   logs-dev:
     cmds:
-      - ssh root@router "journalctl -u router-monitor-dev -f"
+      - ssh root@router "journalctl -u lanpilot-dev -f"
 
   stop:
     deps:
@@ -74,7 +74,7 @@ tasks:
 
   stop-dev:
     cmds:
-      - ssh root@router "systemctl stop router-monitor-dev"
+      - ssh root@router "systemctl stop lanpilot-dev"
 
   status:
     deps:
@@ -82,10 +82,10 @@ tasks:
 
   status-dev:
     cmds:
-      - ssh root@router "systemctl status router-monitor-dev"
+      - ssh root@router "systemctl status lanpilot-dev"
 
   copy-to-router:
     cmds:
-      - ssh root@router "pkill -f router-monitor" || true
-      - scp router-monitor root@router:/root/router-monitor
-      - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/router-monitor'"
+      - ssh root@router "pkill -f lanpilot" || true
+      - scp lanpilot root@router:/root/lanpilot
+      - ssh root@router "nix-shell -p autoPatchelfHook --run 'autoPatchelf /root/lanpilot'"

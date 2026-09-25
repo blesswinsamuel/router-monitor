@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EditDnsRecordModal } from '@/components/EditDnsRecordModal'
 import { rpcClient } from '@/lib/client'
-import type { ConfigDnsRecord } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { ConfigDnsRecord } from '@/gen/lanpilot/v1/lanpilot_pb'
 
 export function DnsRecordsPage() {
   const [records, setRecords] = useState<ConfigDnsRecord[]>([])

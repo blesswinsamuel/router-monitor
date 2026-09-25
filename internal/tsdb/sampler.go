@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/blesswinsamuel/router-monitor/internal/routermonitor"
+	"github.com/blesswinsamuel/lanpilot/internal/lanpilot"
 )
 
 type LiveRates struct {
@@ -114,9 +114,9 @@ type devPacketCounts struct {
 
 type Sampler struct {
 	db              *DB
-	ebpfCollector   *routermonitor.EbpfCollector
-	arpCollector    *routermonitor.ArpCollector
-	internetChecker *routermonitor.InternetChecker
+	ebpfCollector   *lanpilot.EbpfCollector
+	arpCollector    *lanpilot.ArpCollector
+	internetChecker *lanpilot.InternetChecker
 	interval        time.Duration
 
 	mu          sync.RWMutex
@@ -171,9 +171,9 @@ func normalizeProtocol(proto string) string {
 
 func NewSampler(
 	db *DB,
-	ebpf *routermonitor.EbpfCollector,
-	arp *routermonitor.ArpCollector,
-	checker *routermonitor.InternetChecker,
+	ebpf *lanpilot.EbpfCollector,
+	arp *lanpilot.ArpCollector,
+	checker *lanpilot.InternetChecker,
 	interval time.Duration,
 ) *Sampler {
 	if interval <= 0 {

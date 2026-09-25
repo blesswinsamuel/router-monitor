@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "router-monitor-web",
+      "name": "lanpilot-web",
       "dependencies": {
         "@bufbuild/protobuf": "^2.14.1",
         "@connectrpc/connect": "^2.1.2",

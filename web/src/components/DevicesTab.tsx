@@ -36,7 +36,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { getDeviceCategory } from '@/lib/device-icons'
 import { rpcClient } from '@/lib/client'
-import type { Device } from '@/gen/routermonitor/v1/router_monitor_pb'
+import type { Device } from '@/gen/lanpilot/v1/lanpilot_pb'
 
 import { useRootOutletContext } from './RootLayout'
 
