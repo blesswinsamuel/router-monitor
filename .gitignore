@@ -6,6 +6,7 @@
 /bin
 node_modules
 web/dist
-internal/web/dist
+internal/web/dist/*
+!internal/web/dist/.gitkeep
 .DS_Store
 /.task
